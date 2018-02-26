@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::types::C8Byte;
+use super::types::{C8Byte, C8RegIdx};
 
 /// CHIP-8 register count
 const REGISTER_COUNT: usize = 16;
@@ -21,6 +21,49 @@ impl Registers {
             data: vec![0; REGISTER_COUNT],
             i: 0
         }
+    }
+
+    /// Get register value
+    ///
+    /// # Arguments
+    ///
+    /// * `reg` - Register name
+    ///
+    pub fn get_register(&self, reg: C8RegIdx) -> C8Byte {
+        let reg = reg as usize;
+
+        if reg >= REGISTER_COUNT {
+            panic!("Bad register name: {:X}", reg);
+        }
+
+        self.data[reg]
+    }
+
+    /// Set register value
+    ///
+    /// # Arguments
+    ///
+    /// * `reg` - Register name
+    /// * `value` - Byte value
+    ///
+    pub fn set_register(&mut self, reg: C8RegIdx, value: C8Byte) {
+        let reg = reg as usize;
+        
+        if reg >= REGISTER_COUNT {
+            panic!("Bad register name: {:X}", reg);
+        }
+
+        self.data[reg] = value;
+    }
+
+    /// Set carry register
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - Byte value
+    ///
+    pub fn set_carry_register(&mut self, value: C8Byte) {
+        self.data[15] = value;
     }
 }
 

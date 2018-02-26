@@ -3,6 +3,9 @@
 use std::fs::File;
 use std::io::prelude::*;
 
+use std::env;
+use std::path::{Path, PathBuf};
+
 use super::cpu::types::{C8Byte, C8Short};
 use super::cpu::opcodes::{get_opcode_enum, get_opcode_str};
 
@@ -20,8 +23,9 @@ impl Cartridge {
     /// 
     /// * `path` - Path to file
     /// 
-    pub fn load_from_path(path: &str) -> Cartridge {
-        let mut file = File::open(path)
+    pub fn load_from_games_directory(path: &str) -> Cartridge {
+        let games_dir = Cartridge::get_games_directory();
+        let mut file = File::open(games_dir.join(path))
                             .expect(&format!("File `{}` not found", path));
 
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
@@ -29,6 +33,16 @@ impl Cartridge {
             .expect("Error while reading file contents");
 
         Cartridge(contents)
+    }
+
+    /// Get games directory
+    pub fn get_games_directory() -> PathBuf {
+        let cargo_path = match env::var("CARGO_MANIFEST_DIR") {
+            Ok(path) => path,
+            Err(_) => panic!("Environment var CARGO_MANIFEST_DIR is not set")
+        };
+
+        Path::new(&cargo_path).join("games")
     }
 
     /// Get internal data
@@ -56,5 +70,14 @@ impl Cartridge {
         }
 
         (assembly_output, verbose_output)
+    }
+
+    /// Print disassembly
+    pub fn print_disassembly(&self) {
+        let (assembly, verbose) = self.disassemble();
+        println!("> Disassembly:");
+        for i in 0..assembly.len() {
+            println!("  {:30} ; {}", assembly[i], verbose[i])
+        }
     }
 }

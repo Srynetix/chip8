@@ -29,13 +29,23 @@ impl Stack {
     ///
     /// * `addr` - Address to store
     ///
-    pub fn store(&mut self, addr: C8Addr) {
+    pub fn push(&mut self, addr: C8Addr) {
         if self.pointer as usize >= STACK_DEPTH {
             panic!("CPU stack is full ! (limit: {})", STACK_DEPTH);
         }
 
         self.data[self.pointer as usize] = addr;
         self.pointer += 1
+    }
+
+    /// Pop address from stack
+    pub fn pop(&mut self) -> C8Addr {
+        if self.pointer == 0 {
+            panic!("CPU stack is empty !");
+        }
+
+        self.pointer -= 1;
+        self.data[self.pointer as usize]
     }
 }
 

@@ -42,6 +42,7 @@ impl Device {
 
     /// Show CPU debug
     pub fn debug_cpu(&self) {
+        println!("> CPU");
         println!("{:?}", self.cpu);
     }
 

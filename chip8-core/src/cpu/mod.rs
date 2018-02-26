@@ -11,6 +11,7 @@ pub mod opcodes;
 pub mod video;
 
 use self::opcodes::OpCode;
+use self::types::{C8Short};
 
 /// CHIP-8 CPU struct
 pub struct CPU {
@@ -75,6 +76,11 @@ impl CPU {
                 // Clear screen
                 self.video_memory.clear_screen();
             },
+            OpCode::RET => {
+                // Get last stored address
+                let addr = self.stack.pop();
+                self.memory.set_pointer(addr);
+            },
             OpCode::JP(addr) => {
                 // Set pointer to address
                 self.memory.set_pointer(addr);
@@ -82,10 +88,91 @@ impl CPU {
             },
             OpCode::CALL(addr) => {
                 // Store current address and set pointer
-                self.stack.store(self.memory.get_pointer());
+                self.stack.push(self.memory.get_pointer());
                 self.memory.set_pointer(addr);
                 advance_pointer = false;                
-            }
+            },
+            OpCode::SEByte(reg, byte) => {
+                // Compare register with byte and then advance pointer
+                if self.registers.get_register(reg) == byte {
+                    self.memory.advance_pointer();
+                }
+            },
+            OpCode::SNEByte(reg, byte) => {
+                // Compare register with byte and then advance pointer
+                if self.registers.get_register(reg) != byte {
+                    self.memory.advance_pointer();
+                }
+            },
+            OpCode::SE(reg1, reg2) => {
+                // Compare register values
+                if self.registers.get_register(reg1) == self.registers.get_register(reg2) {
+                    self.memory.advance_pointer();
+                }
+            },
+            OpCode::LDByte(reg, byte) => {
+                // Puts byte in register
+                self.registers.set_register(reg, byte);
+            },
+            OpCode::ADDByte(reg, byte) => {
+                // Add byte in register
+                let r = self.registers.get_register(reg);
+
+                self.registers.set_register(reg, r + byte);
+            },
+            OpCode::LD(reg1, reg2) => {
+                // Load register value in another
+                let r = self.registers.get_register(reg2);
+
+                self.registers.set_register(reg1, r);
+            },
+            OpCode::OR(reg1, reg2) => {
+                // OR between two registers
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+
+                self.registers.set_register(reg1, r1 & r2);
+            },
+            OpCode::AND(reg1, reg2) => {
+                // AND between two registers
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+
+                self.registers.set_register(reg1, r1 | r2)
+            },
+            OpCode::XOR(reg1, reg2) => {
+                // XOR between two registers
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+
+                self.registers.set_register(reg1, r1 ^ r2);
+            },
+            OpCode::ADD(reg1, reg2) => {
+                // ADD between two registers
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+
+                if (r1 as C8Short + r2 as C8Short) > 0xFF {
+                    self.registers.set_carry_register(1);
+                } else {
+                    self.registers.set_carry_register(0);
+                }
+
+                self.registers.set_register(reg1, r1 + r2);
+            },
+            OpCode::SUB(reg1, reg2) => {
+                // SUB between two registers
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+
+                if r1 < r2 {
+                    self.registers.set_carry_register(1);
+                } else {
+                    self.registers.set_carry_register(0);
+                }
+
+                self.registers.set_register(reg1, r1 - r2);
+            },
             _ => println!(" - Not implemented")
         };
 
