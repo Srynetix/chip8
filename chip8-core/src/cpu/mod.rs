@@ -9,28 +9,33 @@ pub mod timer;
 pub mod types;
 pub mod opcodes;
 pub mod video;
+pub mod font;
 
 use rand::random;
 
 use self::opcodes::OpCode;
 use self::types::{C8Byte, C8Addr};
+use self::font::{FONT_DATA_ADDR, FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT};
+use self::video::{VIDEO_MEMORY_WIDTH, VIDEO_MEMORY_HEIGHT};
 
 /// CHIP-8 CPU struct
 pub struct CPU {
     /// Memory
-    pub memory: memory::Memory,
+    memory: memory::Memory,
     /// Video memory
-    pub video_memory: video::VideoMemory,
+    video_memory: video::VideoMemory,
     /// Registers
-    pub registers: registers::Registers,
+    registers: registers::Registers,
     /// Stack
-    pub stack: stack::Stack,
+    stack: stack::Stack,
 
     /// Syncronization timer
-    pub delay_timer: timer::Timer,
+    delay_timer: timer::Timer,
     /// Sound timer
-    pub sound_timer: timer::Timer,
+    sound_timer: timer::Timer,
 
+    /// Font
+    font: font::Font,
     /// Instruction count
     instruction_count: usize
 }
@@ -48,13 +53,25 @@ impl CPU {
             delay_timer: timer::Timer::new(),
             sound_timer: timer::Timer::new(),
 
+            font: font::Font::new_system_font(),
             instruction_count: 0
         }
     }
 
+    /// Load font in memory
+    pub fn load_font_in_memory(&mut self) {
+        self.memory.write_data_at_offset(FONT_DATA_ADDR, self.font.get_data());
+    }
+
     /// Run CPU
-    pub fn run() {
-        
+    pub fn run(&mut self) {
+        println!("> Run");
+    }
+
+    /// Read cartridge data
+    pub fn load_cartridge_data(&mut self, cartridge_data: &[u8]) {
+        self.memory.reset_pointer();
+        self.memory.write_data_at_pointer(cartridge_data);
     }
 
     /// Read next instruction
@@ -249,22 +266,37 @@ impl CPU {
             },
             OpCode::DRW(reg1, reg2, byte) => {
                 // Draw sprite
-                let _r1 = self.registers.get_register(reg1);
-                let _r2 = self.registers.get_register(reg2);
-                let _b = byte;
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+                let ri = self.registers.get_i_register();
 
-                // TODO
+                self.registers.set_carry_register(0);
+
+                for i in 0..r1 {
+                    let code = self.memory.read_byte_at_offset(ri + i as C8Addr);
+                    
+                    let y = (r2 + i) as usize % VIDEO_MEMORY_HEIGHT;
+                    let mut shift = FONT_CHAR_HEIGHT - 1;
+
+                    for j in 0..FONT_CHAR_WIDTH {
+                        let x = (byte as usize + j) % VIDEO_MEMORY_WIDTH;
+
+                        if code & (0x1 << shift) != 0 {
+                            if self.video_memory.toggle_pixel_xy(x, y) {
+                                self.registers.set_carry_register(1);
+                            }
+                        } 
+
+                        shift -= 1;
+                    } 
+                }
             },
-            OpCode::SKP(reg) => {
+            OpCode::SKP(_reg) => {
                 // Skip next instruction if key is pressed
-                let _k = self.registers.get_register(reg);
-                
                 // TODO
             },
-            OpCode::SKNP(reg) => {
+            OpCode::SKNP(_reg) => {
                 // Skip next instruction if key is not pressed
-                let _k = self.registers.get_register(reg);
-                
                 // TODO
             },
             OpCode::LDGetDelayTimer(reg) => {
@@ -275,8 +307,6 @@ impl CPU {
             },
             OpCode::LDGetKey(_reg) => {
                 // Wait for key press and stores it in register
-                let _k = 0;
-
                 // TODO
             },
             OpCode::LDSetDelayTimer(reg) => {
@@ -296,9 +326,12 @@ impl CPU {
 
                 self.registers.set_i_register(i + (r as C8Addr));
             },
-            OpCode::LDSprite(_reg) => {
+            OpCode::LDSprite(reg) => {
                 // Set I = location of sprite for reg
-                // TODO
+                let r = self.registers.get_register(reg) as C8Addr;
+                let sprite_addr = (FONT_DATA_ADDR * FONT_CHAR_HEIGHT as C8Addr) * r;
+
+                self.registers.set_i_register(sprite_addr);
             },
             OpCode::LDBCD(reg) => {
                 // Store BCD repr of reg in I, I+1, I+2
@@ -309,15 +342,25 @@ impl CPU {
                 let n2 = (r % 100) / 10;
                 let n1 = r % 10;
 
-                self.memory.write_data_at_offset(i as usize, &[n3, n2, n1]);
+                self.memory.write_data_at_offset(i, &[n3, n2, n1]);
             },
-            OpCode::LDS(_reg) => {
+            OpCode::LDS(reg) => {
                 // Store registers V0 through reg in memory starting at I
-                // TODO
+                let ri = self.registers.get_i_register();
+
+                for ridx in 0..reg {
+                    let r = self.registers.get_register(ridx);                    
+                    self.memory.write_byte_at_offset(ri + ridx as C8Addr, r);
+                }
             },
-            OpCode::LDR(_reg) => {
+            OpCode::LDR(reg) => {
                 // Read registers V0 through reg from memory starting at I
-                // TODO
+                let ri = self.registers.get_i_register();
+                
+                for ridx in 0..reg {
+                    let byte = self.memory.read_byte_at_offset(ri + ridx as C8Addr);
+                    self.registers.set_register(ridx, byte);
+                }
             },
             OpCode::NOP => {
                 // Nothing

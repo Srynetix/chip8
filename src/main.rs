@@ -13,6 +13,7 @@ fn main() {
     let cartridge = Cartridge::load_from_games_directory("test.ch8");
 
     device.read_cartridge(&cartridge);
+    device.start();
     device.debug_cpu();
 
     cartridge.print_disassembly();

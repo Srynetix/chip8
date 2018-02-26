@@ -48,11 +48,18 @@ impl Device {
         println!("> Is renderer active: {}", self.renderer.is_some());
     }
 
-    /// ReadCHIP-8 cartridge
+    /// Start device
+    pub fn start(&mut self) {
+        println!("> Starting device...");
+
+        self.cpu.load_font_in_memory();
+        self.cpu.run();
+    }
+
+    /// Read CHIP-8 cartridge
     pub fn read_cartridge(&mut self, cartridge: &Cartridge) {
         println!("> Reading cartridge...");
 
-        self.cpu.memory.reset_pointer();
-        self.cpu.memory.write_data_at_pointer(cartridge.get_data());
+        self.cpu.load_cartridge_data(cartridge.get_data());
     }
 }

@@ -2,18 +2,17 @@
 
 use std::fmt;
 
-use super::types::C8Byte;
-use super::types::C8Short;
+use super::types::{C8Byte, C8Addr};
 
 /// CHIP-8 CPU memory vars
 const MEMORY_SIZE: usize = 4096;
 const CHUNK_SIZE: usize = 64;
-const INITIAL_MEMORY_POINTER: C8Short = 512;
+const INITIAL_MEMORY_POINTER: C8Addr = 512;
 
 /// CHIP-8 CPU memory struct
 pub struct Memory{
     data: Vec<C8Byte>,
-    pointer: C8Short
+    pointer: C8Addr
 }
 
 impl Memory {
@@ -33,10 +32,21 @@ impl Memory {
     /// * `offset` - Offset
     /// * `data` - Data (bytes)
     /// 
-    pub fn write_data_at_offset(&mut self, offset: usize, data: &[C8Byte]) {
+    pub fn write_data_at_offset(&mut self, offset: C8Addr, data: &[C8Byte]) {
         for (idx, v) in data.iter().enumerate() {
-            self.data[offset + idx] = *v; 
+            self.data[(offset + idx as C8Addr) as usize] = *v; 
         }
+    }
+
+    /// Write byte at offset
+    /// 
+    /// # Arguments
+    /// 
+    /// * `offset` - Offset
+    /// * `byte` - Byte
+    /// 
+    pub fn write_byte_at_offset(&mut self, offset: C8Addr, byte: C8Byte) {
+        self.data[offset as usize] = byte
     }
 
     /// Write data at pointer
@@ -44,10 +54,32 @@ impl Memory {
     /// # Arguments
     /// 
     /// * `data` - Data (bytes)
+    /// 
     pub fn write_data_at_pointer(&mut self, data: &[C8Byte]) {
-        let pointer = self.pointer as usize;
+        let pointer = self.pointer;
 
         self.write_data_at_offset(pointer, data)
+    }
+
+    /// Get data at offset
+    /// 
+    /// # Arguments
+    /// 
+    /// * `offset` - Offset
+    /// * `count` - Count
+    /// 
+    pub fn read_data_at_offset(&self, offset: C8Addr, count: C8Addr) -> &[C8Byte] {
+        &self.data[(offset as usize)..((offset + count) as usize)]
+    }
+
+    /// Get byte at offset
+    /// 
+    /// # Arguments
+    /// 
+    /// * `offset` - Offset
+    /// 
+    pub fn read_byte_at_offset(&self, offset: C8Addr) -> C8Byte {
+        self.data[offset as usize]
     }
 
     /// Set pointer
@@ -56,12 +88,12 @@ impl Memory {
     /// 
     /// * `pointer` - Pointer
     /// 
-    pub fn set_pointer(&mut self, pointer: C8Short) {
+    pub fn set_pointer(&mut self, pointer: C8Addr) {
         self.pointer = pointer;
     }
 
     /// Get pointer
-    pub fn get_pointer(&self) -> C8Short {
+    pub fn get_pointer(&self) -> C8Addr {
         self.pointer
     }
 
@@ -76,10 +108,10 @@ impl Memory {
     }
 
     /// Read opcode
-    pub fn read_opcode(&self) -> C8Short {
+    pub fn read_opcode(&self) -> C8Addr {
         let pc = self.pointer as usize;
 
-        ((self.data[pc] as C8Short) << 8) + self.data[pc + 1] as C8Short
+        ((self.data[pc] as C8Addr) << 8) + self.data[pc + 1] as C8Addr
     }
 }
 

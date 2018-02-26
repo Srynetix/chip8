@@ -77,7 +77,7 @@ impl Cartridge {
         let (assembly, verbose) = self.disassemble();
         println!("> Disassembly:");
         for i in 0..assembly.len() {
-            println!("  {:30} ; {}", assembly[i], verbose[i])
+            println!("  {:20} ; {}", assembly[i], verbose[i]);
         }
     }
 }
