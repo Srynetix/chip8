@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::types::{C8Byte, C8RegIdx};
+use super::types::{C8Byte, C8Addr, C8RegIdx};
 
 /// CHIP-8 register count
 const REGISTER_COUNT: usize = 16;
@@ -10,7 +10,7 @@ const REGISTER_COUNT: usize = 16;
 /// CHIP-8 CPU Registers
 pub struct Registers {
     data: Vec<C8Byte>,
-    i: C8Byte
+    i: C8Addr
 }
 
 impl Registers {
@@ -39,6 +39,11 @@ impl Registers {
         self.data[reg]
     }
 
+    /// Get I register
+    pub fn get_i_register(&self) -> C8Addr {
+        self.i
+    }
+
     /// Set register value
     ///
     /// # Arguments
@@ -64,6 +69,15 @@ impl Registers {
     ///
     pub fn set_carry_register(&mut self, value: C8Byte) {
         self.data[15] = value;
+    }
+
+    /// Set I register
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - Address
+    pub fn set_i_register(&mut self, value: C8Addr) {
+        self.i = value;
     }
 }
 

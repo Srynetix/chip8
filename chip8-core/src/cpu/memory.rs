@@ -26,28 +26,28 @@ impl Memory {
         }
     }
 
-    /// Load data at offset
+    /// Write data at offset
     /// 
     /// # Arguments
     /// 
     /// * `offset` - Offset
     /// * `data` - Data (bytes)
     /// 
-    pub fn load_data_at_offset(&mut self, offset: usize, data: &[C8Byte]) {
+    pub fn write_data_at_offset(&mut self, offset: usize, data: &[C8Byte]) {
         for (idx, v) in data.iter().enumerate() {
             self.data[offset + idx] = *v; 
         }
     }
 
-    /// Load data at pointer
+    /// Write data at pointer
     /// 
     /// # Arguments
     /// 
     /// * `data` - Data (bytes)
-    pub fn load_data_at_pointer(&mut self, data: &[C8Byte]) {
+    pub fn write_data_at_pointer(&mut self, data: &[C8Byte]) {
         let pointer = self.pointer as usize;
 
-        self.load_data_at_offset(pointer, data)
+        self.write_data_at_offset(pointer, data)
     }
 
     /// Set pointer

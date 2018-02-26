@@ -274,7 +274,7 @@ pub enum OpCode {
 
     /// 0000 - NOP
     /// * Empty
-    NOP()
+    NOP
 }
 
 lazy_static! {
@@ -401,7 +401,7 @@ pub fn get_opcode_enum(opcode: C8Short) -> Option<OpCode> {
         32 => OpCode::LDBCD(b3),
         33 => OpCode::LDS(b3),
         34 => OpCode::LDR(b3),
-        35 => OpCode::NOP(),
+        35 => OpCode::NOP,
         _ => {
             println!("OpCode `{}` identified as `{}` but is not implemented", opcode, action_id);
             return None
@@ -462,6 +462,6 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
         OpCode::LDS(reg) => (format!("LD [I], V{:X}", reg), format!("Store registers V0 through V{:X} in memory starting at location I", reg)),
         OpCode::LDR(reg) => (format!("LD V{:X}, [I]", reg), format!("Read registers V0 through V{:X} from memory starting at location I", reg)),
 
-        OpCode::NOP() => ("NOP".to_string(), "- Empty".to_string())
+        OpCode::NOP => ("NOP".to_string(), "- Empty".to_string())
     }
 }

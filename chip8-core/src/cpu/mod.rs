@@ -10,8 +10,10 @@ pub mod types;
 pub mod opcodes;
 pub mod video;
 
+use rand::random;
+
 use self::opcodes::OpCode;
-use self::types::{C8Short};
+use self::types::{C8Byte, C8Addr};
 
 /// CHIP-8 CPU struct
 pub struct CPU {
@@ -25,7 +27,7 @@ pub struct CPU {
     pub stack: stack::Stack,
 
     /// Syncronization timer
-    pub sync_timer: timer::Timer,
+    pub delay_timer: timer::Timer,
     /// Sound timer
     pub sound_timer: timer::Timer,
 
@@ -43,7 +45,7 @@ impl CPU {
             registers: registers::Registers::new(),
             stack: stack::Stack::new(),
 
-            sync_timer: timer::Timer::new(),
+            delay_timer: timer::Timer::new(),
             sound_timer: timer::Timer::new(),
 
             instruction_count: 0
@@ -94,19 +96,26 @@ impl CPU {
             },
             OpCode::SEByte(reg, byte) => {
                 // Compare register with byte and then advance pointer
-                if self.registers.get_register(reg) == byte {
+                let r = self.registers.get_register(reg);
+
+                if r == byte {
                     self.memory.advance_pointer();
                 }
             },
             OpCode::SNEByte(reg, byte) => {
                 // Compare register with byte and then advance pointer
-                if self.registers.get_register(reg) != byte {
+                let r = self.registers.get_register(reg);
+                
+                if r != byte {
                     self.memory.advance_pointer();
                 }
             },
             OpCode::SE(reg1, reg2) => {
                 // Compare register values
-                if self.registers.get_register(reg1) == self.registers.get_register(reg2) {
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+
+                if r1 == r2 {
                     self.memory.advance_pointer();
                 }
             },
@@ -151,29 +160,168 @@ impl CPU {
                 // ADD between two registers
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
+                let (res, overflow) = r1.overflowing_add(r2);
 
-                if (r1 as C8Short + r2 as C8Short) > 0xFF {
+                if overflow {
                     self.registers.set_carry_register(1);
                 } else {
                     self.registers.set_carry_register(0);
                 }
 
-                self.registers.set_register(reg1, r1 + r2);
+                self.registers.set_register(reg1, res);
             },
             OpCode::SUB(reg1, reg2) => {
                 // SUB between two registers
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
+                let (res, overflow) = r1.overflowing_sub(r2);
 
-                if r1 < r2 {
+                if overflow {
+                    self.registers.set_carry_register(0);
+                } else {
+                    self.registers.set_carry_register(1);
+                }
+
+                self.registers.set_register(reg1, res);
+            },
+            OpCode::SHR(reg, _) => {
+                // Shift right registry
+                let r = self.registers.get_register(reg);
+
+                if r & 1 == 1 {
                     self.registers.set_carry_register(1);
                 } else {
                     self.registers.set_carry_register(0);
                 }
 
-                self.registers.set_register(reg1, r1 - r2);
+                self.registers.set_register(reg, r >> 1);
             },
-            _ => println!(" - Not implemented")
+            OpCode::SUBN(reg1, reg2) => {
+                // SUBN between two registers
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+                let (res, overflow) = r2.overflowing_sub(r1);
+
+                if overflow {
+                    self.registers.set_carry_register(0);
+                } else {
+                    self.registers.set_carry_register(1);
+                }
+
+                self.registers.set_register(reg1, res);
+            },
+            OpCode::SHL(reg, _) => {
+                // Shift left registry
+                let r = self.registers.get_register(reg);
+                let msb = 1 << 7;
+
+                if r & msb == msb {
+                    self.registers.set_carry_register(1);
+                } else {
+                    self.registers.set_carry_register(0);
+                }
+
+                self.registers.set_register(reg, r << 1);
+            },
+            OpCode::SNE(reg1, reg2) => {
+                // Skip if registers are not equal
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+
+                if r1 != r2 {
+                    self.memory.advance_pointer();
+                }
+            },
+            OpCode::LDI(addr) => {
+                // Set I to addr
+                self.registers.set_i_register(addr);
+            },
+            OpCode::JP0(addr) => {
+                // Set pointer to address + V0
+                let v0 = self.registers.get_register(0);
+                self.memory.set_pointer(addr + (v0 as C8Addr));
+                advance_pointer = false;                
+            },
+            OpCode::RND(reg, byte) => {
+                // Set random value AND byte in register
+                let rand_value = random::<C8Byte>() & byte;
+                self.registers.set_register(reg, rand_value);
+            },
+            OpCode::DRW(reg1, reg2, byte) => {
+                // Draw sprite
+                let _r1 = self.registers.get_register(reg1);
+                let _r2 = self.registers.get_register(reg2);
+                let _b = byte;
+
+                // TODO
+            },
+            OpCode::SKP(reg) => {
+                // Skip next instruction if key is pressed
+                let _k = self.registers.get_register(reg);
+                
+                // TODO
+            },
+            OpCode::SKNP(reg) => {
+                // Skip next instruction if key is not pressed
+                let _k = self.registers.get_register(reg);
+                
+                // TODO
+            },
+            OpCode::LDGetDelayTimer(reg) => {
+                // Get delay timer and set register
+                let dt = self.delay_timer.get_value();
+
+                self.registers.set_register(reg, dt);
+            },
+            OpCode::LDGetKey(_reg) => {
+                // Wait for key press and stores it in register
+                let _k = 0;
+
+                // TODO
+            },
+            OpCode::LDSetDelayTimer(reg) => {
+                // Set delay timer value from registry
+                let r = self.registers.get_register(reg);
+                self.delay_timer.reset(r);
+            },
+            OpCode::LDSetSoundTimer(reg) => {
+                // Set sound timer value from registry
+                let r = self.registers.get_register(reg);
+                self.sound_timer.reset(r);
+            },
+            OpCode::ADDI(reg) => {
+                // Add register value to I
+                let i = self.registers.get_i_register();
+                let r = self.registers.get_register(reg);
+
+                self.registers.set_i_register(i + (r as C8Addr));
+            },
+            OpCode::LDSprite(_reg) => {
+                // Set I = location of sprite for reg
+                // TODO
+            },
+            OpCode::LDBCD(reg) => {
+                // Store BCD repr of reg in I, I+1, I+2
+                let r = self.registers.get_register(reg);
+                let i = self.registers.get_i_register();
+
+                let n3 = r / 100;
+                let n2 = (r % 100) / 10;
+                let n1 = r % 10;
+
+                self.memory.write_data_at_offset(i as usize, &[n3, n2, n1]);
+            },
+            OpCode::LDS(_reg) => {
+                // Store registers V0 through reg in memory starting at I
+                // TODO
+            },
+            OpCode::LDR(_reg) => {
+                // Read registers V0 through reg from memory starting at I
+                // TODO
+            },
+            OpCode::NOP => {
+                // Nothing
+            }
         };
 
         if advance_pointer {
@@ -204,7 +352,7 @@ impl fmt::Debug for CPU {
         write!(f, "{:?}", self.stack)?;
         write!(f, "  }}\n")?;
 
-        write!(f, "  sync_timer: {:?}\n", self.sync_timer)?;
+        write!(f, "  delay_timer: {:?}\n", self.delay_timer)?;
         write!(f, "  sound_timer: {:?}\n", self.sound_timer)?;
 
         write!(f, "}}\n")

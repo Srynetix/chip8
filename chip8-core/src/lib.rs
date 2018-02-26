@@ -4,6 +4,7 @@
 
 #[macro_use]
 extern crate lazy_static;
+extern crate rand;
 
 pub mod cpu;
 pub mod cartridge;

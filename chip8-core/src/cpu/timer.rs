@@ -33,6 +33,11 @@ impl Timer {
 
         self
     }
+
+    /// Get value
+    pub fn get_value(&self) -> C8Byte {
+        self.0
+    }
 }
 
 impl fmt::Debug for Timer {

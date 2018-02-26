@@ -44,6 +44,8 @@ impl Device {
     pub fn debug_cpu(&self) {
         println!("> CPU");
         println!("{:?}", self.cpu);
+
+        println!("> Is renderer active: {}", self.renderer.is_some());
     }
 
     /// ReadCHIP-8 cartridge
@@ -51,6 +53,6 @@ impl Device {
         println!("> Reading cartridge...");
 
         self.cpu.memory.reset_pointer();
-        self.cpu.memory.load_data_at_pointer(cartridge.get_data());
+        self.cpu.memory.write_data_at_pointer(cartridge.get_data());
     }
 }
