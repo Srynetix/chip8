@@ -3,6 +3,8 @@
 use std::{thread};
 use std::sync::{Arc, RwLock};
 
+use time;
+
 use chip8_cpu::{CPU, Cartridge};
 use chip8_graphics::Renderer;
 
@@ -47,9 +49,17 @@ impl Device {
         let running_handle = Arc::clone(&running);
 
         let handle = thread::spawn(move || {
+            let mut start_time = time::PreciseTime::now();
+
             while *(running_handle.read().unwrap()) {
                 cpu.read_next_instruction();
-                cpu.decrement_timers();
+
+                // Decrement timers 60Hz
+                let current_time = time::PreciseTime::now();
+                if start_time.to(current_time).num_milliseconds() > 16 {
+                    cpu.decrement_timers();
+                    start_time = current_time;
+                }
             }
         });
 

@@ -22,22 +22,25 @@ impl VideoMemory {
 
     /// Create new video memory
     pub fn new() -> Self {
+        let mut vec = Vec::with_capacity(VIDEO_MEMORY_SIZE);
+        for _ in 0..VIDEO_MEMORY_SIZE {
+            vec.push(RwLock::new(0));
+        }
+
         VideoMemory(
             Arc::new(
-                RwLock::new(
-                    vec![0; VIDEO_MEMORY_SIZE]
-                )
+                vec
             )
         )
     }
 
     /// Clear screen
     pub fn clear_screen(&mut self) {
-        let screen_handle = Arc::clone(&self.0); 
-        let mut screen = screen_handle.write().expect("Could not write to screen");
+        let screen = Arc::clone(&self.0); 
 
         for x in 0..screen.len() {
-            screen[x] = 0;
+            let mut pixel = screen[x].write().expect("Could not write to screen");
+            *pixel = 0;
         }
     }
 
@@ -51,14 +54,14 @@ impl VideoMemory {
     pub fn toggle_pixel(&mut self, pos: usize) -> bool {
         // For now, only handle 0 and 1
         let mut flip = false;
-        let screen_handle = Arc::clone(&self.0);         
-        let mut screen = screen_handle.write().expect("Could not write to screen");        
+        let screen = Arc::clone(&self.0);         
+        let mut pixel = screen[pos].write().expect("Could not write to screen");        
         
-        if screen[pos] == 1 {
-            screen[pos] = 0;
+        if *pixel == 1 {
+            *pixel = 0;
             flip = true;
         } else {
-            screen[pos] = 1;
+            *pixel = 1;
         }
 
         flip
@@ -84,15 +87,15 @@ impl VideoMemory {
 
 impl fmt::Debug for VideoMemory {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let screen_handle = Arc::clone(&self.0);         
-        let screen = screen_handle.read().expect("Could not read screen");
+        let screen = Arc::clone(&self.0);         
         write!(f, "    -> Size: {} x {}\n", VIDEO_MEMORY_WIDTH, VIDEO_MEMORY_HEIGHT)?;
 
         for j in 0..VIDEO_MEMORY_HEIGHT {
             write!(f, "    ")?;
 
             for i in 0..VIDEO_MEMORY_WIDTH {
-                write!(f, "{:02X} ", screen[i + j * VIDEO_MEMORY_WIDTH])?;
+                let pixel = screen[i + j * VIDEO_MEMORY_WIDTH].read().expect("Could not read screen");
+                write!(f, "{:02X} ", *pixel)?;
             }
 
             write!(f, "\n")?;

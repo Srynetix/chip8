@@ -21,4 +21,4 @@ pub type C8ByteVec = Vec<C8Byte>;
 pub type C8AddrVec = Vec<C8Addr>;
 
 /// SharedC8ByteVec: Shared CHIP-8 byte vec
-pub type SharedC8ByteVec = Arc<RwLock<C8ByteVec>>;
+pub type SharedC8ByteVec = Arc<Vec<RwLock<C8Byte>>>;

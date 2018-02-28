@@ -53,9 +53,7 @@ impl Renderer {
 
     /// Start loop
     pub fn run(&mut self, screen_lock: SharedC8ByteVec) {
-        let handle = Arc::clone(&screen_lock);
-        
-
+        let screen = Arc::clone(&screen_lock);
         let mut event_pump = self.sdl_context.event_pump().unwrap();
 
         'running: loop {
@@ -72,11 +70,11 @@ impl Renderer {
             self.canvas.clear();
 
             {
-                let screen = handle.read().unwrap();
                 for (idx, px) in screen.iter().enumerate() {
                     let idx = idx as u32;
                     let x = idx % RENDERER_WIDTH;
                     let y = idx / RENDERER_WIDTH;
+                    let px = px.read().unwrap();
 
                     self.canvas.set_draw_color(color_from_byte(*px));
                     self.canvas.fill_rect(Rect::new((x * RENDERER_SCALE) as i32, (y * RENDERER_SCALE) as i32, RENDERER_SCALE, RENDERER_SCALE)).expect("Error while drawing.");
