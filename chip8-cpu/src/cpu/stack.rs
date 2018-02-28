@@ -2,14 +2,14 @@
 
 use std::fmt;
 
-use super::types::{C8Byte, C8Addr};
+use chip8_core::types::{C8AddrVec, C8Byte, C8Addr};
 
 /// CHIP-8 CPU stack depth
 const STACK_DEPTH: usize = 16;
 
 /// CHIP-8 CPU stack struct
 pub struct Stack {
-    data: Vec<C8Addr>,
+    data: C8AddrVec,
     pointer: C8Byte
 }
 
@@ -52,9 +52,9 @@ impl Stack {
 impl fmt::Debug for Stack {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (idx, v) in self.data.iter().enumerate() {
-            write!(f, "    S{:X}: {:02X},\n", idx, v)?;
+            write!(f, "    S{:X}: {:04X},\n", idx, v)?;
         }
 
-        write!(f, "    SP: {:04X}\n", self.pointer)
+        write!(f, "    SP: {:02X}\n", self.pointer)
     }
 }

@@ -1,5 +1,9 @@
 //! CHIP-8 graphics renderer
 
+use std::sync::{Arc};
+
+use chip8_core::types::{SharedC8ByteVec};
+
 use piston_window::{PistonWindow, WindowSettings};
 use piston_window::{clear, rectangle};
 
@@ -14,11 +18,19 @@ pub struct Color([f32; 4]);
 
 /// CHIP-8 renderer struct
 pub struct Renderer {
-    window: PistonWindow,
-    screen: Vec<&'static Color>
+    window: PistonWindow
 }
 
 impl Color {
+
+    /// Create a color from byte
+    pub fn from_byte(byte: u8) -> &'static Color {
+        match byte {
+            0 => Self::black(),
+            1 => Self::white(),
+            _ => Self::black()
+        }
+    }
 
     /// Create a black color
     pub fn black() -> &'static Color {
@@ -34,9 +46,9 @@ impl Color {
 impl Renderer {
 
     /// Create a new renderer
-    pub fn new() -> Self {
+    pub fn new(window_title: String) -> Self {
         let window: PistonWindow = WindowSettings::new(
-                                                "Renderer",
+                                                window_title,
                                                 [RENDERER_WIDTH * RENDERER_SCALE, RENDERER_HEIGHT * RENDERER_SCALE])
                                             .exit_on_esc(true)
                                             .resizable(false)
@@ -45,29 +57,31 @@ impl Renderer {
                                             .unwrap();
 
         Renderer {
-            window: window,
-            screen: vec![&Color::black(); (RENDERER_WIDTH * RENDERER_HEIGHT) as usize]
+            window: window
         }
     }
 
     /// Start loop
-    pub fn start_loop(&mut self) {
+    pub fn run(&mut self, screen_lock: SharedC8ByteVec) {
+        let handle = Arc::clone(&screen_lock);
+        
         while let Some(event) = self.window.next() {
-            let screen = &self.screen;
-
             self.window.draw_2d(&event, |context, g2d| {
                 clear(RENDERER_CLEAR_COLOR, g2d);
 
-                for (idx, px) in screen.iter().enumerate() {
-                    let idx = idx as u32;
-                    let x = idx % RENDERER_WIDTH;
-                    let y = idx / RENDERER_WIDTH;
+                {
+                    let screen = handle.read().unwrap();
+                    for (idx, px) in screen.iter().enumerate() {
+                        let idx = idx as u32;
+                        let x = idx % RENDERER_WIDTH;
+                        let y = idx / RENDERER_WIDTH;
 
-                    rectangle(
-                        px.0,
-                        [(x * RENDERER_SCALE) as f64, (y * RENDERER_SCALE) as f64, RENDERER_SCALE as f64, RENDERER_SCALE as f64],
-                        context.transform,
-                        g2d);
+                        rectangle(
+                            Color::from_byte(*px).0,
+                            [(x * RENDERER_SCALE) as f64, (y * RENDERER_SCALE) as f64, RENDERER_SCALE as f64, RENDERER_SCALE as f64],
+                            context.transform,
+                            g2d);
+                    }
                 }
             });
         }

@@ -6,14 +6,15 @@ use std::io::prelude::*;
 use std::env;
 use std::path::{Path, PathBuf};
 
-use super::cpu::types::{C8Byte, C8Short};
-use super::cpu::opcodes::{get_opcode_enum, get_opcode_str};
+use chip8_core::types::{C8ByteVec, C8Byte};
+
+use super::cpu::opcodes::{get_opcode_enum, get_opcode_str, extract_opcode_from_array};
 
 /// Cartridge max size
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
 
 /// CHIP-8 cartridge type
-pub struct Cartridge(Vec<C8Byte>);
+pub struct Cartridge(C8ByteVec);
 
 impl Cartridge {
 
@@ -39,7 +40,7 @@ impl Cartridge {
     pub fn get_games_directory() -> PathBuf {
         let cargo_path = match env::var("CARGO_MANIFEST_DIR") {
             Ok(path) => path,
-            Err(_) => panic!("Environment var CARGO_MANIFEST_DIR is not set")
+            Err(_) => ".".to_string()
         };
 
         Path::new(&cargo_path).join("games")
@@ -58,9 +59,8 @@ impl Cartridge {
         let mut ptr = 0;
 
         while ptr < self.0.len() {
-            let opcode_value = ((self.0[ptr] as C8Short) << 8) + self.0[ptr + 1] as C8Short;
-            let opcode_enum = get_opcode_enum(opcode_value)
-                                .expect(&format!("Unknown opcode: {}", opcode_value));
+            let opcode_value = extract_opcode_from_array(&self.0, ptr);
+            let opcode_enum = get_opcode_enum(opcode_value);
 
             let (assembly, verbose) = get_opcode_str(&opcode_enum);
             assembly_output.push(assembly);
@@ -74,10 +74,11 @@ impl Cartridge {
 
     /// Print disassembly
     pub fn print_disassembly(&self) {
-        let (assembly, verbose) = self.disassemble();
         println!("> Disassembly:");
+        let (assembly, verbose) = self.disassemble();
         for i in 0..assembly.len() {
             println!("  {:20} ; {}", assembly[i], verbose[i]);
         }
+        println!("");
     }
 }

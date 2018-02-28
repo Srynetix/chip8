@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use super::types::{C8Byte, C8Short, C8RegIdx, C8Addr};
+use chip8_core::types::{C8Byte, C8Short, C8Addr, C8RegIdx};
 
 /// CHIP-8 opcode flag/mask
 type OpCodeFlagMask = (C8Short, C8Short);
@@ -272,9 +272,8 @@ pub enum OpCode {
     /// | into registers V0 through Vx.
     LDR(C8RegIdx),
 
-    /// 0000 - NOP
-    /// * Empty
-    NOP
+    /// xxxx - Data
+    DATA(C8Short)
 }
 
 lazy_static! {
@@ -315,7 +314,6 @@ lazy_static! {
         m.insert(32, (0xF033, 0xF0FF));     // Fx33
         m.insert(33, (0xF055, 0xF0FF));     // Fx55
         m.insert(34, (0xF065, 0xF0FF));     // Fx65
-        m.insert(35, (0x0000, 0xFFFF));     // 0000
 
         m
     };
@@ -327,7 +325,7 @@ lazy_static! {
 /// 
 /// * `opcode` - Opcode value
 /// 
-fn extract_opcode_id(opcode: C8Short) -> Option<C8Short> {
+fn extract_opcode_id(opcode: C8Short) -> C8Short {
     let mut extracted_key = None;
 
     for (key, flag_mask) in OPCODE_FLAG_MASKS.iter() {
@@ -339,7 +337,11 @@ fn extract_opcode_id(opcode: C8Short) -> Option<C8Short> {
         }
     }
 
-    extracted_key
+    if extracted_key.is_none() {
+        extracted_key = Some(255)
+    }
+    
+    extracted_key.unwrap()
 }
 
 /// Get opcode enum
@@ -349,14 +351,8 @@ fn extract_opcode_id(opcode: C8Short) -> Option<C8Short> {
 /// * `opcode_value` - Opcode value
 /// * `action_id` - Action ID
 /// 
-pub fn get_opcode_enum(opcode: C8Short) -> Option<OpCode> {
+pub fn get_opcode_enum(opcode: C8Short) -> OpCode {
     let action_id = extract_opcode_id(opcode);
-    if action_id.is_none() {
-        println!("`{}` is an unknown opcode", opcode);
-        return None;
-    }
-
-    let action_id = action_id.unwrap();
 
     let b3 = ((opcode & 0x0F00) >> 8) as C8Byte; 
     let b2 = ((opcode & 0x00F0) >> 4) as C8Byte; 
@@ -401,14 +397,10 @@ pub fn get_opcode_enum(opcode: C8Short) -> Option<OpCode> {
         32 => OpCode::LDBCD(b3),
         33 => OpCode::LDS(b3),
         34 => OpCode::LDR(b3),
-        35 => OpCode::NOP,
-        _ => {
-            println!("OpCode `{}` identified as `{}` but is not implemented", opcode, action_id);
-            return None
-        }
+        _ => OpCode::DATA(opcode)
     };
 
-    Some(opcode_enum)
+    opcode_enum
 }
 
 /// Get string output for an opcode.
@@ -462,6 +454,17 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
         OpCode::LDS(reg) => (format!("LD [I], V{:X}", reg), format!("Store registers V0 through V{:X} in memory starting at location I", reg)),
         OpCode::LDR(reg) => (format!("LD V{:X}, [I]", reg), format!("Read registers V0 through V{:X} from memory starting at location I", reg)),
 
-        OpCode::NOP => ("NOP".to_string(), "- Empty".to_string())
+        OpCode::DATA(opcode) => (format!("DATA {:04X}", opcode), format!("- Data ({:04X})", opcode))
     }
+}
+
+/// Extract opcode from array
+/// 
+/// # Arguments
+/// 
+/// * `array` - Array
+/// * `ptr` - Pointer
+/// 
+pub fn extract_opcode_from_array(array: &[u8], ptr: usize) -> C8Addr {
+    ((array[ptr] as C8Addr) << 8) + array[ptr + 1] as C8Addr
 }

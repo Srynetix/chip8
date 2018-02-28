@@ -1,59 +1,67 @@
 //! CHIP-8 device
 
-use chip8_core::{CPU, Cartridge};
+use std::{thread};
+use std::sync::{Arc, RwLock};
+
+use chip8_cpu::{CPU, Cartridge};
 use chip8_graphics::Renderer;
 
 /// CHIP-8 device struct
 pub struct Device {
-    cpu: CPU,
-    renderer: Option<Renderer>
-}
-
-/// CHIP-8 device builder
-pub struct DeviceBuilder {
-    show_renderer: bool
-}
-
-impl DeviceBuilder {
-
-    /// Create a DeviceBuilder
-    pub fn new() -> DeviceBuilder {
-        DeviceBuilder {
-            show_renderer: true
-        }
-    }
-
-    /// Enable/Disable renderer
-    pub fn renderer(&mut self, value: bool) -> &Self {
-        self.show_renderer = value;
-        self
-    }
-
-    /// Build CHIP-8 device
-    pub fn build(&self) -> Device {
-        Device {
-            cpu: CPU::new(),
-            renderer: if self.show_renderer { Some(Renderer::new()) } else { None }
-        }
-    }
+    cpu: CPU
 }
 
 impl Device {
+
+    /// Create device
+    pub fn new() -> Self {
+        let mut cpu = CPU::new();
+        cpu.load_font_in_memory();
+
+        Device {
+            cpu: cpu 
+        }
+    }
 
     /// Show CPU debug
     pub fn debug_cpu(&self) {
         println!("> CPU");
         println!("{:?}", self.cpu);
-
-        println!("> Is renderer active: {}", self.renderer.is_some());
     }
 
-    /// Start device
-    pub fn start(&mut self) {
+    /// Run device
+    /// 
+    /// # Arguments
+    /// 
+    /// * `verbose` - Verbose mode
+    /// 
+    pub fn run(self) {
+        let mut renderer = Renderer::new("CHIP-8".to_string());
+
         println!("> Starting device...");
 
-        self.cpu.load_font_in_memory();
-        self.cpu.run();
+        let mut cpu = self.cpu;
+        
+        let running = Arc::new(RwLock::new(true));
+        let screen_handle = Arc::clone(&cpu.get_video_memory());
+        let running_handle = Arc::clone(&running);
+
+        let handle = thread::spawn(move || {
+            while *(running_handle.read().unwrap()) {
+                cpu.read_next_instruction();
+                cpu.decrement_timers();
+            }
+        });
+
+        println!("> Starting renderer...");
+        renderer.run(screen_handle);
+        println!("> Stopping renderer...");   
+
+        *(running.write().unwrap()) = false;
+
+        handle.join().unwrap();
+
+        println!("> Stopping CPU...");        
     }
 
     /// Read CHIP-8 cartridge

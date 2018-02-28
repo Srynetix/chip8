@@ -4,5 +4,3 @@ version = "0.1.0"
 authors = ["Denis BOURGE <denis.bourge@sharingcloud.com>"]
 
 [dependencies]
-lazy_static = "1.0"
-rand = "0.4"

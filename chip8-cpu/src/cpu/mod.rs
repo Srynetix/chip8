@@ -6,15 +6,15 @@ pub mod memory;
 pub mod registers;
 pub mod stack;
 pub mod timer;
-pub mod types;
 pub mod opcodes;
 pub mod video;
 pub mod font;
 
 use rand::random;
 
+use chip8_core::types::{C8Byte, C8Addr, SharedC8ByteVec};
+
 use self::opcodes::OpCode;
-use self::types::{C8Byte, C8Addr};
 use self::font::{FONT_DATA_ADDR, FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT};
 use self::video::{VIDEO_MEMORY_WIDTH, VIDEO_MEMORY_HEIGHT};
 
@@ -58,14 +58,19 @@ impl CPU {
         }
     }
 
+    /// Get video memory
+    pub fn get_video_memory(&self) -> SharedC8ByteVec {
+        self.video_memory.get_read_only_data()
+    }
+
     /// Load font in memory
     pub fn load_font_in_memory(&mut self) {
         self.memory.write_data_at_offset(FONT_DATA_ADDR, self.font.get_data());
     }
 
-    /// Run CPU
-    pub fn run(&mut self) {
-        println!("> Run");
+    /// Get instruction count
+    pub fn get_instruction_count(&self) -> usize {
+        self.instruction_count
     }
 
     /// Read cartridge data
@@ -74,16 +79,20 @@ impl CPU {
         self.memory.write_data_at_pointer(cartridge_data);
     }
 
+    /// Decrement timers
+    pub fn decrement_timers(&mut self) {
+        self.delay_timer.decrement();
+        self.sound_timer.decrement();
+    }
+
     /// Read next instruction
     pub fn read_next_instruction(&mut self) {
         let opcode = self.memory.read_opcode();
-        println!("{:04X} - Reading opcode 0x{:04X}...", self.instruction_count, opcode);
+        debug!("{:08X} - Reading opcode 0x{:04X}...", self.instruction_count, opcode);
 
-        let opcode_enum = opcodes::get_opcode_enum(opcode)
-                                .expect(&format!("Unknown opcode: {:04X}", opcode));
-
+        let opcode_enum = opcodes::get_opcode_enum(opcode);
         let (assembly, verbose) = opcodes::get_opcode_str(&opcode_enum);
-        println!("  - {:30} ; {}", assembly, verbose);
+        debug!("  - {:20} ; {}", assembly, verbose);
 
         let mut advance_pointer = true;
 
@@ -143,8 +152,15 @@ impl CPU {
             OpCode::ADDByte(reg, byte) => {
                 // Add byte in register
                 let r = self.registers.get_register(reg);
+                let (res, overflow) = r.overflowing_add(byte);                
 
-                self.registers.set_register(reg, r + byte);
+                if overflow {
+                    self.registers.set_carry_register(1);
+                } else {
+                    self.registers.set_carry_register(0);
+                }
+
+                self.registers.set_register(reg, res);
             },
             OpCode::LD(reg1, reg2) => {
                 // Load register value in another
@@ -272,14 +288,13 @@ impl CPU {
 
                 self.registers.set_carry_register(0);
 
-                for i in 0..r1 {
+                for i in 0..byte {
                     let code = self.memory.read_byte_at_offset(ri + i as C8Addr);
-                    
                     let y = (r2 + i) as usize % VIDEO_MEMORY_HEIGHT;
-                    let mut shift = FONT_CHAR_HEIGHT - 1;
+                    let mut shift = FONT_CHAR_WIDTH - 1;
 
                     for j in 0..FONT_CHAR_WIDTH {
-                        let x = (byte as usize + j) % VIDEO_MEMORY_WIDTH;
+                        let x = (r1 as usize + j) % VIDEO_MEMORY_WIDTH;
 
                         if code & (0x1 << shift) != 0 {
                             if self.video_memory.toggle_pixel_xy(x, y) {
@@ -287,7 +302,9 @@ impl CPU {
                             }
                         } 
 
-                        shift -= 1;
+                        if shift > 0 {
+                            shift -= 1;
+                        }
                     } 
                 }
             },
@@ -362,8 +379,8 @@ impl CPU {
                     self.registers.set_register(ridx, byte);
                 }
             },
-            OpCode::NOP => {
-                // Nothing
+            OpCode::DATA(_) => {
+                // Unknown
             }
         };
 

@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::types::C8Byte;
+use chip8_core::types::{C8Byte};
 
 /// CHIP-8 CPU timer
 pub struct Timer(C8Byte);

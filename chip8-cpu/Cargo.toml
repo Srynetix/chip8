@@ -1,9 +1,10 @@
 [package]
-name = "chip8-graphics"
+name = "chip8-cpu"
 version = "0.1.0"
 authors = ["Denis BOURGE <denis.bourge@sharingcloud.com>"]
 
 [dependencies]
 chip8-core = { path = "../chip8-core" }
-piston_window = "0.70.0"
-piston2d-graphics = "0.21.1"
+lazy_static = "1.0"
+rand = "0.4"
+log = "0.3"

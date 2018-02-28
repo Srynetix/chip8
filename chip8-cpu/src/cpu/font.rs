@@ -1,9 +1,9 @@
 //! CHIP-8 system font
 
-use super::types::{C8Byte, C8Addr};
+use chip8_core::types::{C8ByteVec, C8Byte, C8Addr};
 
 /// CHIP-8 system font struct
-pub struct Font(Vec<C8Byte>);
+pub struct Font(C8ByteVec);
 
 /// Font data address in memory
 pub const FONT_DATA_ADDR: C8Addr = 0;
@@ -39,7 +39,7 @@ impl Font {
     }
 
     /// Get font data
-    pub fn get_data(&self) -> &[u8] {
+    pub fn get_data(&self) -> &[C8Byte] {
         &self.0
     }
 }

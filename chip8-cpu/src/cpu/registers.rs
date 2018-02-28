@@ -2,14 +2,14 @@
 
 use std::fmt;
 
-use super::types::{C8Byte, C8Addr, C8RegIdx};
+use chip8_core::types::{C8ByteVec, C8Byte, C8Addr, C8RegIdx};
 
 /// CHIP-8 register count
 const REGISTER_COUNT: usize = 16;
 
 /// CHIP-8 CPU Registers
 pub struct Registers {
-    data: Vec<C8Byte>,
+    data: C8ByteVec,
     i: C8Addr
 }
 

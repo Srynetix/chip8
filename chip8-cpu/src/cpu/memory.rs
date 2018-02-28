@@ -2,16 +2,18 @@
 
 use std::fmt;
 
-use super::types::{C8Byte, C8Addr};
+use chip8_core::types::{C8ByteVec, C8Byte, C8Addr};
+
+use super::opcodes::extract_opcode_from_array;
 
 /// CHIP-8 CPU memory vars
 const MEMORY_SIZE: usize = 4096;
 const CHUNK_SIZE: usize = 64;
-const INITIAL_MEMORY_POINTER: C8Addr = 512;
+const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
 
 /// CHIP-8 CPU memory struct
 pub struct Memory{
-    data: Vec<C8Byte>,
+    data: C8ByteVec,
     pointer: C8Addr
 }
 
@@ -109,9 +111,7 @@ impl Memory {
 
     /// Read opcode
     pub fn read_opcode(&self) -> C8Addr {
-        let pc = self.pointer as usize;
-
-        ((self.data[pc] as C8Addr) << 8) + self.data[pc + 1] as C8Addr
+        extract_opcode_from_array(&self.data, self.pointer as usize)
     }
 }
 
