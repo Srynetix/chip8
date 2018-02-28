@@ -36,7 +36,7 @@ impl Device {
     /// * `verbose` - Verbose mode
     /// 
     pub fn run(self) {
-        let mut renderer = Renderer::new("CHIP-8".to_string());
+        let mut renderer = Renderer::new();
 
         println!("> Starting device...");
 
