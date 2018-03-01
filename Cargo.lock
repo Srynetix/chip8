@@ -32,7 +32,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "chip8"
 version = "0.1.0"
 dependencies = [
- "chip8-core 0.1.0",
  "chip8-cpu 0.1.0",
  "chip8-graphics 0.1.0",
  "chrono 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",

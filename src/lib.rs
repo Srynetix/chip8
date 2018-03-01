@@ -2,7 +2,6 @@
 
 #![warn(missing_docs)]
 
-extern crate chip8_core;
 extern crate chip8_cpu;
 extern crate chip8_graphics;
 
