@@ -32,11 +32,6 @@ impl Device {
     }
 
     /// Run device
-    /// 
-    /// # Arguments
-    /// 
-    /// * `verbose` - Verbose mode
-    /// 
     pub fn run(self) {
         let mut renderer = Renderer::new();
 
@@ -76,9 +71,14 @@ impl Device {
     }
 
     /// Read CHIP-8 cartridge
+    /// 
+    /// # Arguments
+    /// 
+    /// * `cartridge` - Cartridge to load
+    /// 
     pub fn read_cartridge(&mut self, cartridge: &Cartridge) {
         println!("> Reading cartridge...");
 
-        self.cpu.load_cartridge_data(cartridge.get_data());
+        self.cpu.load_cartridge_data(cartridge);
     }
 }

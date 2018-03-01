@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 use chip8_core::types::{C8Byte};
 
-use super::cpu::opcodes::{get_opcode_enum, get_opcode_str, extract_opcode_from_array};
+use super::opcodes::{get_opcode_enum, get_opcode_str, extract_opcode_from_array};
 
 /// Cartridge max size
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
@@ -52,7 +52,9 @@ impl Cartridge {
     }
 
     /// Disassemble cartridge
+    /// 
     /// Returns a tuple (assembly, verbose)
+    /// 
     pub fn disassemble(&self) -> (Vec<String>, Vec<String>) {
         let mut assembly_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
         let mut verbose_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);

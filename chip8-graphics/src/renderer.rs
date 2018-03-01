@@ -5,8 +5,8 @@ use std::time::Duration;
 use std::sync::{Arc};
 
 use chip8_core::types::{C8Byte};
-use chip8_cpu::cpu::input::InputState;
-use chip8_cpu::cpu::video::VideoMemory;
+use chip8_cpu::input::InputState;
+use chip8_cpu::video::VideoMemory;
 
 use sdl2;
 use sdl2::rect::Rect;

@@ -3,43 +3,41 @@
 use std::fmt;
 use std::sync::{Arc};
 
-pub mod memory;
-pub mod registers;
-pub mod stack;
-pub mod timer;
-pub mod opcodes;
-pub mod video;
-pub mod font;
-pub mod input;
-
 use rand::random;
 
 use chip8_core::types::{C8Byte, C8Addr};
 
-use self::opcodes::OpCode;
-use self::font::{FONT_DATA_ADDR, FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT};
-use self::video::{VIDEO_MEMORY_WIDTH, VIDEO_MEMORY_HEIGHT};
+use super::opcodes;
+use super::opcodes::OpCode;
+use super::font::{Font, FONT_DATA_ADDR, FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT};
+use super::video::{VideoMemory, VIDEO_MEMORY_WIDTH, VIDEO_MEMORY_HEIGHT};
+use super::cartridge::Cartridge;
+use super::timer::Timer;
+use super::memory::Memory;
+use super::registers::Registers;
+use super::stack::Stack;
+use super::input::InputState;
 
 /// CHIP-8 CPU struct
 pub struct CPU {
     /// Memory
-    memory: memory::Memory,
+    memory: Memory,
     /// Video memory
-    video_memory: Arc<video::VideoMemory>,
+    video_memory: Arc<VideoMemory>,
     /// Registers
-    registers: registers::Registers,
+    registers: Registers,
     /// Stack
-    stack: stack::Stack,
+    stack: Stack,
     /// Input state
-    input: Arc<input::InputState>,
+    input: Arc<InputState>,
 
     /// Syncronization timer
-    delay_timer: timer::Timer,
+    delay_timer: Timer,
     /// Sound timer
-    sound_timer: timer::Timer,
+    sound_timer: Timer,
 
     /// Font
-    font: font::Font,
+    font: Font,
     /// Instruction count
     instruction_count: usize
 }
@@ -49,27 +47,27 @@ impl CPU {
     /// Create CHIP-8 CPU
     pub fn new() -> Self {
         CPU {
-            memory: memory::Memory::new(),
-            video_memory: Arc::new(video::VideoMemory::new()),
-            registers: registers::Registers::new(),
-            stack: stack::Stack::new(),
-            input: Arc::new(input::InputState::new()),
+            memory: Memory::new(),
+            video_memory: Arc::new(VideoMemory::new()),
+            registers: Registers::new(),
+            stack: Stack::new(),
+            input: Arc::new(InputState::new()),
 
-            delay_timer: timer::Timer::new(),
-            sound_timer: timer::Timer::new(),
+            delay_timer: Timer::new(),
+            sound_timer: Timer::new(),
 
-            font: font::Font::new_system_font(),
+            font: Font::new_system_font(),
             instruction_count: 0
         }
     }
 
     /// Get video memory
-    pub fn get_video_memory(&self) -> Arc<video::VideoMemory> {
+    pub fn get_video_memory(&self) -> Arc<VideoMemory> {
         self.video_memory.clone()
     }
 
     /// Get input state
-    pub fn get_input_state(&self) -> Arc<input::InputState> {
+    pub fn get_input_state(&self) -> Arc<InputState> {
         self.input.clone()
     }
 
@@ -84,9 +82,14 @@ impl CPU {
     }
 
     /// Read cartridge data
-    pub fn load_cartridge_data(&mut self, cartridge_data: &[u8]) {
+    /// 
+    /// # Arguments
+    /// 
+    /// * `cartridge` - Cartridge
+    /// 
+    pub fn load_cartridge_data(&mut self, cartridge: &Cartridge) {
         self.memory.reset_pointer();
-        self.memory.write_data_at_pointer(cartridge_data);
+        self.memory.write_data_at_pointer(cartridge.get_data());
     }
 
     /// Decrement timers
