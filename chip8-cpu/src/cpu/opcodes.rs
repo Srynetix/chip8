@@ -2,10 +2,10 @@
 
 use std::collections::HashMap;
 
-use chip8_core::types::{C8Byte, C8Short, C8Addr, C8RegIdx};
+use chip8_core::types::{C8Byte, C8Addr, C8RegIdx};
 
 /// CHIP-8 opcode flag/mask
-type OpCodeFlagMask = (C8Short, C8Short);
+type OpCodeFlagMask = (C8Addr, C8Addr);
 
 /// CHIP-8 opcode enum
 #[derive(Debug)]
@@ -273,11 +273,11 @@ pub enum OpCode {
     LDR(C8RegIdx),
 
     /// xxxx - Data
-    DATA(C8Short)
+    DATA(C8Addr)
 }
 
 lazy_static! {
-    static ref OPCODE_FLAG_MASKS: HashMap<C8Short, OpCodeFlagMask> = {
+    static ref OPCODE_FLAG_MASKS: HashMap<C8Addr, OpCodeFlagMask> = {
         let mut m = HashMap::new();
         m.insert(0, (0x0FFF, 0x0000));      // 0nnn
         m.insert(1, (0x00E0, 0xFFFF));      // 00E0
@@ -325,7 +325,7 @@ lazy_static! {
 /// 
 /// * `opcode` - Opcode value
 /// 
-fn extract_opcode_id(opcode: C8Short) -> C8Short {
+fn extract_opcode_id(opcode: C8Addr) -> C8Addr {
     let mut extracted_key = None;
 
     for (key, flag_mask) in OPCODE_FLAG_MASKS.iter() {
@@ -351,7 +351,7 @@ fn extract_opcode_id(opcode: C8Short) -> C8Short {
 /// * `opcode_value` - Opcode value
 /// * `action_id` - Action ID
 /// 
-pub fn get_opcode_enum(opcode: C8Short) -> OpCode {
+pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
     let action_id = extract_opcode_id(opcode);
 
     let b3 = ((opcode & 0x0F00) >> 8) as C8Byte; 

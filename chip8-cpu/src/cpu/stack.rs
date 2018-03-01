@@ -2,14 +2,14 @@
 
 use std::fmt;
 
-use chip8_core::types::{C8AddrVec, C8Byte, C8Addr};
+use chip8_core::types::{C8Byte, C8Addr};
 
 /// CHIP-8 CPU stack depth
 const STACK_DEPTH: usize = 16;
 
 /// CHIP-8 CPU stack struct
 pub struct Stack {
-    data: C8AddrVec,
+    data: Vec<C8Addr>,
     pointer: C8Byte
 }
 

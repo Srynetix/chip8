@@ -4,9 +4,9 @@
 //! 0: Off
 
 use std::fmt;
-use std::sync::{Arc, RwLock};
+use std::sync::{RwLock};
 
-use chip8_core::types::{SharedC8ByteVec};
+use chip8_core::types::{C8Byte};
 
 /// Video memory width
 pub const VIDEO_MEMORY_WIDTH: usize = 64;
@@ -16,7 +16,7 @@ pub const VIDEO_MEMORY_HEIGHT: usize = 32;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
 
 /// CHIP-8 video memory struct
-pub struct VideoMemory(SharedC8ByteVec);
+pub struct VideoMemory(Vec<RwLock<C8Byte>>);
 
 impl VideoMemory {
 
@@ -27,19 +27,13 @@ impl VideoMemory {
             vec.push(RwLock::new(0));
         }
 
-        VideoMemory(
-            Arc::new(
-                vec
-            )
-        )
+        VideoMemory(vec)
     }
 
     /// Clear screen
-    pub fn clear_screen(&mut self) {
-        let screen = Arc::clone(&self.0); 
-
-        for x in 0..screen.len() {
-            let mut pixel = screen[x].write().expect("Could not write to screen");
+    pub fn clear_screen(&self) {
+        for x in 0..self.0.len() {
+            let mut pixel = self.0[x].write().expect("Could not write to screen");
             *pixel = 0;
         }
     }
@@ -51,11 +45,10 @@ impl VideoMemory {
     /// 
     /// * `pos` - Position
     /// 
-    pub fn toggle_pixel(&mut self, pos: usize) -> bool {
+    pub fn toggle_pixel(&self, pos: usize) -> bool {
         // For now, only handle 0 and 1
         let mut flip = false;
-        let screen = Arc::clone(&self.0);         
-        let mut pixel = screen[pos].write().expect("Could not write to screen");        
+        let mut pixel = self.0[pos].write().expect("Could not write to screen");        
         
         if *pixel == 1 {
             *pixel = 0;
@@ -75,26 +68,25 @@ impl VideoMemory {
     /// * `x` - X coordinate
     /// * `y` - Y coordinate
     /// 
-    pub fn toggle_pixel_xy(&mut self, x: usize, y: usize) -> bool {
+    pub fn toggle_pixel_xy(&self, x: usize, y: usize) -> bool {
         self.toggle_pixel(x + y * VIDEO_MEMORY_WIDTH)
     }
 
-    /// Get read-only data
-    pub fn get_read_only_data(&self) -> SharedC8ByteVec {
-        self.0.clone()
+    /// Get raw data
+    pub fn get_raw_data(&self) -> &Vec<RwLock<C8Byte>> {
+        &self.0
     }
 }
 
 impl fmt::Debug for VideoMemory {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let screen = Arc::clone(&self.0);         
         write!(f, "    -> Size: {} x {}\n", VIDEO_MEMORY_WIDTH, VIDEO_MEMORY_HEIGHT)?;
 
         for j in 0..VIDEO_MEMORY_HEIGHT {
             write!(f, "    ")?;
 
             for i in 0..VIDEO_MEMORY_WIDTH {
-                let pixel = screen[i + j * VIDEO_MEMORY_WIDTH].read().expect("Could not read screen");
+                let pixel = self.0[i + j * VIDEO_MEMORY_WIDTH].read().expect("Could not read screen");
                 write!(f, "{:02X} ", *pixel)?;
             }
 

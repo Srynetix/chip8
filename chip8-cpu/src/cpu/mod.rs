@@ -1,6 +1,7 @@
 //! CHIP-8 CPU
 
 use std::fmt;
+use std::sync::{Arc};
 
 pub mod memory;
 pub mod registers;
@@ -9,10 +10,11 @@ pub mod timer;
 pub mod opcodes;
 pub mod video;
 pub mod font;
+pub mod input;
 
 use rand::random;
 
-use chip8_core::types::{C8Byte, C8Addr, SharedC8ByteVec};
+use chip8_core::types::{C8Byte, C8Addr};
 
 use self::opcodes::OpCode;
 use self::font::{FONT_DATA_ADDR, FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT};
@@ -23,11 +25,13 @@ pub struct CPU {
     /// Memory
     memory: memory::Memory,
     /// Video memory
-    video_memory: video::VideoMemory,
+    video_memory: Arc<video::VideoMemory>,
     /// Registers
     registers: registers::Registers,
     /// Stack
     stack: stack::Stack,
+    /// Input state
+    input: Arc<input::InputState>,
 
     /// Syncronization timer
     delay_timer: timer::Timer,
@@ -46,9 +50,10 @@ impl CPU {
     pub fn new() -> Self {
         CPU {
             memory: memory::Memory::new(),
-            video_memory: video::VideoMemory::new(),
+            video_memory: Arc::new(video::VideoMemory::new()),
             registers: registers::Registers::new(),
             stack: stack::Stack::new(),
+            input: Arc::new(input::InputState::new()),
 
             delay_timer: timer::Timer::new(),
             sound_timer: timer::Timer::new(),
@@ -59,8 +64,13 @@ impl CPU {
     }
 
     /// Get video memory
-    pub fn get_video_memory(&self) -> SharedC8ByteVec {
-        self.video_memory.get_read_only_data()
+    pub fn get_video_memory(&self) -> Arc<video::VideoMemory> {
+        self.video_memory.clone()
+    }
+
+    /// Get input state
+    pub fn get_input_state(&self) -> Arc<input::InputState> {
+        self.input.clone()
     }
 
     /// Load font in memory
@@ -290,11 +300,11 @@ impl CPU {
 
                 for i in 0..byte {
                     let code = self.memory.read_byte_at_offset(ri + i as C8Addr);
-                    let y = (r2 + i) as usize % VIDEO_MEMORY_HEIGHT;
+                    let y = ((r2 as usize) + (i as usize)) % VIDEO_MEMORY_HEIGHT;
                     let mut shift = FONT_CHAR_WIDTH - 1;
 
                     for j in 0..FONT_CHAR_WIDTH {
-                        let x = (r1 as usize + j) % VIDEO_MEMORY_WIDTH;
+                        let x = ((r1 as usize) + (j as usize)) % VIDEO_MEMORY_WIDTH;
 
                         if code & (0x1 << shift) != 0 {
                             if self.video_memory.toggle_pixel_xy(x, y) {
@@ -308,13 +318,24 @@ impl CPU {
                     } 
                 }
             },
-            OpCode::SKP(_reg) => {
+            OpCode::SKP(reg) => {
                 // Skip next instruction if key is pressed
-                // TODO
+                let r = self.registers.get_register(reg);
+                let is = self.input.get(r);
+
+                if is == 1 {
+                    self.memory.advance_pointer();
+                }
+
             },
-            OpCode::SKNP(_reg) => {
+            OpCode::SKNP(reg) => {
                 // Skip next instruction if key is not pressed
-                // TODO
+                let r = self.registers.get_register(reg);
+                let is = self.input.get(r);
+
+                if is == 0 {
+                    self.memory.advance_pointer();
+                }
             },
             OpCode::LDGetDelayTimer(reg) => {
                 // Get delay timer and set register
@@ -406,13 +427,17 @@ impl fmt::Debug for CPU {
         
         write!(f, "  registers: {{\n")?;
         write!(f, "{:?}", self.registers)?;
-        write!(f, "  }}\n")?;
+        write!(f, "  }},\n")?;
         
         write!(f, "  stack: {{\n")?;
         write!(f, "{:?}", self.stack)?;
-        write!(f, "  }}\n")?;
+        write!(f, "  }},\n")?;
 
-        write!(f, "  delay_timer: {:?}\n", self.delay_timer)?;
+        write!(f, "  input: {{\n")?;
+        write!(f, "{:?}", self.input)?;
+        write!(f, "  }},\n")?;
+
+        write!(f, "  delay_timer: {:?},\n", self.delay_timer)?;
         write!(f, "  sound_timer: {:?}\n", self.sound_timer)?;
 
         write!(f, "}}\n")

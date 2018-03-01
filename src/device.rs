@@ -46,6 +46,7 @@ impl Device {
         
         let running = Arc::new(RwLock::new(true));
         let screen_handle = Arc::clone(&cpu.get_video_memory());
+        let input_handle = Arc::clone(&cpu.get_input_state());
         let running_handle = Arc::clone(&running);
 
         let handle = thread::spawn(move || {
@@ -64,7 +65,7 @@ impl Device {
         });
 
         println!("> Starting renderer...");
-        renderer.run(screen_handle);
+        renderer.run(input_handle, screen_handle);
         println!("> Stopping renderer...");   
 
         *(running.write().unwrap()) = false;

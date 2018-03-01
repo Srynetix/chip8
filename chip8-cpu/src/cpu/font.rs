@@ -1,9 +1,9 @@
 //! CHIP-8 system font
 
-use chip8_core::types::{C8ByteVec, C8Byte, C8Addr};
+use chip8_core::types::{C8Byte, C8Addr};
 
 /// CHIP-8 system font struct
-pub struct Font(C8ByteVec);
+pub struct Font(Vec<C8Byte>);
 
 /// Font data address in memory
 pub const FONT_DATA_ADDR: C8Addr = 0;

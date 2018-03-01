@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use chip8_core::types::{C8ByteVec, C8Byte, C8Addr};
+use chip8_core::types::{C8Byte, C8Addr};
 
 use super::opcodes::extract_opcode_from_array;
 
@@ -13,7 +13,7 @@ const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
 
 /// CHIP-8 CPU memory struct
 pub struct Memory{
-    data: C8ByteVec,
+    data: Vec<C8Byte>,
     pointer: C8Addr
 }
 

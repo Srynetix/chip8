@@ -1,10 +1,12 @@
 //! CHIP-8 graphics renderer
 
-use std::sync::{Arc};
 use std::thread::{sleep};
 use std::time::Duration;
+use std::sync::{Arc};
 
-use chip8_core::types::{C8Byte, SharedC8ByteVec};
+use chip8_core::types::{C8Byte};
+use chip8_cpu::cpu::input::InputState;
+use chip8_cpu::cpu::video::VideoMemory;
 
 use sdl2;
 use sdl2::rect::Rect;
@@ -52,8 +54,7 @@ impl Renderer {
     }
 
     /// Start loop
-    pub fn run(&mut self, screen_lock: SharedC8ByteVec) {
-        let screen = Arc::clone(&screen_lock);
+    pub fn run(&mut self, input: Arc<InputState>, screen: Arc<VideoMemory>) {
         let mut event_pump = self.sdl_context.event_pump().unwrap();
 
         'running: loop {
@@ -61,6 +62,28 @@ impl Renderer {
                 match event {
                     Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                         break 'running
+                    },
+                    Event::KeyDown { keycode: Some(keycode), .. } => {
+                        let key = match keycode {
+                            Keycode::Up => 0x2,
+                            Keycode::Left => 0x4,
+                            Keycode::Down => 0x8,
+                            Keycode::Right => 0x6,
+                            _ => 0xF
+                        };
+
+                        input.press(key);
+                    },
+                    Event::KeyUp { keycode: Some(keycode), .. } => {
+                        let key = match keycode {
+                            Keycode::Up => 0x2,
+                            Keycode::Left => 0x4,
+                            Keycode::Down => 0x8,
+                            Keycode::Right => 0x6,
+                            _ => 0xF
+                        };
+
+                        input.release(key);
                     },
                     _ => {}
                 }
@@ -70,7 +93,7 @@ impl Renderer {
             self.canvas.clear();
 
             {
-                for (idx, px) in screen.iter().enumerate() {
+                for (idx, px) in screen.get_raw_data().iter().enumerate() {
                     let idx = idx as u32;
                     let x = idx % RENDERER_WIDTH;
                     let y = idx / RENDERER_WIDTH;
@@ -85,26 +108,5 @@ impl Renderer {
             
             sleep(Duration::new(0, 1_000_000_000u32 / 60));
         }
-        
-        // while let Some(event) = self.window.next() {
-        //     self.window.draw_2d(&event, |context, g2d| {
-        //         clear(RENDERER_CLEAR_COLOR, g2d);
-
-        //         {
-        //             let screen = handle.read().unwrap();
-        //             for (idx, px) in screen.iter().enumerate() {
-        //                 let idx = idx as u32;
-        //                 let x = idx % RENDERER_WIDTH;
-        //                 let y = idx / RENDERER_WIDTH;
-
-        //                 rectangle(
-        //                     Color::from_byte(*px).0,
-        //                     [(x * RENDERER_SCALE) as f64, (y * RENDERER_SCALE) as f64, RENDERER_SCALE as f64, RENDERER_SCALE as f64],
-        //                     context.transform,
-        //                     g2d);
-        //             }
-        //         }
-        //     });
-        // }
     }
 }

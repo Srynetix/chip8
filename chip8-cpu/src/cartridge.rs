@@ -6,7 +6,7 @@ use std::io::prelude::*;
 use std::env;
 use std::path::{Path, PathBuf};
 
-use chip8_core::types::{C8ByteVec, C8Byte};
+use chip8_core::types::{C8Byte};
 
 use super::cpu::opcodes::{get_opcode_enum, get_opcode_str, extract_opcode_from_array};
 
@@ -14,7 +14,7 @@ use super::cpu::opcodes::{get_opcode_enum, get_opcode_str, extract_opcode_from_a
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
 
 /// CHIP-8 cartridge type
-pub struct Cartridge(C8ByteVec);
+pub struct Cartridge(Vec<C8Byte>);
 
 impl Cartridge {
 
