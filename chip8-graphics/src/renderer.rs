@@ -2,11 +2,10 @@
 
 use std::thread::{sleep};
 use std::time::Duration;
-use std::sync::{Arc};
+use std::sync::{Arc, RwLock};
 
 use chip8_core::types::{C8Byte};
-use chip8_cpu::input::InputState;
-use chip8_cpu::video::VideoMemory;
+use chip8_cpu::CPU;
 
 use sdl2;
 use sdl2::rect::Rect;
@@ -54,8 +53,11 @@ impl Renderer {
     }
 
     /// Start loop
-    pub fn run(&mut self, input: Arc<InputState>, screen: Arc<VideoMemory>) {
+    pub fn run(&mut self, cpu: Arc<RwLock<CPU>>) {
         let mut event_pump = self.sdl_context.event_pump().unwrap();
+
+        let input = cpu.read().unwrap().get_input_state();
+        let screen = cpu.read().unwrap().get_video_memory();
 
         'running: loop {
             for event in event_pump.poll_iter() {
@@ -64,26 +66,16 @@ impl Renderer {
                         break 'running
                     },
                     Event::KeyDown { keycode: Some(keycode), .. } => {
-                        let key = match keycode {
-                            Keycode::Up => 0x2,
-                            Keycode::Left => 0x4,
-                            Keycode::Down => 0x8,
-                            Keycode::Right => 0x6,
-                            _ => 0xF
-                        };
-
-                        input.press(key);
+                        let key = key_handle(keycode);
+                        if key != 0xFF {
+                            input.press(key);
+                        }
                     },
                     Event::KeyUp { keycode: Some(keycode), .. } => {
-                        let key = match keycode {
-                            Keycode::Up => 0x2,
-                            Keycode::Left => 0x4,
-                            Keycode::Down => 0x8,
-                            Keycode::Right => 0x6,
-                            _ => 0xF
-                        };
-
-                        input.release(key);
+                        let key = key_handle(keycode);
+                        if key != 0xFF {
+                            input.release(key);
+                        }
                     },
                     _ => {}
                 }
@@ -108,5 +100,31 @@ impl Renderer {
             
             sleep(Duration::new(0, 1_000_000_000u32 / 60));
         }
+    }
+}
+
+fn key_handle(keycode: Keycode) -> C8Byte {
+    match keycode {
+        Keycode::A => 0x1,
+        Keycode::Z => 0x2,
+        Keycode::E => 0x3,
+        Keycode::R => 0xC,
+
+        Keycode::Q => 0x4,
+        Keycode::S => 0x5,
+        Keycode::D => 0x6,
+        Keycode::F => 0xD,
+
+        Keycode::W => 0x7,
+        Keycode::X => 0x8,
+        Keycode::C => 0x9,
+        Keycode::V => 0xE,
+
+        Keycode::T => 0xA,
+        Keycode::Y => 0x0,
+        Keycode::U => 0xB,
+        Keycode::I => 0xF,
+
+        _ => 0xFF
     }
 }

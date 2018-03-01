@@ -10,7 +10,7 @@ use chip8_graphics::Renderer;
 
 /// CHIP-8 device struct
 pub struct Device {
-    cpu: CPU
+    cpu: Arc<RwLock<CPU>>
 }
 
 impl Device {
@@ -21,7 +21,7 @@ impl Device {
         cpu.load_font_in_memory();
 
         Device {
-            cpu: cpu 
+            cpu: Arc::new(RwLock::new(cpu)) 
         }
     }
 
@@ -37,30 +37,27 @@ impl Device {
 
         println!("> Starting device...");
 
-        let mut cpu = self.cpu;
-        
-        let running = Arc::new(RwLock::new(true));
-        let screen_handle = Arc::clone(&cpu.get_video_memory());
-        let input_handle = Arc::clone(&cpu.get_input_state());
+        let running = Arc::new(RwLock::new(true));        
         let running_handle = Arc::clone(&running);
 
+        let thread_cpu = self.cpu.clone();
         let handle = thread::spawn(move || {
             let mut start_time = time::PreciseTime::now();
 
             while *(running_handle.read().unwrap()) {
-                cpu.read_next_instruction();
+                thread_cpu.write().unwrap().read_next_instruction();
 
                 // Decrement timers 60Hz
                 let current_time = time::PreciseTime::now();
                 if start_time.to(current_time).num_milliseconds() > 16 {
-                    cpu.decrement_timers();
+                    thread_cpu.write().unwrap().decrement_timers();
                     start_time = current_time;
                 }
             }
         });
 
         println!("> Starting renderer...");
-        renderer.run(input_handle, screen_handle);
+        renderer.run(self.cpu);
         println!("> Stopping renderer...");   
 
         *(running.write().unwrap()) = false;
@@ -79,6 +76,6 @@ impl Device {
     pub fn read_cartridge(&mut self, cartridge: &Cartridge) {
         println!("> Reading cartridge...");
 
-        self.cpu.load_cartridge_data(cartridge);
+        self.cpu.write().unwrap().load_cartridge_data(cartridge);
     }
 }
