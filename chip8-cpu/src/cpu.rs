@@ -1,45 +1,50 @@
 //! CHIP-8 CPU
 
 use std::fmt;
-use std::sync::{Arc};
+use std::fs::OpenOptions;
+use std::io::Write;
 
 use rand::random;
+use time;
 
 use chip8_core::types::{C8Byte, C8Addr};
 
 use super::opcodes;
 use super::opcodes::OpCode;
-use super::font::{Font, FONT_DATA_ADDR, FONT_CHAR_WIDTH, FONT_CHAR_HEIGHT};
-use super::video::{VideoMemory, VIDEO_MEMORY_WIDTH, VIDEO_MEMORY_HEIGHT};
+
+use super::font::{Font, FONT_DATA_ADDR, FONT_CHAR_HEIGHT};
 use super::cartridge::Cartridge;
 use super::timer::Timer;
-use super::memory::Memory;
 use super::registers::Registers;
 use super::stack::Stack;
-use super::input::InputState;
+use super::breakpoints::Breakpoints;
+use super::peripherals::Peripherals;
+use super::debugger::Debugger;
 
 /// CHIP-8 CPU struct
 pub struct CPU {
-    /// Memory
-    memory: Memory,
-    /// Video memory
-    video_memory: Arc<VideoMemory>,
+    /// Peripherals
+    pub peripherals: Peripherals,
+    /// Breakpoints
+    pub breakpoints: Breakpoints,
+
     /// Registers
-    registers: Registers,
+    pub registers: Registers,
     /// Stack
-    stack: Stack,
-    /// Input state
-    input: Arc<InputState>,
+    pub stack: Stack,
 
     /// Syncronization timer
-    delay_timer: Timer,
+    pub delay_timer: Timer,
     /// Sound timer
-    sound_timer: Timer,
+    pub sound_timer: Timer,
 
     /// Font
-    font: Font,
+    pub font: Font,
     /// Instruction count
-    instruction_count: usize
+    pub instruction_count: usize,
+
+    /// Tracefile
+    pub tracefile: Option<String>
 }
 
 impl CPU {
@@ -47,33 +52,35 @@ impl CPU {
     /// Create CHIP-8 CPU
     pub fn new() -> Self {
         CPU {
-            memory: Memory::new(),
-            video_memory: Arc::new(VideoMemory::new()),
+            peripherals: Peripherals::new(),
+            breakpoints: Breakpoints::new(),
+
             registers: Registers::new(),
             stack: Stack::new(),
-            input: Arc::new(InputState::new()),
 
-            delay_timer: Timer::new(),
-            sound_timer: Timer::new(),
+            delay_timer: Timer::new("Delay".to_string()),
+            sound_timer: Timer::new("Sound".to_string()),
 
             font: Font::new_system_font(),
-            instruction_count: 0
+            instruction_count: 0,
+
+            tracefile: None
         }
     }
 
-    /// Get video memory
-    pub fn get_video_memory(&self) -> Arc<VideoMemory> {
-        self.video_memory.clone()
+    /// Set tracefile
+    pub fn tracefile(&mut self, tracefile: &str) {
+        self.tracefile = Some(tracefile.to_string());
     }
 
-    /// Get input state
-    pub fn get_input_state(&self) -> Arc<InputState> {
-        self.input.clone()
+    /// Show debug data
+    pub fn show_debug(&self) {
+        println!("{:?}", self);
     }
 
     /// Load font in memory
     pub fn load_font_in_memory(&mut self) {
-        self.memory.write_data_at_offset(FONT_DATA_ADDR, self.font.get_data());
+        self.peripherals.memory.write_data_at_offset(FONT_DATA_ADDR, self.font.get_data());
     }
 
     /// Get instruction count
@@ -88,8 +95,8 @@ impl CPU {
     /// * `cartridge` - Cartridge
     /// 
     pub fn load_cartridge_data(&mut self, cartridge: &Cartridge) {
-        self.memory.reset_pointer();
-        self.memory.write_data_at_pointer(cartridge.get_data());
+        self.peripherals.memory.reset_pointer();
+        self.peripherals.memory.write_data_at_pointer(cartridge.get_data());
     }
 
     /// Decrement timers
@@ -98,39 +105,103 @@ impl CPU {
         self.sound_timer.decrement();
     }
 
-    /// Read next instruction
-    pub fn read_next_instruction(&mut self) {
-        let opcode = self.memory.read_opcode();
-        debug!("{:08X} - Reading opcode 0x{:04X}...", self.instruction_count, opcode);
+    /// Run CPU
+    pub fn run(&mut self, cartridge: &Cartridge) {
+        self.load_font_in_memory();
+        self.load_cartridge_data(cartridge);
 
-        let opcode_enum = opcodes::get_opcode_enum(opcode);
-        let (assembly, verbose) = opcodes::get_opcode_str(&opcode_enum);
-        debug!("  - {:20} ; {}", assembly, verbose);
+        let mut timers_time = time::PreciseTime::now();
+        let mut tracefile_handle = match self.tracefile {
+            Some(ref path) => Some(
+                            OpenOptions::new()
+                                .write(true)
+                                .create(true)
+                                .open(path)
+                                .unwrap()
+                            ),
+            None => None
+        };
 
+        loop {
+            // Check if CPU should stop
+            if self.peripherals.input.should_close {
+                break;
+            }
+
+            // Read next instruction
+            let opcode = self.peripherals.memory.read_opcode();
+            if let Some(ref mut tracefile) = tracefile_handle {
+                writeln!(tracefile, "[{:08X}] {:04X} - Reading opcode 0x{:04X}...", self.instruction_count, self.peripherals.memory.get_pointer(), opcode).unwrap();
+            }
+
+            // Check for breakpoints
+            if let Some(addr) = self.breakpoints.check_breakpoint(self.peripherals.memory.get_pointer()) {
+                if let Some(ref mut tracefile) = tracefile_handle {
+                    writeln!(tracefile, "{:?}", self).unwrap();
+                }
+
+                let debugger = Debugger::new(&self, addr);
+                debugger.run();
+            }
+
+            let opcode_enum = opcodes::get_opcode_enum(opcode);
+            let (assembly, verbose) = opcodes::get_opcode_str(&opcode_enum);
+            if let Some(ref mut tracefile) = tracefile_handle {
+                writeln!(tracefile, "  - {:20} ; {}", assembly, verbose).unwrap();
+            }
+
+            if self.execute_instruction(opcode_enum) {
+                // Should exit
+                break;
+            }
+
+            // Update input state
+            self.peripherals.input.update_state();
+            self.instruction_count += 1;
+
+            if timers_time.to(time::PreciseTime::now()).num_milliseconds() > 16 {
+                self.handle_timers();
+                timers_time = time::PreciseTime::now();
+            }
+        }
+    }
+
+    /// Handle timers
+    pub fn handle_timers(&mut self) {
+        self.decrement_timers();
+    }
+
+    /// Execute instruction
+    pub fn execute_instruction(&mut self, opcode: OpCode) -> bool {
         let mut advance_pointer = true;
 
-        match opcode_enum {
+        match opcode {
             OpCode::SYS(_addr) => {
                 // Do nothing
             },
             OpCode::CLS => {
                 // Clear screen
-                self.video_memory.clear_screen();
+                self.peripherals.screen.clear_screen();
             },
             OpCode::RET => {
                 // Get last stored address
+                if self.stack.empty() {
+                    println!("END !");
+                    return true
+                }
+
                 let addr = self.stack.pop();
-                self.memory.set_pointer(addr);
+                self.peripherals.memory.set_pointer(addr);
             },
             OpCode::JP(addr) => {
                 // Set pointer to address
-                self.memory.set_pointer(addr);
+                self.peripherals.memory.set_pointer(addr);
                 advance_pointer = false;
             },
             OpCode::CALL(addr) => {
                 // Store current address and set pointer
-                self.stack.push(self.memory.get_pointer());
-                self.memory.set_pointer(addr);
+                self.stack.push(self.peripherals.memory.get_pointer());
+                self.peripherals.memory.set_pointer(addr);
                 advance_pointer = false;                
             },
             OpCode::SEByte(reg, byte) => {
@@ -138,7 +209,7 @@ impl CPU {
                 let r = self.registers.get_register(reg);
 
                 if r == byte {
-                    self.memory.advance_pointer();
+                    self.peripherals.memory.advance_pointer();
                 }
             },
             OpCode::SNEByte(reg, byte) => {
@@ -146,7 +217,7 @@ impl CPU {
                 let r = self.registers.get_register(reg);
                 
                 if r != byte {
-                    self.memory.advance_pointer();
+                    self.peripherals.memory.advance_pointer();
                 }
             },
             OpCode::SE(reg1, reg2) => {
@@ -155,7 +226,7 @@ impl CPU {
                 let r2 = self.registers.get_register(reg2);
 
                 if r1 == r2 {
-                    self.memory.advance_pointer();
+                    self.peripherals.memory.advance_pointer();
                 }
             },
             OpCode::LDByte(reg, byte) => {
@@ -220,12 +291,12 @@ impl CPU {
                 // SUB between two registers
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
-                let (res, overflow) = r1.overflowing_sub(r2);
+                let res = r1.wrapping_sub(r2);
 
-                if overflow {
-                    self.registers.set_carry_register(0);
-                } else {
+                if r1 > r2 {
                     self.registers.set_carry_register(1);
+                } else {
+                    self.registers.set_carry_register(0);
                 }
 
                 self.registers.set_register(reg1, res);
@@ -246,12 +317,12 @@ impl CPU {
                 // SUBN between two registers
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
-                let (res, overflow) = r2.overflowing_sub(r1);
+                let res = r2.wrapping_sub(r1);
 
-                if overflow {
-                    self.registers.set_carry_register(0);
-                } else {
+                if r2 > r1 {
                     self.registers.set_carry_register(1);
+                } else {
+                    self.registers.set_carry_register(0);
                 }
 
                 self.registers.set_register(reg1, res);
@@ -275,7 +346,7 @@ impl CPU {
                 let r2 = self.registers.get_register(reg2);
 
                 if r1 != r2 {
-                    self.memory.advance_pointer();
+                    self.peripherals.memory.advance_pointer();
                 }
             },
             OpCode::LDI(addr) => {
@@ -285,7 +356,7 @@ impl CPU {
             OpCode::JP0(addr) => {
                 // Set pointer to address + V0
                 let v0 = self.registers.get_register(0);
-                self.memory.set_pointer(addr + (v0 as C8Addr));
+                self.peripherals.memory.set_pointer(addr + (v0 as C8Addr));
                 advance_pointer = false;                
             },
             OpCode::RND(reg, byte) => {
@@ -298,46 +369,32 @@ impl CPU {
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
                 let ri = self.registers.get_i_register();
+                let sprite_data = self.peripherals.memory.read_data_at_offset(ri, byte as C8Addr);
 
-                self.registers.set_carry_register(0);
-
-                for i in 0..byte {
-                    let code = self.memory.read_byte_at_offset(ri + i as C8Addr);
-                    let y = ((r2 as usize) + (i as usize)) % VIDEO_MEMORY_HEIGHT;
-                    let mut shift = FONT_CHAR_WIDTH - 1;
-
-                    for j in 0..FONT_CHAR_WIDTH {
-                        let x = ((r1 as usize) + (j as usize)) % VIDEO_MEMORY_WIDTH;
-
-                        if code & (0x1 << shift) != 0 {
-                            if self.video_memory.toggle_pixel_xy(x, y) {
-                                self.registers.set_carry_register(1);
-                            }
-                        } 
-
-                        if shift > 0 {
-                            shift -= 1;
-                        }
-                    } 
-                }
+                let collision = self.peripherals.screen.draw_sprite(r1, r2, sprite_data);
+                self.registers.set_carry_register(collision as C8Byte);
             },
             OpCode::SKP(reg) => {
                 // Skip next instruction if key is pressed
                 let r = self.registers.get_register(reg);
-                let is = self.input.get(r);
+                let is = self.peripherals.input.get(r);
+
+                println!("IS KEY {} PRESSED ?", r);
 
                 if is == 1 {
-                    self.memory.advance_pointer();
+                    self.peripherals.memory.advance_pointer();
                 }
 
             },
             OpCode::SKNP(reg) => {
                 // Skip next instruction if key is not pressed
                 let r = self.registers.get_register(reg);
-                let is = self.input.get(r);
+                let is = self.peripherals.input.get(r);
+
+                println!("IS KEY {} NOT PRESSED ?", r);
 
                 if is == 0 {
-                    self.memory.advance_pointer();
+                    self.peripherals.memory.advance_pointer();
                 }
             },
             OpCode::LDGetDelayTimer(reg) => {
@@ -346,9 +403,12 @@ impl CPU {
 
                 self.registers.set_register(reg, dt);
             },
-            OpCode::LDGetKey(_reg) => {
-                // Wait for key press and stores it in register
-                // TODO
+            OpCode::LDGetKey(reg) => {
+                println!("WAITING FOR KEY");
+                let key = self.peripherals.input.wait_for_input();
+                println!("OK KEY: {}", key);
+                
+                self.registers.set_register(reg, key);
             },
             OpCode::LDSetDelayTimer(reg) => {
                 // Set delay timer value from registry
@@ -383,7 +443,7 @@ impl CPU {
                 let n2 = (r % 100) / 10;
                 let n1 = r % 10;
 
-                self.memory.write_data_at_offset(i, &[n3, n2, n1]);
+                self.peripherals.memory.write_data_at_offset(i, &[n3, n2, n1]);
             },
             OpCode::LDS(reg) => {
                 // Store registers V0 through reg in memory starting at I
@@ -391,7 +451,7 @@ impl CPU {
 
                 for ridx in 0..reg {
                     let r = self.registers.get_register(ridx);                    
-                    self.memory.write_byte_at_offset(ri + ridx as C8Addr, r);
+                    self.peripherals.memory.write_byte_at_offset(ri + ridx as C8Addr, r);
                 }
             },
             OpCode::LDR(reg) => {
@@ -399,7 +459,7 @@ impl CPU {
                 let ri = self.registers.get_i_register();
                 
                 for ridx in 0..reg {
-                    let byte = self.memory.read_byte_at_offset(ri + ridx as C8Addr);
+                    let byte = self.peripherals.memory.read_byte_at_offset(ri + ridx as C8Addr);
                     self.registers.set_register(ridx, byte);
                 }
             },
@@ -409,10 +469,10 @@ impl CPU {
         };
 
         if advance_pointer {
-            self.memory.advance_pointer();
+            self.peripherals.memory.advance_pointer();
         }
 
-        self.instruction_count += 1;
+        false
     }
 }
 
@@ -421,11 +481,11 @@ impl fmt::Debug for CPU {
         write!(f, "CPU {{\n")?;
         
         write!(f, "  memory: {{\n")?;
-        write!(f, "{:?}", self.memory)?;
+        write!(f, "{:?}", self.peripherals.memory)?;
         write!(f, "  }},\n")?;
 
-        write!(f, "  video memory: {{\n")?;
-        write!(f, "{:?}", self.video_memory)?;
+        write!(f, "  screen: {{\n")?;
+        write!(f, "{:?}", self.peripherals.screen)?;
         write!(f, "  }},\n")?;
         
         write!(f, "  registers: {{\n")?;
@@ -437,7 +497,7 @@ impl fmt::Debug for CPU {
         write!(f, "  }},\n")?;
 
         write!(f, "  input: {{\n")?;
-        write!(f, "{:?}", self.input)?;
+        write!(f, "{:?}", self.peripherals.input)?;
         write!(f, "  }},\n")?;
 
         write!(f, "  delay_timer: {:?},\n", self.delay_timer)?;

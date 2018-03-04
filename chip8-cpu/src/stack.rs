@@ -47,6 +47,11 @@ impl Stack {
         self.pointer -= 1;
         self.data[self.pointer as usize]
     }
+
+    /// Check if empty
+    pub fn empty(&self) -> bool {
+        self.pointer == 0
+    }
 }
 
 impl fmt::Debug for Stack {

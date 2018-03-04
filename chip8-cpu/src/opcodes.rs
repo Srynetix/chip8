@@ -306,7 +306,7 @@ lazy_static! {
         m.insert(24, (0xE09E, 0xF0FF));     // Ex9E
         m.insert(25, (0xE0A1, 0xF0FF));     // ExA1
         m.insert(26, (0xF007, 0xF0FF));     // Fx07
-        m.insert(27, (0xF007, 0xF0FF));     // Fx0A
+        m.insert(27, (0xF00A, 0xF0FF));     // Fx0A
         m.insert(28, (0xF015, 0xF0FF));     // Fx15
         m.insert(29, (0xF018, 0xF0FF));     // Fx18
         m.insert(30, (0xF01E, 0xF0FF));     // Fx1E

@@ -1,14 +1,16 @@
 //! CHIP-8 cartridge
 
 use std::fs::File;
+use std::fs::OpenOptions;
 use std::io::prelude::*;
 
 use std::env;
 use std::path::{Path, PathBuf};
 
-use chip8_core::types::{C8Byte};
+use chip8_core::types::{C8Byte, C8Addr};
 
 use super::opcodes::{get_opcode_enum, get_opcode_str, extract_opcode_from_array};
+use super::memory::{INITIAL_MEMORY_POINTER};
 
 /// Cartridge max size
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
@@ -55,7 +57,8 @@ impl Cartridge {
     /// 
     /// Returns a tuple (assembly, verbose)
     /// 
-    pub fn disassemble(&self) -> (Vec<String>, Vec<String>) {
+    pub fn disassemble(&self) -> (Vec<C8Addr>, Vec<String>, Vec<String>) {
+        let mut code_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
         let mut assembly_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
         let mut verbose_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
         let mut ptr = 0;
@@ -65,22 +68,42 @@ impl Cartridge {
             let opcode_enum = get_opcode_enum(opcode_value);
 
             let (assembly, verbose) = get_opcode_str(&opcode_enum);
+            code_output.push(opcode_value);
             assembly_output.push(assembly);
             verbose_output.push(verbose);
 
             ptr += 2;
         }
 
-        (assembly_output, verbose_output)
+        (code_output, assembly_output, verbose_output)
     }
 
     /// Print disassembly
-    pub fn print_disassembly(&self) {
-        println!("> Disassembly:");
-        let (assembly, verbose) = self.disassemble();
-        for i in 0..assembly.len() {
-            println!("  {:20} ; {}", assembly[i], verbose[i]);
+    pub fn print_disassembly(&self, output_file: &str) {
+        
+        let (code, assembly, verbose) = self.disassemble();
+        let mut ptr_value = INITIAL_MEMORY_POINTER;
+            
+        if output_file == "-" {
+            println!("> Disassembly:");
+            for i in 0..assembly.len() {
+                println!("{:04X}| ({:04X})  {:20} ; {}", ptr_value, code[i], assembly[i], verbose[i]);
+                ptr_value += 2;
+            }
+        } else {
+            println!("> Disassembly dumped to file {}", output_file);
+            let mut file_handle = OpenOptions::new()
+                                    .create(true)
+                                    .write(true)
+                                    .open(output_file)
+                                    .unwrap();
+
+            for i in 0..assembly.len() {
+                writeln!(file_handle, "{:04X}| ({:04X})  {:20} ; {}", ptr_value, code[i], assembly[i], verbose[i]).unwrap();                
+                ptr_value += 2;
+            }   
         }
-        println!("");
+
+        
     }
 }

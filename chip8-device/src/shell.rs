@@ -2,9 +2,9 @@
 
 use std::env;
 
-use super::device::Device;
 use super::logger::init_logger;
 
+use chip8_cpu::CPU;
 use chip8_cpu::Cartridge;
 use clap::{Arg, App};
 use log;
@@ -25,10 +25,20 @@ pub fn start_shell() {
         .arg(Arg::with_name("disassemble")
             .long("disassemble")
             .short("d")
-            .help("disassemble cartridge"))
-        .arg(Arg::with_name("show-cpu")
-            .long("show-cpu")
-            .help("show CPU dump"))
+            .help("disassemble cartridge")
+            .takes_value(true))
+        .arg(Arg::with_name("breakpoint")
+            .short("b")
+            .long("breakpoint")
+            .multiple(true)
+            .number_of_values(1)
+            .help("breakpoint at address")
+            .takes_value(true))
+        .arg(Arg::with_name("trace")
+            .short("t")
+            .long("trace")
+            .help("trace execution")
+            .takes_value(true))
         .arg(Arg::with_name("verbose")
             .long("verbose")
             .short("v")
@@ -50,16 +60,23 @@ pub fn start_shell() {
             let cartridge = Cartridge::load_from_games_directory(cartridge_filename);
 
             if result.is_present("disassemble") {
-                cartridge.print_disassembly();
+                let dis_file = result.value_of("disassemble").unwrap();
+                cartridge.print_disassembly(dis_file);
             } else {
-                let mut device = Device::new();
-                device.read_cartridge(&cartridge);
+                let mut cpu = CPU::new();
 
-                if result.is_present("show-cpu") {
-                    device.debug_cpu()
-                } else {
-                    device.run();
+                if result.is_present("trace") {
+                    cpu.tracefile(result.value_of("trace").unwrap());
                 }
+
+                if result.is_present("breakpoint") {
+                    let bp_values: Vec<&str> = result.values_of("breakpoint").unwrap().collect();
+                    for v in bp_values {
+                        cpu.breakpoints.register(u16::from_str_radix(&v[2..], 16).unwrap());
+                    }
+                }
+
+                cpu.run(&cartridge);
             }       
         },
 

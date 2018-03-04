@@ -8,3 +8,5 @@ chip8-core = { path = "../chip8-core" }
 lazy_static = "1.0"
 rand = "0.4"
 log = "0.3"
+sdl2 = "0.31"
+time = "0.1"

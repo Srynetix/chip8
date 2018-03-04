@@ -6,11 +6,4 @@ version = "0.1.0"
 authors = ["Denis BOURGE <denis.bourge@sharingcloud.com>"]
 
 [dependencies]
-chip8-graphics = { path = "chip8-graphics" }
-chip8-cpu = { path = "chip8-cpu" }
-
-time = "0.1"
-clap = "2.29"
-log = "0.3"
-fern = "0.4"
-chrono = "0.4"
+chip8-device = { path = "chip8-device" }

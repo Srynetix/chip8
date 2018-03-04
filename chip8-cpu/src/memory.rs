@@ -9,7 +9,9 @@ use super::opcodes::extract_opcode_from_array;
 /// CHIP-8 CPU memory vars
 const MEMORY_SIZE: usize = 4096;
 const CHUNK_SIZE: usize = 64;
-const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
+
+/// CHIP-8 initial memory pointer
+pub const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
 
 /// CHIP-8 CPU memory struct
 pub struct Memory{
@@ -111,7 +113,12 @@ impl Memory {
 
     /// Read opcode
     pub fn read_opcode(&self) -> C8Addr {
-        extract_opcode_from_array(&self.data, self.pointer as usize)
+        self.read_opcode_at_address(self.pointer)
+    }
+
+    /// Read opcode at address
+    pub fn read_opcode_at_address(&self, addr: C8Addr) -> C8Addr {
+        extract_opcode_from_array(&self.data, addr as usize)
     }
 }
 
