@@ -3,6 +3,7 @@
 use std::fmt;
 use std::fs::OpenOptions;
 use std::io::Write;
+use std::process;
 
 use rand::random;
 use time;
@@ -19,7 +20,7 @@ use super::registers::Registers;
 use super::stack::Stack;
 use super::breakpoints::Breakpoints;
 use super::peripherals::Peripherals;
-use super::debugger::Debugger;
+use super::debugger::{Debugger, Command};
 
 /// CHIP-8 CPU struct
 pub struct CPU {
@@ -110,6 +111,8 @@ impl CPU {
         self.load_font_in_memory();
         self.load_cartridge_data(cartridge);
 
+        let mut last_debugger_command: Option<Command> = None;
+        let mut break_next_instruction: Option<C8Addr> = None;
         let mut timers_time = time::PreciseTime::now();
         let mut tracefile_handle = match self.tracefile {
             Some(ref path) => Some(
@@ -135,13 +138,21 @@ impl CPU {
             }
 
             // Check for breakpoints
-            if let Some(addr) = self.breakpoints.check_breakpoint(self.peripherals.memory.get_pointer()) {
+            if break_next_instruction.is_none() {
+                break_next_instruction = self.breakpoints.check_breakpoint(self.peripherals.memory.get_pointer());
+            }
+
+            if let Some(addr) = break_next_instruction {
                 if let Some(ref mut tracefile) = tracefile_handle {
                     writeln!(tracefile, "{:?}", self).unwrap();
                 }
 
                 let debugger = Debugger::new(&self, addr);
-                debugger.run();
+                last_debugger_command = debugger.run();
+
+                if let Some(Command::Quit) = last_debugger_command {
+                    process::exit(1);
+                }
             }
 
             let opcode_enum = opcodes::get_opcode_enum(opcode);
@@ -162,6 +173,19 @@ impl CPU {
             if timers_time.to(time::PreciseTime::now()).num_milliseconds() > 16 {
                 self.handle_timers();
                 timers_time = time::PreciseTime::now();
+            }
+
+            // Handle last debugger command
+            if let Some(command) = last_debugger_command {
+                match command {
+                    Command::Continue => {
+                        break_next_instruction = None;
+                    },
+                    Command::Next => {
+                        break_next_instruction = Some(self.peripherals.memory.get_pointer());
+                    },
+                    _ => {}
+                }
             }
         }
     }
