@@ -2,10 +2,11 @@
 
 use std::env;
 
+use super::types::convert_hex_addr;
 use super::logger::init_logger;
+use super::cpu::CPU;
+use super::cartridge::Cartridge;
 
-use chip8_cpu::CPU;
-use chip8_cpu::Cartridge;
 use clap::{Arg, App};
 use log;
 
@@ -25,19 +26,19 @@ pub fn start_shell() {
         .arg(Arg::with_name("disassemble")
             .long("disassemble")
             .short("d")
-            .help("disassemble cartridge")
+            .help("disassemble cartridge to file (use '-' to trace in console)")
             .takes_value(true))
         .arg(Arg::with_name("breakpoint")
             .short("b")
             .long("breakpoint")
             .multiple(true)
             .number_of_values(1)
-            .help("breakpoint at address")
+            .help("add breakpoint at address")
             .takes_value(true))
         .arg(Arg::with_name("trace")
             .short("t")
             .long("trace")
-            .help("trace execution")
+            .help("trace execution to file")
             .takes_value(true))
         .arg(Arg::with_name("verbose")
             .long("verbose")
@@ -72,7 +73,7 @@ pub fn start_shell() {
                 if result.is_present("breakpoint") {
                     let bp_values: Vec<&str> = result.values_of("breakpoint").unwrap().collect();
                     for v in bp_values {
-                        cpu.breakpoints.register(u16::from_str_radix(&v[2..], 16).unwrap());
+                        cpu.breakpoints.register(convert_hex_addr(v));
                     }
                 }
 

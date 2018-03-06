@@ -7,8 +7,7 @@ use std::io::prelude::*;
 use std::env;
 use std::path::{Path, PathBuf};
 
-use chip8_core::types::{C8Byte, C8Addr};
-
+use super::types::{C8Byte, C8Addr};
 use super::opcodes::{get_opcode_enum, get_opcode_str, extract_opcode_from_array};
 use super::memory::{INITIAL_MEMORY_POINTER};
 

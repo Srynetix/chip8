@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use chip8_core::types::{C8Byte, C8Addr, C8RegIdx};
+use super::types::{C8Byte, C8Addr, C8RegIdx};
 
 /// CHIP-8 register count
 const REGISTER_COUNT: usize = 16;

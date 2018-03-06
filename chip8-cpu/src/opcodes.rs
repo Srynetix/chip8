@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use chip8_core::types::{C8Byte, C8Addr, C8RegIdx};
+use super::types::{C8Byte, C8Addr, C8RegIdx};
 
 /// CHIP-8 opcode flag/mask
 type OpCodeFlagMask = (C8Addr, C8Addr);
@@ -438,7 +438,7 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
         OpCode::JP0(addr) => (format!("JP V0, {:04X}", addr), format!("Jump to location {:04X} + V0", addr)),
 
         OpCode::RND(reg, byte) => (format!("RND V{:X}, {:02X}", reg, byte), format!("Set V{:X} = random byte AND {:02X}", reg, byte)),
-        OpCode::DRW(reg1, reg2, byte) => (format!("DRW V{:X}, V{:X}, {:02X}", reg1, reg2, byte), format!("Display sprite {:02X} starting at mem. location I at (V{:X}, V{:X}), set VF = collision", byte, reg1, reg2)),
+        OpCode::DRW(reg1, reg2, byte) => (format!("DRW V{:X}, V{:X}, {:02X}", reg1, reg2, byte), format!("Display sprite starting at mem. location I at (V{:X}, V{:X}) on {} bytes, set VF = collision", reg1, reg2, byte)),
         
         OpCode::SKP(reg) => (format!("SKP V{:X}", reg), format!("Skip next instruction if key with the value of V{:X} is pressed", reg)),
         OpCode::SKNP(reg) => (format!("SKNP V{:X}", reg), format!("Skip next instruction if key with the value of V{:X} is not pressed", reg)),

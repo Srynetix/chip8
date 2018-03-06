@@ -2,8 +2,7 @@
 
 use std::fmt;
 
-use chip8_core::types::{C8Byte, C8Addr};
-
+use super::types::{C8Byte, C8Addr};
 use super::opcodes::extract_opcode_from_array;
 
 /// CHIP-8 CPU memory vars
@@ -124,10 +123,14 @@ impl Memory {
 
 impl fmt::Debug for Memory {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Print row
+        print_row(f)?;
+        print_separator(f)?;        
+
         for (idx, chunk) in self.data.chunks(CHUNK_SIZE).enumerate() {
             write!(
                 f,
-                "    {:04X}-{:04X} - ",
+                "    {:04X}-{:04X} | ",
                 idx * CHUNK_SIZE,
                 (idx + 1) * CHUNK_SIZE)?;
             
@@ -141,6 +144,28 @@ impl fmt::Debug for Memory {
             write!(f, "\n")?;
         }
 
+        // Reprint row
+        print_separator(f)?;
+        print_row(f)?;     
+
         write!(f, "    PC: {:04X}\n", self.pointer)
     }
+}
+
+fn print_separator(f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "                ")?;        
+    for _ in 0..CHUNK_SIZE {
+        write!(f, "---")?;
+    }
+
+    write!(f, "\n")
+}
+
+fn print_row(f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "                ")?;
+    for v in 0..CHUNK_SIZE {
+        write!(f, "{:02X} ", v * 2)?;
+    }
+
+    write!(f, "\n")
 }

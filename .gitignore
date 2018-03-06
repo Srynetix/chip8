@@ -3,3 +3,6 @@
 **/*.rs.bk
 
 /SDL2.dll
+
+/*.dump
+/*.log

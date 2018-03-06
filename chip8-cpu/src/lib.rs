@@ -2,8 +2,6 @@
 
 #![warn(missing_docs)]
 
-extern crate chip8_core;
-
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
@@ -11,6 +9,9 @@ extern crate log;
 extern crate rand;
 extern crate sdl2;
 extern crate time;
+extern crate clap;
+extern crate fern;
+extern crate chrono;
 
 pub mod cpu;
 pub mod memory;
@@ -25,6 +26,9 @@ pub mod cartridge;
 pub mod peripherals;
 pub mod breakpoints;
 pub mod debugger;
+pub mod shell;
+pub mod logger;
+pub mod types;
 
 pub use cpu::CPU;
 pub use cartridge::Cartridge;

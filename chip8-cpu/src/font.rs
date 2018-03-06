@@ -1,6 +1,6 @@
 //! CHIP-8 system font
 
-use chip8_core::types::{C8Byte, C8Addr};
+use super::types::{C8Byte, C8Addr};
 
 /// CHIP-8 system font struct
 pub struct Font(Vec<C8Byte>);

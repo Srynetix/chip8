@@ -1,6 +1,8 @@
 //! CHIP-8 breakpoints
 
-use chip8_core::types::{C8Addr};
+use std::fmt;
+
+use super::types::{C8Addr};
 
 /// Breakpoints
 pub struct Breakpoints(Vec<C8Addr>);
@@ -14,11 +16,40 @@ impl Breakpoints {
 
     /// Register
     pub fn register(&mut self, addr: C8Addr) {
-        self.0.push(addr);
+        if self.check_breakpoint(addr).is_none() {
+            self.0.push(addr);
+        }
+    }
+
+    /// Unregister
+    pub fn unregister(&mut self, addr: C8Addr) {
+        if let Some(idx) = self.check_breakpoint(addr) {
+            self.0.remove(idx);
+        }
     }
 
     /// Check for breakpoint
-    pub fn check_breakpoint(&self, addr: C8Addr) -> Option<C8Addr> {
-        self.0.iter().find(|&&x| x == addr).map(|x| x.clone())
+    pub fn check_breakpoint(&self, addr: C8Addr) -> Option<usize> {
+        self.0.iter().position(|&x| x == addr)
+    }
+
+    /// Dump breakpoints
+    pub fn dump_breakpoints(&self) {
+        println!("{:?}", &self);
+    }
+}
+
+impl fmt::Debug for Breakpoints {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Breakpoints: \n")?;
+        if self.0.len() == 0 {
+            write!(f, "  None\n")?;
+        } else {
+            for i in &self.0 {
+                write!(f, "  - {:04X}\n", i)?;
+            }
+        }
+
+        Ok(())
     }
 }

@@ -5,9 +5,8 @@
 
 use std::fmt;
 
+use super::types::{C8Byte};
 use super::font::{FONT_CHAR_WIDTH};
-
-use chip8_core::types::{C8Byte};
 
 use sdl2;
 use sdl2::pixels::Color;
@@ -25,6 +24,7 @@ const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
 /// CHIP-8 screen memory struct
 pub struct Screen {
     data: Vec<C8Byte>,
+    alpha: Vec<C8Byte>,
     renderer: sdl2::render::WindowCanvas
 }
 
@@ -32,9 +32,11 @@ impl Screen {
 
     /// Create new video memory
     pub fn new(context: &sdl2::Sdl) -> Self {
-        let mut vec = Vec::with_capacity(VIDEO_MEMORY_SIZE);
+        let mut data = Vec::with_capacity(VIDEO_MEMORY_SIZE);
+        let mut alpha = Vec::with_capacity(VIDEO_MEMORY_SIZE);
         for _ in 0..VIDEO_MEMORY_SIZE {
-            vec.push(0);
+            data.push(0);
+            alpha.push(0);
         }
 
         let video_subsystem = context.video().unwrap();
@@ -56,8 +58,9 @@ impl Screen {
         renderer.present();
 
         Screen {
-            renderer: renderer,
-            data: vec
+            renderer,
+            data,
+            alpha
         }
     }
 
@@ -100,6 +103,17 @@ impl Screen {
         self.render();
     }
 
+    /// Fade pixels
+    pub fn fade_pixels(&mut self) {
+        for x in 0..self.data.len() {
+            if self.data[x] == 0 {
+                if self.alpha[x] > 0 {
+                    self.alpha[x] = (self.alpha[x] as f32 * 0.975) as u8;
+                }
+            }
+        }
+    }
+
     /// Toggle pixel position
     /// Return true if collision
     /// 
@@ -114,9 +128,11 @@ impl Screen {
         
         if pixel == 1 {
             self.data[pos] = 0;
+            self.alpha[pos] = 255;
             flip = true;
         } else {
             self.data[pos] = 1;
+            self.alpha[pos] = 255;
         }
 
         flip
@@ -130,8 +146,10 @@ impl Screen {
         for (pos, px) in self.data.iter().enumerate() {
             let x = pos % VIDEO_MEMORY_WIDTH;
             let y = pos / VIDEO_MEMORY_WIDTH;
+            let alpha = &self.alpha[pos];
 
-            self.renderer.set_draw_color(color_from_byte(*px));
+            let color = color_from_byte(*px, *alpha);
+            self.renderer.set_draw_color(color);
             self.renderer.fill_rect(
                 Rect::new(
                     (x * RENDERER_SCALE) as i32,
@@ -155,6 +173,11 @@ impl Screen {
     /// 
     pub fn toggle_pixel_xy(&mut self, x: usize, y: usize) -> bool {
         self.toggle_pixel(x + y * VIDEO_MEMORY_WIDTH)
+    }
+
+    /// Dump screen
+    pub fn dump_screen(&self) {
+        println!("{:?}", &self);
     }
 }
 
@@ -181,9 +204,9 @@ impl fmt::Debug for Screen {
     }
 }
 
-fn color_from_byte(byte: C8Byte) -> Color {
+fn color_from_byte(byte: C8Byte, alpha: C8Byte) -> Color {
     match byte {
-        0 => Color::RGB(0, 0, 0),
+        0 => Color::RGB(alpha, alpha, alpha),
         _ => Color::RGB(255, 255, 255)
     }
 }

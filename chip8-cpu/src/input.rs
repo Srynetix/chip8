@@ -10,12 +10,13 @@
 use std::fmt;
 use std::thread::{sleep};
 use std::time::{Duration};
+use std::collections::HashMap;
 
-use chip8_core::types::{C8RegIdx, C8Byte};
+use super::types::{C8RegIdx, C8Byte};
 
 use sdl2;
 use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
+use sdl2::keyboard::{Scancode, Keycode};
 
 /// Input state count
 pub const INPUT_STATE_COUNT: usize = 16;
@@ -26,6 +27,7 @@ pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
 pub struct InputState {
     event_pump: sdl2::EventPump,
     data: Vec<C8Byte>,
+    key_binding: HashMap<C8Byte, Keycode>,
 
     last_pressed_key: C8Byte,
     input_pressed: bool,
@@ -43,12 +45,34 @@ impl InputState {
             vec.push(0);
         }
 
+        let mut initial_binding = HashMap::new();
+        initial_binding.insert(0x1, Keycode::Num1);
+        initial_binding.insert(0x2, Keycode::Num2);
+        initial_binding.insert(0x3, Keycode::Num3);
+        initial_binding.insert(0xC, Keycode::Num4);
+        
+        initial_binding.insert(0x4, Keycode::A);
+        initial_binding.insert(0x5, Keycode::Z);
+        initial_binding.insert(0x6, Keycode::E);
+        initial_binding.insert(0xD, Keycode::R);
+        
+        initial_binding.insert(0x7, Keycode::Q);
+        initial_binding.insert(0x8, Keycode::S);
+        initial_binding.insert(0x9, Keycode::D);
+        initial_binding.insert(0xE, Keycode::F);
+        
+        initial_binding.insert(0xA, Keycode::W);
+        initial_binding.insert(0x0, Keycode::X);
+        initial_binding.insert(0xB, Keycode::C);
+        initial_binding.insert(0xF, Keycode::V);
+
         InputState {
             event_pump: context.event_pump().unwrap(),
             data: vec,
             last_pressed_key: INPUT_EMPTY_KEY,
             should_close: false,
-            input_pressed: false
+            input_pressed: false,
+            key_binding: initial_binding
         }
     }
 
@@ -61,19 +85,19 @@ impl InputState {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     self.should_close = true;
                 },
-                Event::KeyDown { keycode: Some(keycode), .. } => {
-                    let key = key_handle(keycode);
-                    if key <= 0xF {
-                        self.press(key);
-                    }
-                },
-                Event::KeyUp { keycode: Some(keycode), .. } => {
-                    let key = key_handle(keycode);
-                    if key <= 0xF {
-                        self.release(key);
-                    }
-                },
                 _ => {}
+            }
+        }
+
+        // Keyboard state
+        for key in 0..INPUT_STATE_COUNT {
+            let key8 = key as C8Byte;
+            let kb = Scancode::from_keycode(*self.key_binding.get(&key8).unwrap()).unwrap();
+
+            if self.event_pump.keyboard_state().is_scancode_pressed(kb) {
+                self.press(key8);
+            } else {
+                self.release(key8);
             }
         }
     }
@@ -118,8 +142,8 @@ impl InputState {
         }
 
         self.data[key as usize] = 0;
-        self.last_pressed_key = key;        
-        self.input_pressed = true;
+        self.last_pressed_key = 255;
+        self.input_pressed = false;
     }
 
     /// Get input
@@ -130,31 +154,10 @@ impl InputState {
 
         self.data[key as usize]
     }
-}
 
-fn key_handle(keycode: Keycode) -> C8Byte {
-    match keycode {
-        Keycode::A => 0x1,
-        Keycode::Z => 0x2,
-        Keycode::E => 0x3,
-        Keycode::R => 0xC,
-
-        Keycode::Q => 0x4,
-        Keycode::S => 0x5,
-        Keycode::D => 0x6,
-        Keycode::F => 0xD,
-
-        Keycode::W => 0x7,
-        Keycode::X => 0x8,
-        Keycode::C => 0x9,
-        Keycode::V => 0xE,
-
-        Keycode::T => 0xA,
-        Keycode::Y => 0x0,
-        Keycode::U => 0xB,
-        Keycode::I => 0xF,
-
-        _ => 0xFF
+    /// Dump
+    pub fn dump(&self) {
+        println!("{:?}", &self);
     }
 }
 

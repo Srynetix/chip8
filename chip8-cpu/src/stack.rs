@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use chip8_core::types::{C8Byte, C8Addr};
+use super::types::{C8Byte, C8Addr};
 
 /// CHIP-8 CPU stack depth
 const STACK_DEPTH: usize = 16;
