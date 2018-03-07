@@ -5,6 +5,7 @@ use std::fmt;
 use super::types::{C8Byte};
 
 /// CHIP-8 CPU timer
+#[derive(Clone)]
 pub struct Timer {
     title: String,
     count: C8Byte,
@@ -47,6 +48,17 @@ impl Timer {
     /// Get value
     pub fn get_value(&self) -> C8Byte {
         self.count
+    }
+
+    /// Load from save
+    /// 
+    /// # Arguments
+    /// 
+    /// * `timer` - Timer
+    /// 
+    pub fn load_from_save(&mut self, timer: Timer) {
+        self.count = timer.count;
+        self.title = timer.title;
     }
 }
 

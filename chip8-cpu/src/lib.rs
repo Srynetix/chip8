@@ -32,6 +32,7 @@ mod debugger;
 mod shell;
 mod logger;
 mod types;
+mod savestate;
 
 pub use cpu::CPU;
 pub use cartridge::Cartridge;

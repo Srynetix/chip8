@@ -24,15 +24,24 @@ pub const INPUT_STATE_COUNT: usize = 16;
 pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
 
 const RESET_KEYCODE: Keycode = Keycode::F5;
+const SAVE_STATE_KEYCODE: Keycode = Keycode::F7;
+const LOAD_STATE_KEYCODE: Keycode = Keycode::F8;
 
-/// Input state struct
-pub struct InputState {
-    event_pump: sdl2::EventPump,
+/// Input state data
+#[derive(Clone)]
+pub struct InputStateData {   
     data: Vec<C8Byte>,
     key_binding: HashMap<C8Byte, Keycode>,
     last_pressed_key: C8Byte,
     input_pressed: bool,
 
+    /// Flags
+    pub flags: InputStateFlags
+}
+
+/// Input state flags
+#[derive(Clone)]
+pub struct InputStateFlags {
     /// Should close
     pub should_close: bool,
     /// Should reset
@@ -40,7 +49,13 @@ pub struct InputState {
     /// Should save
     pub should_save: bool,
     /// Should load
-    pub should_load: bool
+    pub should_load: bool   
+}
+
+/// Input state struct
+pub struct InputState {
+    event_pump: sdl2::EventPump,
+    pub data: InputStateData
 }
 
 impl InputState {
@@ -77,15 +92,18 @@ impl InputState {
 
         InputState {
             event_pump: context.event_pump().unwrap(),
-            data: vec,
-            last_pressed_key: INPUT_EMPTY_KEY,
-            input_pressed: false,
-            key_binding: initial_binding,
-
-            should_close: false,
-            should_reset: false,
-            should_save: false,
-            should_load: false
+            data: InputStateData {
+                data: vec,
+                last_pressed_key: INPUT_EMPTY_KEY,
+                input_pressed: false,
+                key_binding: initial_binding,
+                flags: InputStateFlags {
+                    should_close: false,
+                    should_reset: false,
+                    should_save: false,
+                    should_load: false
+                }
+            }
         }
     }
 
@@ -96,11 +114,17 @@ impl InputState {
         for event in events {
             match event {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
-                    self.should_close = true;
+                    self.data.flags.should_close = true;
                 },
                 Event::KeyDown { keycode: Some(RESET_KEYCODE), .. } => {
-                    self.should_reset = true;
+                    self.data.flags.should_reset = true;
                 },
+                Event::KeyDown { keycode: Some(LOAD_STATE_KEYCODE), .. } => {
+                    self.data.flags.should_load = true;
+                },
+                Event::KeyDown { keycode: Some(SAVE_STATE_KEYCODE), .. } => {
+                    self.data.flags.should_save = true;
+                }
                 _ => {}
             }
         }
@@ -108,7 +132,7 @@ impl InputState {
         // Keyboard state
         for key in 0..INPUT_STATE_COUNT {
             let key8 = key as C8Byte;
-            let kb = Scancode::from_keycode(*self.key_binding.get(&key8).unwrap()).unwrap();
+            let kb = Scancode::from_keycode(*self.data.key_binding.get(&key8).unwrap()).unwrap();
 
             if self.event_pump.keyboard_state().is_scancode_pressed(kb) {
                 self.press(key8);
@@ -120,19 +144,19 @@ impl InputState {
 
     /// Wait for input
     pub fn wait_for_input(&mut self) -> C8Byte {
-        self.input_pressed = false;
+        self.data.input_pressed = false;
 
         loop {
             self.update_state();
 
-            if self.input_pressed || self.should_close {
+            if self.data.input_pressed || self.data.flags.should_close {
                 break;
             }
 
             sleep(Duration::from_millis(10));
         }
 
-        self.last_pressed_key
+        self.data.last_pressed_key
     }
 
     /// Press input
@@ -146,9 +170,9 @@ impl InputState {
             panic!("Key `{}` does not exist.", key);
         }
 
-        self.data[key as usize] = 1;
-        self.last_pressed_key = key;
-        self.input_pressed = true;
+        self.data.data[key as usize] = 1;
+        self.data.last_pressed_key = key;
+        self.data.input_pressed = true;
     }
 
     /// Release input
@@ -162,9 +186,9 @@ impl InputState {
             panic!("Key `{}` does not exist.", key);
         }
 
-        self.data[key as usize] = 0;
-        self.last_pressed_key = INPUT_EMPTY_KEY;
-        self.input_pressed = false;
+        self.data.data[key as usize] = 0;
+        self.data.last_pressed_key = INPUT_EMPTY_KEY;
+        self.data.input_pressed = false;
     }
 
     /// Get input
@@ -178,7 +202,7 @@ impl InputState {
             panic!("Key `{}` does not exist.", key);
         }
 
-        self.data[key as usize]
+        self.data.data[key as usize]
     }
 
     /// Dump
@@ -186,22 +210,32 @@ impl InputState {
         println!("{:?}", &self);
     }
 
+    /// Load from save
+    /// 
+    /// # Arguments
+    /// 
+    /// * `data` - Input state data
+    /// 
+    pub fn load_from_save(&mut self, data: InputStateData) {
+        self.data = data;
+    }
+
     /// Reset
     pub fn reset(&mut self) {
-        self.data = vec![0; INPUT_STATE_COUNT];
-        self.last_pressed_key = INPUT_EMPTY_KEY;
-        self.input_pressed = false;
+        self.data.data = vec![0; INPUT_STATE_COUNT];
+        self.data.last_pressed_key = INPUT_EMPTY_KEY;
+        self.data.input_pressed = false;
 
-        self.should_close = false;
-        self.should_reset = false;
-        self.should_save = false;
-        self.should_load = false;  
+        self.data.flags.should_close = false;
+        self.data.flags.should_reset = false;
+        self.data.flags.should_save = false;
+        self.data.flags.should_load = false;  
     }
 }
 
 impl fmt::Debug for InputState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for (idx, v) in self.data.iter().enumerate() {
+        for (idx, v) in self.data.data.iter().enumerate() {
             write!(
                 f,
                 "    K{:X}: {}\n",
@@ -209,6 +243,6 @@ impl fmt::Debug for InputState {
             )?;
         }
 
-        write!(f, "    LK: {}\n", self.last_pressed_key)
+        write!(f, "    LK: {}\n", self.data.last_pressed_key)
     }
 }

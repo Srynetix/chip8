@@ -8,6 +8,7 @@ use super::types::{C8Byte, C8Addr, C8RegIdx};
 const REGISTER_COUNT: usize = 16;
 
 /// CHIP-8 CPU Registers
+#[derive(Clone)]
 pub struct Registers {
     data: Vec<C8Byte>,
     i: C8Addr
@@ -85,6 +86,17 @@ impl Registers {
     pub fn reset(&mut self) {
         self.data = vec![0; REGISTER_COUNT];
         self.i = 0;
+    }
+
+    /// Load from save
+    /// 
+    /// # Arguments
+    /// 
+    /// * `registers` - Registers
+    /// 
+    pub fn load_from_save(&mut self, registers: Registers) {
+        self.data = registers.data;
+        self.i = registers.i;
     }
 }
 

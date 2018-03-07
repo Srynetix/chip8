@@ -8,6 +8,7 @@ use super::types::{C8Byte, C8Addr};
 const STACK_DEPTH: usize = 16;
 
 /// CHIP-8 CPU stack struct
+#[derive(Clone)]
 pub struct Stack {
     data: Vec<C8Addr>,
     pointer: C8Byte
@@ -57,6 +58,17 @@ impl Stack {
     pub fn reset(&mut self) {
         self.data = vec![0; STACK_DEPTH];
         self.pointer = 0;
+    }
+
+    /// Load from save
+    /// 
+    /// # Arguments
+    /// 
+    /// * `stack` - Stack
+    /// 
+    pub fn load_from_save(&mut self, stack: Stack) {
+        self.data = stack.data;
+        self.pointer = stack.pointer;
     }
 }
 

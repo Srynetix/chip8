@@ -22,10 +22,16 @@ pub const RENDERER_SCALE: usize = 10;
 const PIXEL_FADE_COEFFICIENT: f32 = 0.9;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
 
+/// CHIP-8 screen data
+#[derive(Clone)]
+pub struct ScreenData {
+    data: Vec<C8Byte>,
+    alpha: Vec<C8Byte>
+}
+
 /// CHIP-8 screen memory struct
 pub struct Screen {
-    data: Vec<C8Byte>,
-    alpha: Vec<C8Byte>,
+    pub data: ScreenData,
     renderer: sdl2::render::WindowCanvas
 }
 
@@ -61,8 +67,10 @@ impl Screen {
 
         Screen {
             renderer,
-            data,
-            alpha
+            data: ScreenData {
+                data,
+                alpha
+            }
         }
     }
 
@@ -105,8 +113,8 @@ impl Screen {
 
     /// Clear screen
     pub fn clear_screen(&mut self) {
-        for x in 0..self.data.len() {
-            self.data[x] = 0
+        for x in 0..self.data.data.len() {
+            self.data.data[x] = 0
         }
 
         self.render();
@@ -114,10 +122,10 @@ impl Screen {
 
     /// Fade pixels
     pub fn fade_pixels(&mut self) {
-        for x in 0..self.data.len() {
-            if self.data[x] == 0 {
-                if self.alpha[x] > 0 {
-                    self.alpha[x] = (self.alpha[x] as f32 * PIXEL_FADE_COEFFICIENT) as u8;
+        for x in 0..self.data.data.len() {
+            if self.data.data[x] == 0 {
+                if self.data.alpha[x] > 0 {
+                    self.data.alpha[x] = (self.data.alpha[x] as f32 * PIXEL_FADE_COEFFICIENT) as u8;
                 }
             }
         }
@@ -133,15 +141,15 @@ impl Screen {
     pub fn toggle_pixel(&mut self, pos: usize) -> bool {
         // For now, only handle 0 and 1
         let mut flip = false;
-        let pixel = self.data[pos];        
+        let pixel = self.data.data[pos];        
         
         if pixel == 1 {
-            self.data[pos] = 0;
-            self.alpha[pos] = 255;
+            self.data.data[pos] = 0;
+            self.data.alpha[pos] = 255;
             flip = true;
         } else {
-            self.data[pos] = 1;
-            self.alpha[pos] = 255;
+            self.data.data[pos] = 1;
+            self.data.alpha[pos] = 255;
         }
 
         flip
@@ -152,10 +160,10 @@ impl Screen {
         self.renderer.set_draw_color(Color::RGB(0, 0, 0));
         self.renderer.clear();
 
-        for (pos, px) in self.data.iter().enumerate() {
+        for (pos, px) in self.data.data.iter().enumerate() {
             let x = pos % VIDEO_MEMORY_WIDTH;
             let y = pos / VIDEO_MEMORY_WIDTH;
-            let alpha = &self.alpha[pos];
+            let alpha = &self.data.alpha[pos];
 
             let color = color_from_byte(*px, *alpha);
             self.renderer.set_draw_color(color);
@@ -193,8 +201,19 @@ impl Screen {
     /// 
     /// With a little flash !
     pub fn reset(&mut self) {
-        self.data = vec![0; VIDEO_MEMORY_SIZE];
-        self.alpha = vec![255; VIDEO_MEMORY_SIZE];
+        self.data.data = vec![0; VIDEO_MEMORY_SIZE];
+        self.data.alpha = vec![255; VIDEO_MEMORY_SIZE];
+    }
+
+    /// Load from save
+    /// 
+    /// # Arguments
+    /// 
+    /// * `screen_data` - Screen data
+    /// 
+    pub fn load_from_save(&mut self, screen_data: ScreenData) {
+        self.data.data = screen_data.data;
+        self.data.alpha = screen_data.alpha;
     }
 }
 
@@ -206,7 +225,7 @@ impl fmt::Debug for Screen {
             write!(f, "    ")?;
 
             for i in 0..VIDEO_MEMORY_WIDTH {
-                let pixel = self.data[i + j * VIDEO_MEMORY_WIDTH];
+                let pixel = self.data.data[i + j * VIDEO_MEMORY_WIDTH];
                 if pixel == 0 {
                     write!(f, " ")?;
                 } else {

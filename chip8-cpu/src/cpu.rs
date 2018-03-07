@@ -18,6 +18,7 @@ use super::stack::Stack;
 use super::breakpoints::Breakpoints;
 use super::peripherals::Peripherals;
 use super::debugger::{Debugger, Command};
+use super::savestate::SaveState;
 
 const TIMER_FRAME_LIMIT: i64 = 16;
 const CPU_FRAME_LIMIT: i64 = 2;
@@ -46,7 +47,10 @@ pub struct CPU {
     pub instruction_count: usize,
 
     /// Tracefile
-    pub tracefile: Option<String>
+    pub tracefile: Option<String>,
+
+    /// Save state
+    pub savestate: Option<SaveState>
 }
 
 impl CPU {
@@ -66,7 +70,8 @@ impl CPU {
             font: Font::new_system_font(),
             instruction_count: 0,
 
-            tracefile: None
+            tracefile: None,
+            savestate: None
         }
     }
 
@@ -93,6 +98,23 @@ impl CPU {
     /// Get instruction count
     pub fn get_instruction_count(&self) -> usize {
         self.instruction_count
+    }
+
+    /// Load savestate
+    /// 
+    /// # Arguments
+    /// 
+    /// * `state` - Save state
+    /// 
+    pub fn load_savestate(&mut self, state: SaveState) {
+        self.instruction_count = state.instruction_count;
+        self.peripherals.input.load_from_save(state.input_data);
+        self.peripherals.memory.load_from_save(state.memory);
+        self.peripherals.screen.load_from_save(state.screen_data);
+        self.registers.load_from_save(state.registers);
+        self.stack.load_from_save(state.stack);
+        self.delay_timer.load_from_save(state.delay_timer);
+        self.sound_timer.load_from_save(state.sound_timer);
     }
 
     /// Read cartridge data
@@ -155,12 +177,12 @@ impl CPU {
 
         loop {
             // Check if CPU should stop
-            if self.peripherals.input.should_close {
+            if self.peripherals.input.data.flags.should_close {
                 break;
             }
 
             // Check if CPU should reset
-            if self.peripherals.input.should_reset {
+            if self.peripherals.input.data.flags.should_reset {
                 // Reset CPU
                 self.reset();
 
@@ -177,6 +199,29 @@ impl CPU {
                 
                 // Restart !
                 continue;
+            }
+
+            // Check if CPU should save
+            if self.peripherals.input.data.flags.should_save {
+                self.peripherals.input.data.flags.should_save = false;
+
+                println!("Saving state...");
+                self.savestate = Some(SaveState::save_from_cpu(&self));
+                println!("State saved.");
+            }
+
+            if self.peripherals.input.data.flags.should_load {
+                self.peripherals.input.data.flags.should_load = false;
+                
+                let state_copy: Option<SaveState> = self.savestate.clone();
+
+                if state_copy.is_none() {
+                    println!("No state to load");
+                } else {
+                    println!("Loading state...");
+                    self.load_savestate(state_copy.unwrap());    
+                    println!("State loaded.");                
+                }
             }
 
             if cpu_frametime.to(time::PreciseTime::now()).num_milliseconds() >= CPU_FRAME_LIMIT {

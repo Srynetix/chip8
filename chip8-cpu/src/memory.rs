@@ -13,6 +13,7 @@ const CHUNK_SIZE: usize = 64;
 pub const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
 
 /// CHIP-8 CPU memory struct
+#[derive(Clone)]
 pub struct Memory{
     data: Vec<C8Byte>,
     pointer: C8Addr
@@ -129,6 +130,17 @@ impl Memory {
     pub fn reset(&mut self) {
         self.data = vec![0; MEMORY_SIZE];
         self.pointer = INITIAL_MEMORY_POINTER;
+    }
+
+    /// Load from save
+    /// 
+    /// # Arguments
+    /// 
+    /// * `memory` - Memory
+    /// 
+    pub fn load_from_save(&mut self, memory: Memory) {
+        self.data = memory.data;
+        self.pointer = memory.pointer;
     }
 }
 
