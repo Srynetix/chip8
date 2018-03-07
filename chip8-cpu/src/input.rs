@@ -36,7 +36,11 @@ pub struct InputState {
     /// Should close
     pub should_close: bool,
     /// Should reset
-    pub should_reset: bool
+    pub should_reset: bool,
+    /// Should save
+    pub should_save: bool,
+    /// Should load
+    pub should_load: bool
 }
 
 impl InputState {
@@ -79,7 +83,9 @@ impl InputState {
             key_binding: initial_binding,
 
             should_close: false,
-            should_reset: false            
+            should_reset: false,
+            should_save: false,
+            should_load: false
         }
     }
 
@@ -187,7 +193,9 @@ impl InputState {
         self.input_pressed = false;
 
         self.should_close = false;
-        self.should_reset = false;           
+        self.should_reset = false;
+        self.should_save = false;
+        self.should_load = false;  
     }
 }
 

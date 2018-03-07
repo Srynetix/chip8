@@ -19,7 +19,7 @@ pub const VIDEO_MEMORY_HEIGHT: usize = 32;
 /// Renderer scale
 pub const RENDERER_SCALE: usize = 10;
 
-const PIXEL_FADE_COEFFICIENT: f32 = 0.90;
+const PIXEL_FADE_COEFFICIENT: f32 = 0.9;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
 
 /// CHIP-8 screen memory struct

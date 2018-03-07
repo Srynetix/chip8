@@ -171,7 +171,10 @@ impl CPU {
                 // Reset vars
                 last_debugger_command = None;
                 break_next_instruction = None;
-
+                timer_frametime = time::PreciseTime::now();
+                cpu_frametime = time::PreciseTime::now();
+                frametime = time::PreciseTime::now();
+                
                 // Restart !
                 continue;
             }
