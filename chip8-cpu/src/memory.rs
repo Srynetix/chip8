@@ -116,6 +116,11 @@ impl Memory {
     }
 
     /// Read opcode at address
+    /// 
+    /// # Arguments
+    /// 
+    /// * `addr` - Address
+    /// 
     pub fn read_opcode_at_address(&self, addr: C8Addr) -> C8Addr {
         extract_opcode_from_array(&self.data, addr as usize)
     }

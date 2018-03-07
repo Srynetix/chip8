@@ -17,6 +17,7 @@ pub struct Peripherals {
 }
 
 impl Peripherals {
+    
     /// Create peripherals
     pub fn new() -> Self {
         // Create SDL context

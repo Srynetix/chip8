@@ -1,8 +1,5 @@
 //! CHIP-8 logger
-
 use std::io;
-use std::fs::File;
-use std::io::Write;
 
 use fern;
 use log;
@@ -31,11 +28,4 @@ pub fn init_logger(level: log::LogLevelFilter) -> Result<(), log::SetLoggerError
         .chain(io::stdout())
         // Apply globally
         .apply()
-}
-
-/// Trace execution
-pub fn trace_exec(tracefile_handle: &mut Option<File>, line: &str) {
-    if let &mut Some(ref mut tracefile) = tracefile_handle {
-        writeln!(tracefile, "{}", line).unwrap();
-    }
 }

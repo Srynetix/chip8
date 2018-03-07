@@ -54,7 +54,7 @@ impl Cartridge {
 
     /// Disassemble cartridge
     /// 
-    /// Returns a tuple (assembly, verbose)
+    /// Returns a tuple (code, assembly, verbose)
     /// 
     pub fn disassemble(&self) -> (Vec<C8Addr>, Vec<String>, Vec<String>) {
         let mut code_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
@@ -78,6 +78,11 @@ impl Cartridge {
     }
 
     /// Print disassembly
+    /// 
+    /// # Arguments
+    /// 
+    /// * `output_file` - Output file
+    /// 
     pub fn print_disassembly(&self, output_file: &str) {
         
         let (code, assembly, verbose) = self.disassemble();

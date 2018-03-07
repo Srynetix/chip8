@@ -38,6 +38,7 @@ impl Timer {
     /// # Arguments
     /// 
     /// * `value`: Value
+    /// 
     pub fn reset(&mut self, value: C8Byte) -> &Self {
         self.count = value;
         self

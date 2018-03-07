@@ -18,12 +18,9 @@ use super::stack::Stack;
 use super::breakpoints::Breakpoints;
 use super::peripherals::Peripherals;
 use super::debugger::{Debugger, Command};
-use super::logger::{trace_exec};
 
-/// Timer wait time
-pub const TIMER_WAIT_MS: i64 = 10;
-/// CPU wait time
-pub const CPU_WAIT_US: i64 = 100; 
+const TIMER_FRAME_LIMIT: u64 = 10;
+const CPU_FRAME_LIMIT: u64 = 10;
 
 /// CHIP-8 CPU struct
 pub struct CPU {
@@ -73,6 +70,11 @@ impl CPU {
     }
 
     /// Set tracefile
+    /// 
+    /// # Arguments
+    /// 
+    /// * `tracefile` - Tracefile output
+    /// 
     pub fn tracefile(&mut self, tracefile: &str) {
         self.tracefile = Some(tracefile.to_string());
     }
@@ -124,13 +126,17 @@ impl CPU {
     }
 
     /// Run CPU
+    /// 
+    /// # Arguments
+    /// 
+    /// * `cartridge` - Cartridge
+    /// 
     pub fn run(&mut self, cartridge: &Cartridge) {
         self.load_font_in_memory();
         self.load_cartridge_data(cartridge);
 
         let mut last_debugger_command: Option<Command> = None;
         let mut break_next_instruction: Option<C8Addr> = None;
-        let mut timers_time = time::PreciseTime::now();
         let mut tracefile_handle = match self.tracefile {
             Some(ref path) => Some(
                             OpenOptions::new()
@@ -142,7 +148,8 @@ impl CPU {
             None => None
         };
 
-        let mut cpu_time = time::PreciseTime::now();
+        let mut cpu_frames = 0;
+        let mut timer_frames = 0;
 
         loop {
             // Check if CPU should stop
@@ -162,8 +169,8 @@ impl CPU {
                 // Reset vars
                 last_debugger_command = None;
                 break_next_instruction = None;
-                timers_time = time::PreciseTime::now();
-                cpu_time = time::PreciseTime::now();
+                timer_frames = 0;
+                cpu_frames = 0;
 
                 // Restart !
                 continue;
@@ -171,14 +178,11 @@ impl CPU {
 
             // Read next instruction
             let opcode = self.peripherals.memory.read_opcode();
-            trace_exec(
-                &mut tracefile_handle,
-                &format!(
-                    "[{:08X}] {:04X} - Reading opcode 0x{:04X}...",
-                    self.instruction_count,
-                    self.peripherals.memory.get_pointer(),
-                    opcode
-                )
+            trace_exec!(tracefile_handle,
+                "[{:08X}] {:04X} - Reading opcode 0x{:04X}...",
+                self.instruction_count,
+                self.peripherals.memory.get_pointer(),
+                opcode
             );
 
             // Check for breakpoints
@@ -190,9 +194,7 @@ impl CPU {
             }
 
             if let Some(addr) = break_next_instruction {
-                if let Some(ref mut tracefile) = tracefile_handle {
-                    writeln!(tracefile, "{:?}", self).unwrap();
-                }
+                trace_exec!(tracefile_handle, "{:?}", self);
 
                 'debugger: loop {
                     {
@@ -219,22 +221,18 @@ impl CPU {
 
             let opcode_enum = opcodes::get_opcode_enum(opcode);
             let (assembly, verbose) = opcodes::get_opcode_str(&opcode_enum);
-            if let Some(ref mut tracefile) = tracefile_handle {
-                writeln!(tracefile, "  - {:20} ; {}", assembly, verbose).unwrap();
-            }
+            trace_exec!(tracefile_handle, "  - {:20} ; {}", assembly, verbose);
 
             // Update input state
-            self.peripherals.input.update_state();
-
-            if self.execute_instruction(opcode_enum) {
-                // Should exit
-                break;
-            }
-
-            // Handle timers
-            if timers_time.to(time::PreciseTime::now()).num_milliseconds() > TIMER_WAIT_MS {
-                self.handle_timers();
-                timers_time = time::PreciseTime::now();
+            if cpu_frames >= CPU_FRAME_LIMIT {
+                self.peripherals.input.update_state();
+             
+                if self.execute_instruction(opcode_enum) {
+                    // Should exit
+                    break;
+                }
+             
+                self.instruction_count += 1;
             }
 
             // Handle last debugger command
@@ -249,28 +247,28 @@ impl CPU {
                     _ => {}
                 }
             }
+            
+            // Handle timers
+            if timer_frames >= TIMER_FRAME_LIMIT {
+                self.decrement_timers();
+                timer_frames = 0;
+            }
 
+            // Update screen
             self.peripherals.screen.fade_pixels();
             self.peripherals.screen.render();
 
-            // Let the CPU sleep !
-            while cpu_time.to(time::PreciseTime::now()).num_microseconds().unwrap() <= CPU_WAIT_US {
-                // Update screen
-                self.peripherals.screen.fade_pixels();
-                self.peripherals.screen.render();
-            }
-
-            self.instruction_count += 1;
-            cpu_time = time::PreciseTime::now();            
+            cpu_frames += 1;
+            timer_frames += 1;      
         }
     }
 
-    /// Handle timers
-    pub fn handle_timers(&mut self) {
-        self.decrement_timers();
-    }
-
     /// Execute instruction
+    /// 
+    /// # Arguments
+    /// 
+    /// * `opcode` - Execute instruction
+    /// 
     pub fn execute_instruction(&mut self, opcode: OpCode) -> bool {
         let mut advance_pointer = true;
 

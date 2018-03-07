@@ -42,6 +42,11 @@ pub struct InputState {
 impl InputState {
 
     /// Create new input state
+    /// 
+    /// # Arguments
+    /// 
+    /// * `context` - SDL2 context
+    /// 
     pub fn new(context: &sdl2::Sdl) -> Self {
         let vec = vec![0; INPUT_STATE_COUNT];
 
@@ -124,12 +129,12 @@ impl InputState {
         self.last_pressed_key
     }
 
-    /// Check if a key is valid
-    pub fn is_key_valid(key: C8Byte) -> bool {
-        key <= INPUT_STATE_COUNT as C8Byte
-    }
-
     /// Press input
+    /// 
+    /// # Arguments
+    /// 
+    /// * `key` - Input key
+    /// 
     pub fn press(&mut self, key: C8RegIdx) {
         if key as usize >= INPUT_STATE_COUNT {
             panic!("Key `{}` does not exist.", key);
@@ -141,6 +146,11 @@ impl InputState {
     }
 
     /// Release input
+    /// 
+    /// # Arguments
+    /// 
+    /// * `key` - Input key
+    /// 
     pub fn release(&mut self, key: C8RegIdx) {
         if key as usize >= INPUT_STATE_COUNT {
             panic!("Key `{}` does not exist.", key);
@@ -152,6 +162,11 @@ impl InputState {
     }
 
     /// Get input
+    /// 
+    /// # Arguments
+    /// 
+    /// * `key` - Input key
+    /// 
     pub fn get(&self, key: C8RegIdx) -> C8Byte {
         if key as usize >= INPUT_STATE_COUNT {
             panic!("Key `{}` does not exist.", key);

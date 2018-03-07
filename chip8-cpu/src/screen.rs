@@ -31,6 +31,11 @@ pub struct Screen {
 impl Screen {
 
     /// Create new video memory
+    /// 
+    /// # Arguments
+    /// 
+    /// * `context` - SDL2 context
+    /// 
     pub fn new(context: &sdl2::Sdl) -> Self {
         let data = vec![0; VIDEO_MEMORY_SIZE];
         let alpha = vec![0; VIDEO_MEMORY_SIZE];
@@ -61,6 +66,13 @@ impl Screen {
     }
 
     /// Draw sprite
+    /// 
+    /// # Arguments
+    /// 
+    /// * `r1` - X position
+    /// * `r2` - Y position
+    /// * `sprite` - Sprite to draw
+    /// 
     pub fn draw_sprite(&mut self, r1: C8Byte, r2: C8Byte, sprite: &[C8Byte]) -> bool {
         let byte = sprite.len();
         let mut collision = false;

@@ -76,6 +76,7 @@ impl Registers {
     /// # Arguments
     ///
     /// * `value` - Address
+    /// 
     pub fn set_i_register(&mut self, value: C8Addr) {
         self.i = value;
     }

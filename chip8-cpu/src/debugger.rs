@@ -27,8 +27,6 @@ pub enum Command {
     ReadMemory(C8Addr, C8Addr),
     /// Next instruction
     Next,
-    /// Show video dump
-    Video,
     /// Add breakpoint
     AddBreakpoint(C8Addr),
     /// Remove breakpoint
@@ -40,17 +38,19 @@ pub enum Command {
 }
 
 impl<'a> Debugger<'a> {
-    /// Create
+
+    /// Create new debugger
+    /// 
+    /// # Arguments
+    /// 
+    /// * `cpu` - CPU reference
+    /// * `addr` - Starting address
+    /// 
     pub fn new(cpu: &'a CPU, addr: C8Addr) -> Debugger<'a> {
         Debugger {
             addr,
             cpu
         }
-    }
-
-    /// Set address
-    pub fn set_address(&mut self, addr: C8Addr) {
-        self.addr = addr;
     }
 
     /// Run
@@ -126,6 +126,11 @@ impl<'a> Debugger<'a> {
     }
 
     /// Read command
+    /// 
+    /// # Arguments
+    /// 
+    /// * `cmd` - Read command
+    /// 
     fn read_command(&self, cmd: &str) -> Option<Command> {
         let cmd_split: Vec<&str> = cmd.split(" ").collect();
         let command = cmd_split[0];
