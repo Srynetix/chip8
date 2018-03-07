@@ -32,12 +32,8 @@ impl Screen {
 
     /// Create new video memory
     pub fn new(context: &sdl2::Sdl) -> Self {
-        let mut data = Vec::with_capacity(VIDEO_MEMORY_SIZE);
-        let mut alpha = Vec::with_capacity(VIDEO_MEMORY_SIZE);
-        for _ in 0..VIDEO_MEMORY_SIZE {
-            data.push(0);
-            alpha.push(0);
-        }
+        let data = vec![0; VIDEO_MEMORY_SIZE];
+        let alpha = vec![0; VIDEO_MEMORY_SIZE];
 
         let video_subsystem = context.video().unwrap();
 
@@ -178,6 +174,14 @@ impl Screen {
     /// Dump screen
     pub fn dump_screen(&self) {
         println!("{:?}", &self);
+    }
+
+    /// Reset screen
+    /// 
+    /// With a little flash !
+    pub fn reset(&mut self) {
+        self.data = vec![0; VIDEO_MEMORY_SIZE];
+        self.alpha = vec![255; VIDEO_MEMORY_SIZE];
     }
 }
 

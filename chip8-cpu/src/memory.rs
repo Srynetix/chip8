@@ -119,6 +119,12 @@ impl Memory {
     pub fn read_opcode_at_address(&self, addr: C8Addr) -> C8Addr {
         extract_opcode_from_array(&self.data, addr as usize)
     }
+
+    /// Reset memory
+    pub fn reset(&mut self) {
+        self.data = vec![0; MEMORY_SIZE];
+        self.pointer = INITIAL_MEMORY_POINTER;
+    }
 }
 
 impl fmt::Debug for Memory {

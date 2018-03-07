@@ -23,27 +23,27 @@ pub const INPUT_STATE_COUNT: usize = 16;
 /// Input empty key
 pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
 
+const RESET_KEYCODE: Keycode = Keycode::F5;
+
 /// Input state struct
 pub struct InputState {
     event_pump: sdl2::EventPump,
     data: Vec<C8Byte>,
     key_binding: HashMap<C8Byte, Keycode>,
-
     last_pressed_key: C8Byte,
     input_pressed: bool,
 
     /// Should close
-    pub should_close: bool    
+    pub should_close: bool,
+    /// Should reset
+    pub should_reset: bool
 }
 
 impl InputState {
 
     /// Create new input state
     pub fn new(context: &sdl2::Sdl) -> Self {
-        let mut vec = Vec::with_capacity(INPUT_STATE_COUNT);
-        for _ in 0..INPUT_STATE_COUNT {
-            vec.push(0);
-        }
+        let vec = vec![0; INPUT_STATE_COUNT];
 
         let mut initial_binding = HashMap::new();
         initial_binding.insert(0x1, Keycode::Num1);
@@ -70,9 +70,11 @@ impl InputState {
             event_pump: context.event_pump().unwrap(),
             data: vec,
             last_pressed_key: INPUT_EMPTY_KEY,
-            should_close: false,
             input_pressed: false,
-            key_binding: initial_binding
+            key_binding: initial_binding,
+
+            should_close: false,
+            should_reset: false            
         }
     }
 
@@ -84,6 +86,9 @@ impl InputState {
             match event {
                 Event::Quit {..} | Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     self.should_close = true;
+                },
+                Event::KeyDown { keycode: Some(RESET_KEYCODE), .. } => {
+                    self.should_reset = true;
                 },
                 _ => {}
             }
@@ -142,7 +147,7 @@ impl InputState {
         }
 
         self.data[key as usize] = 0;
-        self.last_pressed_key = 255;
+        self.last_pressed_key = INPUT_EMPTY_KEY;
         self.input_pressed = false;
     }
 
@@ -158,6 +163,16 @@ impl InputState {
     /// Dump
     pub fn dump(&self) {
         println!("{:?}", &self);
+    }
+
+    /// Reset
+    pub fn reset(&mut self) {
+        self.data = vec![0; INPUT_STATE_COUNT];
+        self.last_pressed_key = INPUT_EMPTY_KEY;
+        self.input_pressed = false;
+
+        self.should_close = false;
+        self.should_reset = false;           
     }
 }
 

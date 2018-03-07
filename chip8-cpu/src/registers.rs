@@ -79,6 +79,12 @@ impl Registers {
     pub fn set_i_register(&mut self, value: C8Addr) {
         self.i = value;
     }
+
+    /// Reset registers
+    pub fn reset(&mut self) {
+        self.data = vec![0; REGISTER_COUNT];
+        self.i = 0;
+    }
 }
 
 impl fmt::Debug for Registers {

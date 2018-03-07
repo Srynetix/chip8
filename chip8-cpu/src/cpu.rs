@@ -108,6 +108,20 @@ impl CPU {
         self.delay_timer.decrement();
         self.sound_timer.decrement();
     }
+    
+    /// Reset CPU
+    pub fn reset(&mut self) {
+        // Reset peripherals
+        self.peripherals.memory.reset();
+        self.peripherals.input.reset();
+        self.peripherals.screen.reset();       
+
+        // Reset components
+        self.registers.reset();
+        self.stack.reset();
+        self.delay_timer.reset(0);
+        self.sound_timer.reset(0);
+    }
 
     /// Run CPU
     pub fn run(&mut self, cartridge: &Cartridge) {
@@ -134,6 +148,25 @@ impl CPU {
             // Check if CPU should stop
             if self.peripherals.input.should_close {
                 break;
+            }
+
+            // Check if CPU should reset
+            if self.peripherals.input.should_reset {
+                // Reset CPU
+                self.reset();
+
+                // Reload data
+                self.load_font_in_memory();
+                self.load_cartridge_data(cartridge);
+
+                // Reset vars
+                last_debugger_command = None;
+                break_next_instruction = None;
+                timers_time = time::PreciseTime::now();
+                cpu_time = time::PreciseTime::now();
+
+                // Restart !
+                continue;
             }
 
             // Read next instruction

@@ -52,6 +52,12 @@ impl Stack {
     pub fn empty(&self) -> bool {
         self.pointer == 0
     }
+
+    /// Reset stack
+    pub fn reset(&mut self) {
+        self.data = vec![0; STACK_DEPTH];
+        self.pointer = 0;
+    }
 }
 
 impl fmt::Debug for Stack {
