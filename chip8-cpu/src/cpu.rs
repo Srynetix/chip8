@@ -19,8 +19,9 @@ use super::breakpoints::Breakpoints;
 use super::peripherals::Peripherals;
 use super::debugger::{Debugger, Command};
 
-const TIMER_FRAME_LIMIT: u64 = 10;
-const CPU_FRAME_LIMIT: u64 = 10;
+const TIMER_FRAME_LIMIT: i64 = 16;
+const CPU_FRAME_LIMIT: i64 = 2;
+const SCREEN_FRAME_LIMIT: i64 = 16;
 
 /// CHIP-8 CPU struct
 pub struct CPU {
@@ -148,8 +149,9 @@ impl CPU {
             None => None
         };
 
-        let mut cpu_frames = 0;
-        let mut timer_frames = 0;
+        let mut timer_frametime = time::PreciseTime::now();
+        let mut cpu_frametime = time::PreciseTime::now();
+        let mut frametime = time::PreciseTime::now();
 
         loop {
             // Check if CPU should stop
@@ -169,97 +171,102 @@ impl CPU {
                 // Reset vars
                 last_debugger_command = None;
                 break_next_instruction = None;
-                timer_frames = 0;
-                cpu_frames = 0;
 
                 // Restart !
                 continue;
             }
 
-            // Read next instruction
-            let opcode = self.peripherals.memory.read_opcode();
-            trace_exec!(tracefile_handle,
-                "[{:08X}] {:04X} - Reading opcode 0x{:04X}...",
-                self.instruction_count,
-                self.peripherals.memory.get_pointer(),
-                opcode
-            );
+            if cpu_frametime.to(time::PreciseTime::now()).num_milliseconds() >= CPU_FRAME_LIMIT {
+                // Read next instruction
+                let opcode = self.peripherals.memory.read_opcode();
+                trace_exec!(tracefile_handle,
+                    "[{:08X}] {:04X} - Reading opcode 0x{:04X}...",
+                    self.instruction_count,
+                    self.peripherals.memory.get_pointer(),
+                    opcode
+                );
 
-            // Check for breakpoints
-            if break_next_instruction.is_none() {
-                let pointer = self.peripherals.memory.get_pointer();
-                if let Some(_) = self.breakpoints.check_breakpoint(pointer) {
-                    break_next_instruction = Some(pointer);
-                }
-            }
-
-            if let Some(addr) = break_next_instruction {
-                trace_exec!(tracefile_handle, "{:?}", self);
-
-                'debugger: loop {
-                    {
-                        let debugger = Debugger::new(&self, addr);
-                        last_debugger_command = debugger.run();
+                // Check for breakpoints
+                if break_next_instruction.is_none() {
+                    let pointer = self.peripherals.memory.get_pointer();
+                    if let Some(_) = self.breakpoints.check_breakpoint(pointer) {
+                        break_next_instruction = Some(pointer);
                     }
+                }
 
-                    if let Some(ref command) = last_debugger_command {
-                        match *command {
-                            Command::Quit => process::exit(1),
-                            Command::AddBreakpoint(addr) => {
-                                println!("Adding breakpoint for address 0x{:04X}", addr);                            
-                                self.breakpoints.register(addr);                
-                            },
-                            Command::RemoveBreakpoint(addr) => {
-                                println!("Removing breakpoint for address 0x{:04X}", addr);
-                                self.breakpoints.unregister(addr);                                                        
-                            },
-                            _ => break 'debugger
+                // Break ?
+                if let Some(addr) = break_next_instruction {
+                    trace_exec!(tracefile_handle, "{:?}", self);
+
+                    'debugger: loop {
+                        {
+                            let debugger = Debugger::new(&self, addr);
+                            last_debugger_command = debugger.run();
+                        }
+
+                        if let Some(ref command) = last_debugger_command {
+                            match *command {
+                                Command::Quit => process::exit(1),
+                                Command::AddBreakpoint(addr) => {
+                                    println!("Adding breakpoint for address 0x{:04X}", addr);                            
+                                    self.breakpoints.register(addr);                
+                                },
+                                Command::RemoveBreakpoint(addr) => {
+                                    println!("Removing breakpoint for address 0x{:04X}", addr);
+                                    self.breakpoints.unregister(addr);                                                        
+                                },
+                                _ => break 'debugger
+                            }
                         }
                     }
                 }
-            }
 
-            let opcode_enum = opcodes::get_opcode_enum(opcode);
-            let (assembly, verbose) = opcodes::get_opcode_str(&opcode_enum);
-            trace_exec!(tracefile_handle, "  - {:20} ; {}", assembly, verbose);
+                // Trace
+                let opcode_enum = opcodes::get_opcode_enum(opcode);
+                let (assembly, verbose) = opcodes::get_opcode_str(&opcode_enum);
+                trace_exec!(tracefile_handle, "  - {:20} ; {}", assembly, verbose);
 
-            // Update input state
-            if cpu_frames >= CPU_FRAME_LIMIT {
+                // Update state
                 self.peripherals.input.update_state();
              
+                // Execute instruction
                 if self.execute_instruction(opcode_enum) {
-                    // Should exit
                     break;
                 }
              
-                self.instruction_count += 1;
-            }
-
-            // Handle last debugger command
-            if let Some(ref command) = last_debugger_command {
-                match *command {
-                    Command::Continue => {
-                        break_next_instruction = None;
-                    },
-                    Command::Next => {
-                        break_next_instruction = Some(self.peripherals.memory.get_pointer());
-                    },
-                    _ => {}
+                // Handle last debugger command
+                if let Some(ref command) = last_debugger_command {
+                    match *command {
+                        Command::Continue => {
+                            break_next_instruction = None;
+                        },
+                        Command::Next => {
+                            break_next_instruction = Some(self.peripherals.memory.get_pointer());
+                        },
+                        _ => {}
+                    }
                 }
+                
+
+                cpu_frametime = time::PreciseTime::now();
             }
-            
-            // Handle timers
-            if timer_frames >= TIMER_FRAME_LIMIT {
+
+            if timer_frametime.to(time::PreciseTime::now()).num_milliseconds() >= TIMER_FRAME_LIMIT {
+                // Handle timers
                 self.decrement_timers();
-                timer_frames = 0;
+                timer_frametime = time::PreciseTime::now();
             }
 
-            // Update screen
-            self.peripherals.screen.fade_pixels();
-            self.peripherals.screen.render();
+            if frametime.to(time::PreciseTime::now()).num_milliseconds() >= SCREEN_FRAME_LIMIT {
+                // Update screen
+                self.peripherals.screen.fade_pixels();
+                self.peripherals.screen.render();
 
-            cpu_frames += 1;
-            timer_frames += 1;      
+                // println!("FPS: {}", 1.0 / (diff.num_milliseconds() as f32 / 1000.0));
+                frametime = time::PreciseTime::now();        
+
+                self.instruction_count += 1;                    
+            }
         }
     }
 
