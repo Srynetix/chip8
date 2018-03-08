@@ -272,6 +272,69 @@ pub enum OpCode {
     /// | into registers V0 through Vx.
     LDR(C8RegIdx),
 
+    /* SUPER CHIP-48 */
+
+    /// 00CN - SCRD N
+    /// * Scroll display N lines down
+    /// 
+    /// | This opcode delays until the start of a 60Hz clock cycle before drawing in low resolution mode.
+    /// | (Use the delay timer to pace your games in high resolution mode.)
+    SCRD(C8Byte),
+
+    /// 00FB - SCRR
+    /// * Scroll display 4 pixels right
+    /// 
+    /// | This opcode delays until the start of a 60Hz clock cycle before drawing in low resolution mode.
+    /// | (Use the delay timer to pace your games in high resolution mode.)
+    SCRR,
+
+    /// 00FC - SCRL
+    /// * Scroll display 4 pixels left
+    /// 
+    /// | This opcode delays until the start of a 60Hz clock cycle before drawing in low resolution mode.
+    /// | (Use the delay timer to pace your games in high resolution mode.)
+    SCRL,
+
+    /// 00FD - EXIT
+    /// * Exit interpreter
+    EXIT,
+
+    /// 00FE - LOW
+    /// * Disable extended screen mode
+    /// 
+    /// | Low resolution (64×32) graphics mode (this is the default).
+    LOW,
+
+    /// 00FF - HIGH
+    /// * Enable extended screen mode
+    /// 
+    /// | High resolution (128×64) graphics mode.
+    HIGH,
+
+    /// DXY0 - DRWX
+    /// * Same as DRW, with 16x16 sprite.
+    /// 
+    /// | Same as DRW, however the image is always 16×16 pixels.
+    DRWX(C8RegIdx, C8RegIdx),
+
+    /// FX30 - LDX F, Vx
+    /// * Point I to 10-byte font sprite for digit VX (0..9)
+    LDXSprite(C8RegIdx),
+
+    /// FX75 - LDX [I], Vx
+    /// * Store V0..VX in RPL user flags (X <= 7)
+    /// 
+    /// | Store the values of registers v0 to vX into the ‘‘flags’’ registers (this means something in the
+    /// | HP48 implementation). (X < 8)
+    LDXS(C8RegIdx),
+
+    /// FX85 - LDX Vx, [I]
+    /// * Read V0..VX from RPL user flags (X <= 7)
+    /// 
+    /// | Read the values of registers v0 to vX from the ‘‘flags’’ registers (this means something in the
+    /// | HP48 implementation). (X < 8)
+    LDXR(C8RegIdx),
+
     /// xxxx - Data
     DATA(C8Addr)
 }
@@ -302,18 +365,34 @@ lazy_static! {
         m.insert(20, (0xA000, 0xF000));     // Annn
         m.insert(21, (0xB000, 0xF000));     // Bnnn
         m.insert(22, (0xC000, 0xF000));     // Cxkk
-        m.insert(23, (0xD000, 0xF000));     // Dxyn
-        m.insert(24, (0xE09E, 0xF0FF));     // Ex9E
-        m.insert(25, (0xE0A1, 0xF0FF));     // ExA1
-        m.insert(26, (0xF007, 0xF0FF));     // Fx07
-        m.insert(27, (0xF00A, 0xF0FF));     // Fx0A
-        m.insert(28, (0xF015, 0xF0FF));     // Fx15
-        m.insert(29, (0xF018, 0xF0FF));     // Fx18
-        m.insert(30, (0xF01E, 0xF0FF));     // Fx1E
-        m.insert(31, (0xF029, 0xF0FF));     // Fx29
-        m.insert(32, (0xF033, 0xF0FF));     // Fx33
-        m.insert(33, (0xF055, 0xF0FF));     // Fx55
-        m.insert(34, (0xF065, 0xF0FF));     // Fx65
+
+        // S-CHIP DRWX insert
+        m.insert(23, (0xD000, 0xF00F));     // Dxy0
+        m.insert(24, (0xD000, 0xF000));     // Dxyn
+
+        m.insert(25, (0xE09E, 0xF0FF));     // Ex9E
+        m.insert(26, (0xE0A1, 0xF0FF));     // ExA1
+        m.insert(27, (0xF007, 0xF0FF));     // Fx07
+        m.insert(28, (0xF00A, 0xF0FF));     // Fx0A
+        m.insert(29, (0xF015, 0xF0FF));     // Fx15
+        m.insert(30, (0xF018, 0xF0FF));     // Fx18
+        m.insert(31, (0xF01E, 0xF0FF));     // Fx1E
+        m.insert(32, (0xF029, 0xF0FF));     // Fx29
+        m.insert(33, (0xF033, 0xF0FF));     // Fx33
+        m.insert(34, (0xF055, 0xF0FF));     // Fx55
+        m.insert(35, (0xF065, 0xF0FF));     // Fx65
+
+        // S-CHIP
+
+        m.insert(36, (0x00C0, 0xFFF0));     // 00Cn
+        m.insert(37, (0x00FB, 0xFFFF));     // 00FB
+        m.insert(38, (0x00FC, 0xFFFF));     // 00FC
+        m.insert(39, (0x00FD, 0xFFFF));     // 00FD
+        m.insert(40, (0x00FE, 0xFFFF));     // 00FE
+        m.insert(41, (0x00FF, 0xFFFF));     // 00FF
+        m.insert(42, (0xF030, 0xF0FF));     // Fx30
+        m.insert(43, (0xF075, 0xF0FF));     // Fx75
+        m.insert(44, (0xF085, 0xF0FF));     // Fx85
 
         m
     };
@@ -385,18 +464,32 @@ pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
         20 => OpCode::LDI(addr),
         21 => OpCode::JP0(addr),
         22 => OpCode::RND(b3, kk),
-        23 => OpCode::DRW(b3, b2, b1),
-        24 => OpCode::SKP(b3),
-        25 => OpCode::SKNP(b3),
-        26 => OpCode::LDGetDelayTimer(b3),
-        27 => OpCode::LDGetKey(b3),
-        28 => OpCode::LDSetDelayTimer(b3),
-        29 => OpCode::LDSetSoundTimer(b3),
-        30 => OpCode::ADDI(b3),
-        31 => OpCode::LDSprite(b3),
-        32 => OpCode::LDBCD(b3),
-        33 => OpCode::LDS(b3),
-        34 => OpCode::LDR(b3),
+        23 => OpCode::DRWX(b3, b2),
+        24 => OpCode::DRW(b3, b2, b1),
+        25 => OpCode::SKP(b3),
+        26 => OpCode::SKNP(b3),
+        27 => OpCode::LDGetDelayTimer(b3),
+        28 => OpCode::LDGetKey(b3),
+        29 => OpCode::LDSetDelayTimer(b3),
+        30 => OpCode::LDSetSoundTimer(b3),
+        31 => OpCode::ADDI(b3),
+        32 => OpCode::LDSprite(b3),
+        33 => OpCode::LDBCD(b3),
+        34 => OpCode::LDS(b3),
+        35 => OpCode::LDR(b3),
+
+        // S-CHIP
+
+        36 => OpCode::SCRD(b1),
+        37 => OpCode::SCRR,
+        38 => OpCode::SCRL,
+        39 => OpCode::EXIT,
+        40 => OpCode::LOW,
+        41 => OpCode::HIGH,
+        42 => OpCode::LDXSprite(b3),
+        43 => OpCode::LDXS(b3),
+        44 => OpCode::LDXR(b3),
+
         _ => OpCode::DATA(opcode)
     };
 
@@ -453,6 +546,19 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
         OpCode::LDBCD(reg) => (format!("LD B, V{:X}", reg), format!("Store BCD representation of V{:X} in memory locations I, I+1 and I+2", reg)),
         OpCode::LDS(reg) => (format!("LD [I], V{:X}", reg), format!("Store registers V0 through V{:X} in memory starting at location I", reg)),
         OpCode::LDR(reg) => (format!("LD V{:X}, [I]", reg), format!("Read registers V0 through V{:X} from memory starting at location I", reg)),
+
+        // S-CHIP
+
+        OpCode::SCRD(byte) => (format!("SCRD {:X}", byte), format!("Scroll display {} lines down", byte)),
+        OpCode::SCRR => (format!("SCRR"), format!("Scroll display 4 pixels right")),
+        OpCode::SCRL => (format!("SCRL"), format!("Scroll display 4 pixels left")),
+        OpCode::EXIT => (format!("EXIT"), format!("Exit interpreter")),
+        OpCode::LOW => (format!("LOW"), format!("Disable extended screen mode")),
+        OpCode::HIGH => (format!("HIGH"), format!("Enable extended screen mode")),
+        OpCode::DRWX(reg1, reg2) => (format!("DRWX V{:X}, V{:X}", reg1, reg2), format!("Display sprite starting at mem. location I at (V{:X}, V{:X}) on 16 bytes, set VF = collision", reg1, reg2)),
+        OpCode::LDXSprite(reg) => (format!("LDX F, V{:X}", reg), format!("Set I = location of 10-byte sprite for digit V{:X}", reg)),
+        OpCode::LDXS(reg) => (format!("LDX [I], V{:X}", reg), format!("Store V0..V{:X} in RPL user flags", reg)),
+        OpCode::LDXR(reg) => (format!("LDX V{:X}, [I]", reg), format!("Read V0..V{:X} from RPL user flags", reg)),
 
         OpCode::DATA(opcode) => (format!("DATA {:04X}", opcode), format!("- Data ({:04X})", opcode))
     }

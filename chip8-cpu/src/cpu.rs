@@ -50,7 +50,10 @@ pub struct CPU {
     pub tracefile: Option<String>,
 
     /// Save state
-    pub savestate: Option<SaveState>
+    pub savestate: Option<SaveState>,
+
+    /// SCHIP mode
+    pub schip_mode: bool
 }
 
 impl CPU {
@@ -71,7 +74,8 @@ impl CPU {
             instruction_count: 0,
 
             tracefile: None,
-            savestate: None
+            savestate: None,
+            schip_mode: false
         }
     }
 
@@ -602,6 +606,20 @@ impl CPU {
                     self.registers.set_register(ridx, byte);
                 }
             },
+
+            // S-CHIP
+            
+            OpCode::SCRD(_b) => {},
+            OpCode::SCRR => {},
+            OpCode::SCRL => {},
+            OpCode::EXIT => {},
+            OpCode::LOW => {},
+            OpCode::HIGH => {},
+            OpCode::DRWX(_reg1, _reg2) => {},
+            OpCode::LDXSprite(_reg) => {},
+            OpCode::LDXS(_reg) => {},
+            OpCode::LDXR(_reg) => {},
+
             OpCode::DATA(_) => {
                 // Unknown
             }
