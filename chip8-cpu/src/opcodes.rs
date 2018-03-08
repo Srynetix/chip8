@@ -572,5 +572,12 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
 /// * `ptr` - Pointer
 /// 
 pub fn extract_opcode_from_array(array: &[u8], ptr: usize) -> C8Addr {
-    ((array[ptr] as C8Addr) << 8) + array[ptr + 1] as C8Addr
+    let array_length = array.len();
+
+    if ptr >= array_length || (ptr + 1) >= array_length {
+        // Return 0 if the opcode is not complete
+        0
+    } else {
+        ((array[ptr] as C8Addr) << 8) + array[ptr + 1] as C8Addr
+    }
 }
