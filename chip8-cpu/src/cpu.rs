@@ -181,6 +181,12 @@ impl CPU {
         let mut frametime = time::PreciseTime::now();
 
         loop {
+            let cpu_framelimit = if self.schip_mode {
+                CPU_FRAME_LIMIT / 2
+            } else {
+                CPU_FRAME_LIMIT
+            };
+
             // Check if CPU should stop
             if self.peripherals.input.data.flags.should_close {
                 break;
@@ -229,7 +235,7 @@ impl CPU {
                 }
             }
 
-            if cpu_frametime.to(time::PreciseTime::now()).num_milliseconds() >= CPU_FRAME_LIMIT {
+            if cpu_frametime.to(time::PreciseTime::now()).num_milliseconds() >= cpu_framelimit {
                 // Read next instruction
                 let opcode = self.peripherals.memory.read_opcode();
                 trace_exec!(tracefile_handle,
@@ -314,8 +320,6 @@ impl CPU {
                 // Update screen
                 self.peripherals.screen.fade_pixels();
                 self.peripherals.screen.render();
-
-                // println!("FPS: {}", 1.0 / (diff.num_milliseconds() as f32 / 1000.0));
                 frametime = time::PreciseTime::now();        
 
                 self.instruction_count += 1;                    
