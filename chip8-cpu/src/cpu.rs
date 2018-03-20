@@ -19,6 +19,7 @@ use super::breakpoints::Breakpoints;
 use super::peripherals::Peripherals;
 use super::debugger::{Debugger, Command};
 use super::savestate::SaveState;
+use super::screen::ScreenMode;
 
 const TIMER_FRAME_LIMIT: i64 = 16;
 const CPU_FRAME_LIMIT: i64 = 2;
@@ -613,8 +614,12 @@ impl CPU {
             OpCode::SCRR => {},
             OpCode::SCRL => {},
             OpCode::EXIT => {},
-            OpCode::LOW => {},
-            OpCode::HIGH => {},
+            OpCode::LOW => {
+                self.peripherals.screen.reload_screen_for_mode(ScreenMode::Standard);
+            },
+            OpCode::HIGH => {
+                self.peripherals.screen.reload_screen_for_mode(ScreenMode::Extended);                
+            },
             OpCode::DRWX(_reg1, _reg2) => {},
             OpCode::LDXSprite(_reg) => {},
             OpCode::LDXS(_reg) => {},

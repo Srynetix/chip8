@@ -19,6 +19,37 @@ pub struct Cartridge(Vec<C8Byte>);
 
 impl Cartridge {
 
+    /// Get game path.
+    /// 
+    /// Automatically add extension if not in name.
+    /// Supported extensions are: ch8, CH8
+    /// 
+    /// # Arguments
+    /// 
+    /// * `name` - Game name
+    /// 
+    fn get_game_path(name: &str) -> String {
+        // Concat games directory to path
+        let mut game_path = Cartridge::get_games_directory();
+        game_path.push(name);
+
+        if !game_path.exists() {
+            // Check for 'ch8' extension
+            game_path.set_extension("ch8");
+    
+            if !game_path.exists() {
+                // Check for 'CH8' extension
+                game_path.set_extension("CH8");
+                
+                if !game_path.exists() {            
+                    panic!("Game `{}` not found.", name);
+                }
+            }
+        }
+
+        String::from(game_path.to_str().unwrap())
+    }
+
     /// Load cartridge from path
     /// 
     /// # Arguments
@@ -26,8 +57,8 @@ impl Cartridge {
     /// * `path` - Path to file
     /// 
     pub fn load_from_games_directory(path: &str) -> Cartridge {
-        let games_dir = Cartridge::get_games_directory();
-        let mut file = File::open(games_dir.join(path))
+        let game_path = Cartridge::get_game_path(path);
+        let mut file = File::open(game_path)
                             .expect(&format!("File `{}` not found", path));
 
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
@@ -38,7 +69,7 @@ impl Cartridge {
     }
 
     /// Get games directory
-    pub fn get_games_directory() -> PathBuf {
+    fn get_games_directory() -> PathBuf {
         let cargo_path = match env::var("CARGO_MANIFEST_DIR") {
             Ok(path) => path,
             Err(_) => ".".to_string()
@@ -84,7 +115,6 @@ impl Cartridge {
     /// * `output_file` - Output file
     /// 
     pub fn print_disassembly(&self, output_file: &str) {
-        
         let (code, assembly, verbose) = self.disassemble();
         let mut ptr_value = INITIAL_MEMORY_POINTER;
             

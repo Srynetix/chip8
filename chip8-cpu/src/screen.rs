@@ -22,11 +22,19 @@ pub const RENDERER_SCALE: usize = 10;
 const PIXEL_FADE_COEFFICIENT: f32 = 0.9;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
 
+/// Screen mode
+#[derive(Debug, Clone)]
+pub enum ScreenMode {
+    Standard,
+    Extended
+}
+
 /// CHIP-8 screen data
 #[derive(Clone)]
 pub struct ScreenData {
     data: Vec<C8Byte>,
-    alpha: Vec<C8Byte>
+    alpha: Vec<C8Byte>,
+    mode: ScreenMode
 }
 
 /// CHIP-8 screen memory struct
@@ -69,8 +77,31 @@ impl Screen {
             renderer,
             data: ScreenData {
                 data,
-                alpha
+                alpha,
+                mode: ScreenMode::Standard
             }
+        }
+    }
+
+    /// Reload screen for mode
+    /// 
+    /// # Arguments
+    /// 
+    /// * `mode` - Screen mode
+    /// 
+    pub fn reload_screen_for_mode(&mut self, mode: ScreenMode) {
+        self.data.mode = mode;
+
+        let coef = self.get_screen_size_coef();
+        self.data.data = vec![0; VIDEO_MEMORY_SIZE * coef * coef];
+        self.data.alpha = vec![0; VIDEO_MEMORY_SIZE * coef * coef];
+    }
+
+    /// Get screen size coef
+    fn get_screen_size_coef(&self) -> usize {
+        match self.data.mode {
+            ScreenMode::Standard => 1,
+            ScreenMode::Extended => 2
         }
     }
 
@@ -83,16 +114,18 @@ impl Screen {
     /// * `sprite` - Sprite to draw
     /// 
     pub fn draw_sprite(&mut self, r1: C8Byte, r2: C8Byte, sprite: &[C8Byte]) -> bool {
+        let coef = self.get_screen_size_coef();
+
         let byte = sprite.len();
         let mut collision = false;
 
         for i in 0..byte {
             let code = sprite[i];
-            let y = ((r2 as usize) + (i as usize)) % VIDEO_MEMORY_HEIGHT;
+            let y = ((r2 as usize) + (i as usize)) % (VIDEO_MEMORY_HEIGHT * coef);
             let mut shift = FONT_CHAR_WIDTH - 1;
 
             for j in 0..FONT_CHAR_WIDTH {
-                let x = ((r1 as usize) + (j as usize)) % VIDEO_MEMORY_WIDTH;
+                let x = ((r1 as usize) + (j as usize)) % (VIDEO_MEMORY_WIDTH * coef);
 
                 if code & (0x1 << shift) != 0 {
                     if self.toggle_pixel_xy(x, y) {
@@ -141,7 +174,7 @@ impl Screen {
     pub fn toggle_pixel(&mut self, pos: usize) -> bool {
         // For now, only handle 0 and 1
         let mut flip = false;
-        let pixel = self.data.data[pos];        
+        let pixel = self.data.data[pos];
         
         if pixel == 1 {
             self.data.data[pos] = 0;
@@ -157,22 +190,23 @@ impl Screen {
 
     /// Render screen
     pub fn render(&mut self) {
+        let coef = self.get_screen_size_coef();
         self.renderer.set_draw_color(Color::RGB(0, 0, 0));
         self.renderer.clear();
 
         for (pos, px) in self.data.data.iter().enumerate() {
-            let x = pos % VIDEO_MEMORY_WIDTH;
-            let y = pos / VIDEO_MEMORY_WIDTH;
+            let x = pos % (VIDEO_MEMORY_WIDTH * coef);
+            let y = pos / (VIDEO_MEMORY_WIDTH * coef);
             let alpha = &self.data.alpha[pos];
 
             let color = color_from_byte(*px, *alpha);
             self.renderer.set_draw_color(color);
             self.renderer.fill_rect(
                 Rect::new(
-                    (x * RENDERER_SCALE) as i32,
-                    (y * RENDERER_SCALE) as i32,
-                    RENDERER_SCALE as u32,
-                    RENDERER_SCALE as u32)
+                    (x * (RENDERER_SCALE / coef)) as i32,
+                    (y * (RENDERER_SCALE / coef)) as i32,
+                    (RENDERER_SCALE / coef) as u32,
+                    (RENDERER_SCALE / coef) as u32)
                 )
                 .expect("Error while drawing.");
         }
@@ -189,7 +223,8 @@ impl Screen {
     /// * `y` - Y coordinate
     /// 
     pub fn toggle_pixel_xy(&mut self, x: usize, y: usize) -> bool {
-        self.toggle_pixel(x + y * VIDEO_MEMORY_WIDTH)
+        let coef = self.get_screen_size_coef();
+        self.toggle_pixel(x + y * (VIDEO_MEMORY_WIDTH * coef))
     }
 
     /// Dump screen
@@ -203,6 +238,7 @@ impl Screen {
     pub fn reset(&mut self) {
         self.data.data = vec![0; VIDEO_MEMORY_SIZE];
         self.data.alpha = vec![255; VIDEO_MEMORY_SIZE];
+        self.data.mode = ScreenMode::Standard;
     }
 
     /// Load from save
@@ -214,18 +250,20 @@ impl Screen {
     pub fn load_from_save(&mut self, screen_data: ScreenData) {
         self.data.data = screen_data.data;
         self.data.alpha = screen_data.alpha;
+        self.data.mode = screen_data.mode;
     }
 }
 
 impl fmt::Debug for Screen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "    -> Size: {} x {}\n", VIDEO_MEMORY_WIDTH, VIDEO_MEMORY_HEIGHT)?;
+        let coef = self.get_screen_size_coef();
+        write!(f, "    -> Size: {} x {}\n", VIDEO_MEMORY_WIDTH * coef, VIDEO_MEMORY_HEIGHT * coef)?;
 
-        for j in 0..VIDEO_MEMORY_HEIGHT {
+        for j in 0..(VIDEO_MEMORY_HEIGHT * coef) {
             write!(f, "    ")?;
 
-            for i in 0..VIDEO_MEMORY_WIDTH {
-                let pixel = self.data.data[i + j * VIDEO_MEMORY_WIDTH];
+            for i in 0..(VIDEO_MEMORY_WIDTH * coef) {
+                let pixel = self.data.data[i + j * (VIDEO_MEMORY_WIDTH * coef)];
                 if pixel == 0 {
                     write!(f, " ")?;
                 } else {
