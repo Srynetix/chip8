@@ -22,6 +22,9 @@ pub const RENDERER_SCALE: usize = 10;
 const PIXEL_FADE_COEFFICIENT: f32 = 0.9;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
 
+const WINDOW_TITLE: &'static str = "CHIP-8 Emulator";
+const SCHIP_WINDOW_TITLE: &'static str = "Super CHIP-8 Emulator";
+
 /// Screen mode
 #[derive(Debug, Clone)]
 pub enum ScreenMode {
@@ -57,7 +60,7 @@ impl Screen {
 
         let video_subsystem = context.video().unwrap();
 
-        let window = video_subsystem.window("CHIP-8 Emulator",
+        let window = video_subsystem.window(WINDOW_TITLE,
                                             (VIDEO_MEMORY_WIDTH * RENDERER_SCALE) as u32,
                                             (VIDEO_MEMORY_HEIGHT * RENDERER_SCALE) as u32)
                                     .position_centered()
@@ -95,6 +98,11 @@ impl Screen {
         let coef = self.get_screen_size_coef();
         self.data.data = vec![0; VIDEO_MEMORY_SIZE * coef * coef];
         self.data.alpha = vec![0; VIDEO_MEMORY_SIZE * coef * coef];
+
+        match self.data.mode {
+            ScreenMode::Standard => self.set_title(WINDOW_TITLE),
+            ScreenMode::Extended => self.set_title(SCHIP_WINDOW_TITLE)
+        }
     }
 
     /// Get screen size coef
@@ -162,6 +170,11 @@ impl Screen {
                 }
             }
         }
+    }
+
+    /// Set title
+    fn set_title(&mut self, title: &str) {
+        self.renderer.window_mut().set_title(title).unwrap();
     }
 
     /// Toggle pixel position
