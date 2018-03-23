@@ -3,6 +3,8 @@
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
+use std::error::Error;
+use std::fmt;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -14,8 +16,27 @@ use super::memory::{INITIAL_MEMORY_POINTER};
 /// Cartridge max size
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
 
+/// Available extensions
+const AVAILABLE_EXTENSIONS: [&str; 3] = ["", "ch8", "CH8"];
+
 /// CHIP-8 cartridge type
 pub struct Cartridge(Vec<C8Byte>);
+
+/// Missing Cartridge error
+#[derive(Debug)]
+pub struct MissingCartridgeError(String);
+
+impl Error for MissingCartridgeError {
+    fn description(&self) -> &str {
+        "Missing cartridge"
+    }
+}
+
+impl fmt::Display for MissingCartridgeError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Game cartridge is not found: {}", self.0)
+    }
+}
 
 impl Cartridge {
 
@@ -28,26 +49,21 @@ impl Cartridge {
     /// 
     /// * `name` - Game name
     /// 
-    fn get_game_path(name: &str) -> String {
+    fn get_game_path(name: &str) -> Result<String, Box<Error>> {
         // Concat games directory to path
         let mut game_path = Cartridge::get_games_directory();
         game_path.push(name);
 
-        if !game_path.exists() {
-            // Check for 'ch8' extension
-            game_path.set_extension("ch8");
-    
-            if !game_path.exists() {
-                // Check for 'CH8' extension
-                game_path.set_extension("CH8");
-                
-                if !game_path.exists() {            
-                    panic!("Game `{}` not found.", name);
-                }
+        for ext in &AVAILABLE_EXTENSIONS {
+            game_path.set_extension(ext);
+            debug!("Searching for game {:?}...", game_path);
+
+            if game_path.exists() {
+                return Ok(String::from(game_path.to_str().unwrap()));
             }
         }
 
-        String::from(game_path.to_str().unwrap())
+        Err(Box::new(MissingCartridgeError(name.to_string())))
     }
 
     /// Load cartridge from path
@@ -56,16 +72,14 @@ impl Cartridge {
     /// 
     /// * `path` - Path to file
     /// 
-    pub fn load_from_games_directory(path: &str) -> Cartridge {
-        let game_path = Cartridge::get_game_path(path);
-        let mut file = File::open(game_path)
-                            .expect(&format!("File `{}` not found", path));
+    pub fn load_from_games_directory(path: &str) -> Result<Cartridge, Box<Error>> {
+        let game_path = Cartridge::get_game_path(path)?;
+        let mut file = File::open(game_path)?;
 
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
-        file.read_to_end(&mut contents)
-            .expect("Error while reading file contents");
+        file.read_to_end(&mut contents)?;
 
-        Cartridge(contents)
+        Ok(Cartridge(contents))
     }
 
     /// Get games directory

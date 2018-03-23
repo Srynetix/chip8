@@ -1,6 +1,7 @@
 //! CHIP-8 shell
 
 use std::env;
+use std::process;
 
 use super::types::convert_hex_addr;
 use super::logger::init_logger;
@@ -58,7 +59,15 @@ pub fn start_shell() {
             init_logger(level).expect(&format!("Failed to initialize logger with level: {:?}", level));
 
             let cartridge_filename = result.value_of("file").unwrap();
-            let cartridge = Cartridge::load_from_games_directory(cartridge_filename);
+            let cartridge_handle = Cartridge::load_from_games_directory(cartridge_filename);
+
+            if let Err(error) = cartridge_handle {
+                println!("{}", error);
+                process::exit(1);
+            }
+
+            // Extract cartridge
+            let cartridge = cartridge_handle.unwrap();
 
             if result.is_present("disassemble") {
                 let dis_file = result.value_of("disassemble").unwrap();
