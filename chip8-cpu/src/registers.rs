@@ -8,7 +8,7 @@ use super::types::{C8Byte, C8Addr, C8RegIdx};
 const REGISTER_COUNT: usize = 16;
 
 /// CHIP-8 CPU Registers
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Registers {
     data: Vec<C8Byte>,
     i: C8Addr

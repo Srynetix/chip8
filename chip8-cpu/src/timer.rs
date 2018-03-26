@@ -5,7 +5,7 @@ use std::fmt;
 use super::types::{C8Byte};
 
 /// CHIP-8 CPU timer
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Timer {
     title: String,
     count: C8Byte,

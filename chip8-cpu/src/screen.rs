@@ -26,14 +26,14 @@ const WINDOW_TITLE: &'static str = "CHIP-8 Emulator";
 const SCHIP_WINDOW_TITLE: &'static str = "Super CHIP-8 Emulator";
 
 /// Screen mode
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ScreenMode {
     Standard,
     Extended
 }
 
 /// CHIP-8 screen data
-#[derive(Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScreenData {
     data: Vec<C8Byte>,
     alpha: Vec<C8Byte>,

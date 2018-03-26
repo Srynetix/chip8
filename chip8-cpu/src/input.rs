@@ -28,10 +28,9 @@ const SAVE_STATE_KEYCODE: Keycode = Keycode::F7;
 const LOAD_STATE_KEYCODE: Keycode = Keycode::F8;
 
 /// Input state data
-#[derive(Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputStateData {   
     data: Vec<C8Byte>,
-    key_binding: HashMap<C8Byte, Keycode>,
     last_pressed_key: C8Byte,
     input_pressed: bool,
 
@@ -40,7 +39,7 @@ pub struct InputStateData {
 }
 
 /// Input state flags
-#[derive(Clone)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputStateFlags {
     /// Should close
     pub should_close: bool,
@@ -55,6 +54,7 @@ pub struct InputStateFlags {
 /// Input state struct
 pub struct InputState {
     event_pump: sdl2::EventPump,
+    key_binding: HashMap<C8Byte, Keycode>,    
     pub data: InputStateData
 }
 
@@ -92,11 +92,11 @@ impl InputState {
 
         InputState {
             event_pump: context.event_pump().unwrap(),
+            key_binding: initial_binding,
             data: InputStateData {
                 data: vec,
                 last_pressed_key: INPUT_EMPTY_KEY,
                 input_pressed: false,
-                key_binding: initial_binding,
                 flags: InputStateFlags {
                     should_close: false,
                     should_reset: false,
@@ -132,7 +132,7 @@ impl InputState {
         // Keyboard state
         for key in 0..INPUT_STATE_COUNT {
             let key8 = key as C8Byte;
-            let kb = Scancode::from_keycode(*self.data.key_binding.get(&key8).unwrap()).unwrap();
+            let kb = Scancode::from_keycode(*self.key_binding.get(&key8).unwrap()).unwrap();
 
             if self.event_pump.keyboard_state().is_scancode_pressed(kb) {
                 self.press(key8);

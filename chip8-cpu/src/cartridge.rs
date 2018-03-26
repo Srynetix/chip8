@@ -20,7 +20,10 @@ const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
 const AVAILABLE_EXTENSIONS: [&str; 3] = ["", "ch8", "CH8"];
 
 /// CHIP-8 cartridge type
-pub struct Cartridge(Vec<C8Byte>);
+pub struct Cartridge {
+    title: String,
+    data: Vec<C8Byte>
+}
 
 /// Missing Cartridge error
 #[derive(Debug)]
@@ -66,6 +69,11 @@ impl Cartridge {
         Err(Box::new(MissingCartridgeError(name.to_string())))
     }
 
+    /// Get cartridge title
+    pub fn get_title(&self) -> &str {
+        &self.title
+    }
+
     /// Load cartridge from path
     /// 
     /// # Arguments
@@ -79,7 +87,12 @@ impl Cartridge {
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
         file.read_to_end(&mut contents)?;
 
-        Ok(Cartridge(contents))
+        Ok(
+            Cartridge {
+                title: path.to_string(),
+                data: contents
+            }
+        )
     }
 
     /// Get games directory
@@ -94,7 +107,7 @@ impl Cartridge {
 
     /// Get internal data
     pub fn get_data(&self) -> &[C8Byte] {
-        &self.0
+        &self.data
     }
 
     /// Disassemble cartridge
@@ -107,8 +120,8 @@ impl Cartridge {
         let mut verbose_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
         let mut ptr = 0;
 
-        while ptr < self.0.len() {
-            let opcode_value = extract_opcode_from_array(&self.0, ptr);
+        while ptr < self.data.len() {
+            let opcode_value = extract_opcode_from_array(&self.data, ptr);
             let opcode_enum = get_opcode_enum(opcode_value);
 
             let (assembly, verbose) = get_opcode_str(&opcode_enum);

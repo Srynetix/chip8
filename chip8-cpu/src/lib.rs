@@ -6,12 +6,16 @@
 extern crate lazy_static;
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate serde_derive;
+
 extern crate rand;
 extern crate sdl2;
 extern crate time;
 extern crate clap;
 extern crate fern;
 extern crate chrono;
+extern crate bincode;
 
 #[macro_use]
 mod macros;

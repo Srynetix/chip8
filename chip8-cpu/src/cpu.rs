@@ -160,6 +160,8 @@ impl CPU {
     /// * `cartridge` - Cartridge
     /// 
     pub fn run(&mut self, cartridge: &Cartridge) {
+        let game_name: String = cartridge.get_title().to_string();
+
         self.load_font_in_memory();
         self.load_cartridge_data(cartridge);
 
@@ -217,21 +219,21 @@ impl CPU {
                 self.peripherals.input.data.flags.should_save = false;
 
                 println!("Saving state...");
-                self.savestate = Some(SaveState::save_from_cpu(&self));
+                let savestate = SaveState::save_from_cpu(&self);
+                savestate.write_to_file(&format!("{}.sav", game_name));
+
+                // self.savestate = Some(;
                 println!("State saved.");
             }
 
             if self.peripherals.input.data.flags.should_load {
                 self.peripherals.input.data.flags.should_load = false;
-                
-                let state_copy: Option<SaveState> = self.savestate.clone();
 
-                if state_copy.is_none() {
-                    println!("No state to load");
-                } else {
-                    println!("Loading state...");
-                    self.load_savestate(state_copy.unwrap());    
-                    println!("State loaded.");                
+                println!("Loading state...");
+                let savestate = SaveState::read_from_file(&format!("{}.sav", game_name));
+                match savestate {
+                    None => println!("No state found."),
+                    Some(ss) => self.load_savestate(ss)
                 }
             }
 
