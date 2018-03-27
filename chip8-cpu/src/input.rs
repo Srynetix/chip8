@@ -132,7 +132,7 @@ impl InputState {
         // Keyboard state
         for key in 0..INPUT_STATE_COUNT {
             let key8 = key as C8Byte;
-            let kb = Scancode::from_keycode(*self.key_binding.get(&key8).unwrap()).unwrap();
+            let kb = Scancode::from_keycode(self.key_binding[&key8]).unwrap();
 
             if self.event_pump.keyboard_state().is_scancode_pressed(kb) {
                 self.press(key8);

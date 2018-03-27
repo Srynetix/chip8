@@ -132,7 +132,7 @@ impl<'a> Debugger<'a> {
     /// * `cmd` - Read command
     /// 
     fn read_command(&self, cmd: &str) -> Option<Command> {
-        let cmd_split: Vec<&str> = cmd.split(" ").collect();
+        let cmd_split: Vec<&str> = cmd.split(' ').collect();
         let command = cmd_split[0];
 
         match command {

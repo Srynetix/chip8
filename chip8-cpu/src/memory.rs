@@ -13,7 +13,7 @@ const CHUNK_SIZE: usize = 64;
 pub const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
 
 /// CHIP-8 CPU memory struct
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Memory{
     data: Vec<C8Byte>,
     pointer: C8Addr

@@ -22,8 +22,8 @@ pub const RENDERER_SCALE: usize = 10;
 const PIXEL_FADE_COEFFICIENT: f32 = 0.9;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
 
-const WINDOW_TITLE: &'static str = "CHIP-8 Emulator";
-const SCHIP_WINDOW_TITLE: &'static str = "Super CHIP-8 Emulator";
+const WINDOW_TITLE: &str = "CHIP-8 Emulator";
+const SCHIP_WINDOW_TITLE: & str = "Super CHIP-8 Emulator";
 
 /// Screen mode
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -127,18 +127,15 @@ impl Screen {
         let byte = sprite.len();
         let mut collision = false;
 
-        for i in 0..byte {
-            let code = sprite[i];
+        for (i, code) in sprite.iter().enumerate().take(byte) {
             let y = ((r2 as usize) + (i as usize)) % (VIDEO_MEMORY_HEIGHT * coef);
             let mut shift = FONT_CHAR_WIDTH - 1;
 
             for j in 0..FONT_CHAR_WIDTH {
                 let x = ((r1 as usize) + (j as usize)) % (VIDEO_MEMORY_WIDTH * coef);
 
-                if code & (0x1 << shift) != 0 {
-                    if self.toggle_pixel_xy(x, y) {
-                        collision = true;
-                    }
+                if code & (0x1 << shift) != 0 && self.toggle_pixel_xy(x, y) {
+                    collision = true;
                 } 
 
                 if shift > 0 {
@@ -164,10 +161,8 @@ impl Screen {
     /// Fade pixels
     pub fn fade_pixels(&mut self) {
         for x in 0..self.data.data.len() {
-            if self.data.data[x] == 0 {
-                if self.data.alpha[x] > 0 {
-                    self.data.alpha[x] = (self.data.alpha[x] as f32 * PIXEL_FADE_COEFFICIENT) as u8;
-                }
+            if self.data.data[x] == 0 && self.data.alpha[x] > 0 {
+                self.data.alpha[x] = (f32::from(self.data.alpha[x]) * PIXEL_FADE_COEFFICIENT) as u8;
             }
         }
     }

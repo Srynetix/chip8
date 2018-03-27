@@ -5,6 +5,7 @@ use std::fmt;
 use super::types::{C8Addr};
 
 /// Breakpoints
+#[derive(Default)]
 pub struct Breakpoints(Vec<C8Addr>);
 
 impl Breakpoints {
@@ -57,7 +58,7 @@ impl Breakpoints {
 impl fmt::Debug for Breakpoints {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Breakpoints: \n")?;
-        if self.0.len() == 0 {
+        if self.0.is_empty() {
             write!(f, "  None\n")?;
         } else {
             for i in &self.0 {

@@ -11,7 +11,7 @@
 #[macro_export]
 macro_rules! trace_exec {
     ($tracefile:expr, $format:expr, $($args:tt)*) => {        
-        if let &mut Some(ref mut tf) = &mut $tracefile {
+        if let Some(ref mut tf) = $tracefile {
             writeln!(tf, $format, $($args)*).unwrap();
         }
     }

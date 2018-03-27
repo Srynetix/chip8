@@ -31,3 +31,8 @@ impl Peripherals {
     }
 }
 
+impl Default for Peripherals {
+    fn default() -> Self {
+        Self::new()
+    }
+}

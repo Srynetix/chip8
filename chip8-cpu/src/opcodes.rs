@@ -437,10 +437,10 @@ pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
     let b2 = ((opcode & 0x00F0) >> 4) as C8Byte; 
     let b1 = (opcode & 0x000F) as C8Byte;
 
-    let addr = ((b3 as C8Addr) << 8) + ((b2 as C8Addr) << 4) + b1 as C8Addr; 
-    let kk = (b2 << 4) as C8Byte + b1 as C8Byte;
+    let addr = (C8Addr::from(b3) << 8) + (C8Addr::from(b2) << 4) + C8Addr::from(b1); 
+    let kk = (b2 << 4) + b1;
 
-    let opcode_enum = match action_id {
+    match action_id {
         0 => OpCode::SYS(addr),
         1 => OpCode::CLS,
         2 => OpCode::RET,
@@ -491,9 +491,7 @@ pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
         44 => OpCode::LDXR(b3),
 
         _ => OpCode::DATA(opcode)
-    };
-
-    opcode_enum
+    }
 }
 
 /// Get string output for an opcode.
@@ -506,8 +504,8 @@ pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
 pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
     match *opcode_enum {
         OpCode::SYS(addr) => (format!("SYS {:04X}", addr), format!("Executing system routine at {:04X}", addr)),
-        OpCode::CLS => ("CLS".to_string(), "Clearing screen".to_string()),
-        OpCode::RET => ("RET".to_string(), "Return from subroutine".to_string()),
+        OpCode::CLS => ("CLS".into(), "Clearing screen".into()),
+        OpCode::RET => ("RET".into(), "Return from subroutine".into()),
         OpCode::JP(addr) => (format!("JP {:04X}", addr), format!("Jumping to address {:04X}", addr)),
         OpCode::CALL(addr) => (format!("CALL {:04X}", addr), format!("Call subroutine at {:04X}", addr)),
 
@@ -550,11 +548,11 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
         // S-CHIP
 
         OpCode::SCRD(byte) => (format!("SCRD {:X}", byte), format!("Scroll display {} lines down", byte)),
-        OpCode::SCRR => (format!("SCRR"), format!("Scroll display 4 pixels right")),
-        OpCode::SCRL => (format!("SCRL"), format!("Scroll display 4 pixels left")),
-        OpCode::EXIT => (format!("EXIT"), format!("Exit interpreter")),
-        OpCode::LOW => (format!("LOW"), format!("Disable extended screen mode")),
-        OpCode::HIGH => (format!("HIGH"), format!("Enable extended screen mode")),
+        OpCode::SCRR => ("SCRR".into(), "Scroll display 4 pixels right".into()),
+        OpCode::SCRL => ("SCRL".into(), "Scroll display 4 pixels left".into()),
+        OpCode::EXIT => ("EXIT".into(), "Exit interpreter".into()),
+        OpCode::LOW => ("LOW".into(), "Disable extended screen mode".into()),
+        OpCode::HIGH => ("HIGH".into(), "Enable extended screen mode".into()),
         OpCode::DRWX(reg1, reg2) => (format!("DRWX V{:X}, V{:X}", reg1, reg2), format!("Display sprite starting at mem. location I at (V{:X}, V{:X}) on 16 bytes, set VF = collision", reg1, reg2)),
         OpCode::LDXSprite(reg) => (format!("LDX F, V{:X}", reg), format!("Set I = location of 10-byte sprite for digit V{:X}", reg)),
         OpCode::LDXS(reg) => (format!("LDX [I], V{:X}", reg), format!("Store V0..V{:X} in RPL user flags", reg)),
@@ -578,6 +576,6 @@ pub fn extract_opcode_from_array(array: &[u8], ptr: usize) -> C8Addr {
         // Return 0 if the opcode is not complete
         0
     } else {
-        ((array[ptr] as C8Addr) << 8) + array[ptr + 1] as C8Addr
+        (C8Addr::from(array[ptr]) << 8) + C8Addr::from(array[ptr + 1])
     }
 }

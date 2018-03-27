@@ -219,7 +219,7 @@ impl CPU {
                 self.peripherals.input.data.flags.should_save = false;
 
                 println!("Saving state...");
-                let savestate = SaveState::save_from_cpu(&self);
+                let savestate = SaveState::save_from_cpu(self);
                 savestate.write_to_file(&format!("{}.sav", game_name));
 
                 // self.savestate = Some(;
@@ -250,7 +250,7 @@ impl CPU {
                 // Check for breakpoints
                 if break_next_instruction.is_none() {
                     let pointer = self.peripherals.memory.get_pointer();
-                    if let Some(_) = self.breakpoints.check_breakpoint(pointer) {
+                    if self.breakpoints.check_breakpoint(pointer).is_some() {
                         break_next_instruction = Some(pointer);
                     }
                 }
@@ -261,7 +261,7 @@ impl CPU {
 
                     'debugger: loop {
                         {
-                            let debugger = Debugger::new(&self, addr);
+                            let debugger = Debugger::new(self, addr);
                             last_debugger_command = debugger.run();
                         }
 
@@ -291,7 +291,7 @@ impl CPU {
                 self.peripherals.input.update_state();
              
                 // Execute instruction
-                if self.execute_instruction(opcode_enum) {
+                if self.execute_instruction(&opcode_enum) {
                     break;
                 }
              
@@ -335,10 +335,10 @@ impl CPU {
     /// 
     /// * `opcode` - Execute instruction
     /// 
-    pub fn execute_instruction(&mut self, opcode: OpCode) -> bool {
+    pub fn execute_instruction(&mut self, opcode: &OpCode) -> bool {
         let mut advance_pointer = true;
 
-        match opcode {
+        match *opcode {
             OpCode::SYS(_addr) => {
                 // Do nothing
             },
@@ -513,7 +513,7 @@ impl CPU {
             OpCode::JP0(addr) => {
                 // Set pointer to address + V0
                 let v0 = self.registers.get_register(0);
-                self.peripherals.memory.set_pointer(addr + (v0 as C8Addr));
+                self.peripherals.memory.set_pointer(addr + (C8Addr::from(v0)));
                 advance_pointer = false;                
             },
             OpCode::RND(reg, byte) => {
@@ -526,7 +526,7 @@ impl CPU {
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
                 let ri = self.registers.get_i_register();
-                let sprite_data = self.peripherals.memory.read_data_at_offset(ri, byte as C8Addr);
+                let sprite_data = self.peripherals.memory.read_data_at_offset(ri, C8Addr::from(byte));
 
                 let collision = self.peripherals.screen.draw_sprite(r1, r2, sprite_data);
                 self.registers.set_carry_register(collision as C8Byte);
@@ -575,11 +575,11 @@ impl CPU {
                 let i = self.registers.get_i_register();
                 let r = self.registers.get_register(reg);
 
-                self.registers.set_i_register(i + (r as C8Addr));
+                self.registers.set_i_register(i + C8Addr::from(r));
             },
             OpCode::LDSprite(reg) => {
                 // Set I = location of sprite for reg
-                let r = self.registers.get_register(reg) as C8Addr;
+                let r = C8Addr::from(self.registers.get_register(reg));
                 let sprite_addr = FONT_DATA_ADDR + (FONT_CHAR_HEIGHT as C8Addr * r);
 
                 self.registers.set_i_register(sprite_addr);
@@ -601,7 +601,7 @@ impl CPU {
 
                 for ridx in 0..(reg + 1) {
                     let r = self.registers.get_register(ridx);                    
-                    self.peripherals.memory.write_byte_at_offset(ri + ridx as C8Addr, r);
+                    self.peripherals.memory.write_byte_at_offset(ri + C8Addr::from(ridx), r);
                 }
             },
             OpCode::LDR(reg) => {
@@ -609,27 +609,43 @@ impl CPU {
                 let ri = self.registers.get_i_register();
                 
                 for ridx in 0..(reg + 1) {
-                    let byte = self.peripherals.memory.read_byte_at_offset(ri + ridx as C8Addr);
+                    let byte = self.peripherals.memory.read_byte_at_offset(ri + C8Addr::from(ridx));
                     self.registers.set_register(ridx, byte);
                 }
             },
 
             // S-CHIP
             
-            OpCode::SCRD(_b) => {},
-            OpCode::SCRR => {},
-            OpCode::SCRL => {},
-            OpCode::EXIT => {},
+            OpCode::SCRD(_b) => {
+                println!("Executing SCRD");                
+            },
+            OpCode::SCRR => {
+                println!("Executing SCRR");
+            },
+            OpCode::SCRL => {
+                println!("Executing SCRL");                
+            },
+            OpCode::EXIT => {
+                println!("Executing EXIT");                
+            },
             OpCode::LOW => {
                 self.peripherals.screen.reload_screen_for_mode(ScreenMode::Standard);
             },
             OpCode::HIGH => {
                 self.peripherals.screen.reload_screen_for_mode(ScreenMode::Extended);                
             },
-            OpCode::DRWX(_reg1, _reg2) => {},
-            OpCode::LDXSprite(_reg) => {},
-            OpCode::LDXS(_reg) => {},
-            OpCode::LDXR(_reg) => {},
+            OpCode::DRWX(_reg1, _reg2) => {
+                println!("Executing DRWX");                
+            },
+            OpCode::LDXSprite(_reg) => {
+                println!("Executing LDXSprite");                
+            },
+            OpCode::LDXS(_reg) => {
+                println!("Executing LDXS");                
+            },
+            OpCode::LDXR(_reg) => {
+                println!("Executing LDXR");                
+            },
 
             OpCode::DATA(_) => {
                 // Unknown
@@ -641,6 +657,12 @@ impl CPU {
         }
 
         false
+    }
+}
+
+impl Default for CPU {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

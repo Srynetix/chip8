@@ -16,7 +16,7 @@ impl Timer {
     /// Create new timer
     pub fn new(title: String) -> Self {
         Timer {
-            title: title,
+            title,
             count: 0
         }
     }

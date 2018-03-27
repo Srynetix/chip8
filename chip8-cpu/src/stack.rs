@@ -8,7 +8,7 @@ use super::types::{C8Byte, C8Addr};
 const STACK_DEPTH: usize = 16;
 
 /// CHIP-8 CPU stack struct
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Stack {
     data: Vec<C8Addr>,
     pointer: C8Byte
