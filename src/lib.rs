@@ -16,6 +16,7 @@ extern crate clap;
 extern crate fern;
 extern crate chrono;
 extern crate bincode;
+extern crate rustyline;
 
 #[macro_use]
 mod macros;

@@ -1,7 +1,7 @@
 //! CHIP-8 emulator
 
-extern crate chip8_cpu;
+extern crate chip8;
 
 fn main() {
-    chip8_cpu::start_shell();
+    chip8::start_shell();
 }

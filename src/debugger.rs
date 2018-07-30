@@ -1,10 +1,11 @@
 //! CHIP-8 debugger
 
-use std::io::{self, Write};
-
 use super::types::{C8Addr, convert_hex_addr};
 use super::cpu::CPU;
 use super::opcodes::{get_opcode_enum, get_opcode_str};
+
+use rustyline::error::ReadlineError;
+use rustyline::Editor;
 
 /// Debugger
 pub struct Debugger<'a> {
@@ -55,6 +56,8 @@ impl<'a> Debugger<'a> {
 
     /// Run
     pub fn run(&self) -> Option<Command> {
+        let mut rl = Editor::<()>::new();
+
         println!("Debugger on address {:04X}.", self.addr);
         
         let opcode = self.cpu.peripherals.memory.read_opcode_at_address(self.addr);
@@ -66,18 +69,13 @@ impl<'a> Debugger<'a> {
         let mut last_command = None;
 
         'running: loop {
-            // Prompt
-            print!("> ");
-            io::stdout().flush().unwrap();
+            let readline = rl.readline("> ");
 
-            // Read
-            let mut buffer = String::new();
-            match io::stdin().read_line(&mut buffer) {
-                Ok(_) => {
-                    let len = buffer.trim_right().len();
-                    buffer.truncate(len);
-
-                    if let Some(ref command) = self.read_command(&buffer) {
+            match readline {
+                Ok(line) => {
+                    rl.add_history_entry(line.as_ref());
+                    
+                    if let Some(ref command) = self.read_command(&line) {
                         last_command = Some(command.clone());
 
                         match *command {
@@ -113,11 +111,22 @@ impl<'a> Debugger<'a> {
                             }
                         }
                     } else {
-                        println!("{}: command unknown", buffer);
+                        println!("{}: command unknown", line);
                     }
                 },
-                Err(error) => {
-                    println!("error: {}", error)
+
+                Err(ReadlineError::Interrupted) => {
+                    last_command = Some(Command::Quit);
+                    break 'running
+                },
+
+                Err(ReadlineError::Eof) => {
+                    last_command = Some(Command::Quit);
+                    break 'running
+                },
+
+                Err(err) => {
+                    println!("Error in readline: {:?}", err);
                 }
             }
         }
@@ -203,7 +212,6 @@ impl<'a> Debugger<'a> {
         println!("  rem-bp|rb       - Remove breakpoint at address");
         println!("  list-bp|lb      - List breakpoints");
         println!("  read-mem|rmem   - Read memory at offset");
-        println!("  next|n          - Step next");
         println!("  quit|q          - Quit program");
         println!("  help|h          - Show this help");
     }

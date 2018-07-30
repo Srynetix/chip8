@@ -1,9 +1,18 @@
-[workspace]
-
 [package]
 name = "chip8"
-version = "0.1.0"
+version = "0.9.0"
 authors = ["Denis BOURGE <denis.bourge@sharingcloud.com>"]
 
 [dependencies]
-chip8-cpu = { path = "chip8-cpu" }
+lazy_static = "1.0"
+rand = "0.4"
+log = "0.3"
+sdl2 = "0.31"
+time = "0.1"
+clap = "2.29"
+fern = "0.4"
+chrono = "0.4"
+bincode = "1.0"
+serde = "1.0"
+serde_derive = "1.0"
+rustyline = "1.0"

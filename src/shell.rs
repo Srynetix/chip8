@@ -11,7 +11,7 @@ use super::cartridge::Cartridge;
 use clap::{Arg, App};
 use log;
 
-const VERSION: &str = "1.0.0";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Start shell
 pub fn start_shell() {
@@ -36,6 +36,10 @@ pub fn start_shell() {
             .number_of_values(1)
             .help("add breakpoint at address")
             .takes_value(true))
+        .arg(Arg::with_name("break-at-start")
+            .short("s")
+            .long("break-at-start")
+            .help("add breakpoint at start"))
         .arg(Arg::with_name("trace")
             .short("t")
             .long("trace")
@@ -84,6 +88,10 @@ pub fn start_shell() {
                     for v in bp_values {
                         cpu.breakpoints.register(convert_hex_addr(v));
                     }
+                }
+
+                if result.is_present("break-at-start") {
+                    cpu.breakpoints.register(convert_hex_addr("0200"))
                 }
 
                 cpu.run(&cartridge);
