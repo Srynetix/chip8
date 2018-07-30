@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::types::{C8Byte, C8Addr, C8RegIdx};
+use super::types::{C8Addr, C8Byte, C8RegIdx};
 
 /// CHIP-8 register count
 const REGISTER_COUNT: usize = 16;
@@ -11,16 +11,15 @@ const REGISTER_COUNT: usize = 16;
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Registers {
     data: Vec<C8Byte>,
-    i: C8Addr
+    i: C8Addr,
 }
 
 impl Registers {
-
     /// Create CPU Registers
     pub fn new() -> Self {
         Registers {
             data: vec![0; REGISTER_COUNT],
-            i: 0
+            i: 0,
         }
     }
 
@@ -54,7 +53,7 @@ impl Registers {
     ///
     pub fn set_register(&mut self, reg: C8RegIdx, value: C8Byte) {
         let reg = reg as usize;
-        
+
         if reg >= REGISTER_COUNT {
             panic!("Bad register name: {:X}", reg);
         }
@@ -77,7 +76,7 @@ impl Registers {
     /// # Arguments
     ///
     /// * `value` - Address
-    /// 
+    ///
     pub fn set_i_register(&mut self, value: C8Addr) {
         self.i = value;
     }
@@ -89,11 +88,11 @@ impl Registers {
     }
 
     /// Load from save
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `registers` - Registers
-    /// 
+    ///
     pub fn load_from_save(&mut self, registers: Registers) {
         self.data = registers.data;
         self.i = registers.i;

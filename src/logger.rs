@@ -1,9 +1,9 @@
 //! CHIP-8 logger
 use std::io;
 
+use chrono;
 use fern;
 use log;
-use chrono;
 
 /// Initialize logger
 ///

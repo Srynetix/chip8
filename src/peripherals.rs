@@ -13,11 +13,10 @@ pub struct Peripherals {
     /// Memory
     pub memory: Memory,
     /// Screen
-    pub screen: Screen
+    pub screen: Screen,
 }
 
 impl Peripherals {
-    
     /// Create peripherals
     pub fn new() -> Self {
         // Create SDL context
@@ -26,7 +25,7 @@ impl Peripherals {
         Peripherals {
             input: InputState::new(&context),
             memory: Memory::new(),
-            screen: Screen::new(&context)
+            screen: Screen::new(&context),
         }
     }
 }

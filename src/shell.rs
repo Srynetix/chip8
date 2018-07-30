@@ -3,12 +3,12 @@
 use std::env;
 use std::process;
 
-use super::types::convert_hex_addr;
-use super::logger::init_logger;
-use super::cpu::CPU;
 use super::cartridge::Cartridge;
+use super::cpu::CPU;
+use super::logger::init_logger;
+use super::types::convert_hex_addr;
 
-use clap::{Arg, App};
+use clap::{App, Arg};
 use log;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -19,36 +19,43 @@ pub fn start_shell() {
         .version(VERSION)
         .author("Denis B. <bourge.denis@gmail.com>")
         .about("CHIP-8 emulator")
-        .arg(Arg::with_name("file")
-            .value_name("FILENAME")
-            .required(true)
-            .help("cartridge name (not the path)")
-            .takes_value(true))
-        .arg(Arg::with_name("disassemble")
-            .long("disassemble")
-            .short("d")
-            .help("disassemble cartridge to file (use '-' to trace in console)")
-            .takes_value(true))
-        .arg(Arg::with_name("breakpoint")
-            .short("b")
-            .long("breakpoint")
-            .multiple(true)
-            .number_of_values(1)
-            .help("add breakpoint at address")
-            .takes_value(true))
-        .arg(Arg::with_name("break-at-start")
-            .short("s")
-            .long("break-at-start")
-            .help("add breakpoint at start"))
-        .arg(Arg::with_name("trace")
-            .short("t")
-            .long("trace")
-            .help("trace execution to file")
-            .takes_value(true))
-        .arg(Arg::with_name("verbose")
-            .long("verbose")
-            .short("v")
-            .help("verbose mode"));
+        .arg(
+            Arg::with_name("file")
+                .value_name("FILENAME")
+                .required(true)
+                .help("cartridge name (not the path)")
+                .takes_value(true),
+        ).arg(
+            Arg::with_name("disassemble")
+                .long("disassemble")
+                .short("d")
+                .help("disassemble cartridge to file (use '-' to trace in console)")
+                .takes_value(true),
+        ).arg(
+            Arg::with_name("breakpoint")
+                .short("b")
+                .long("breakpoint")
+                .multiple(true)
+                .number_of_values(1)
+                .help("add breakpoint at address")
+                .takes_value(true),
+        ).arg(
+            Arg::with_name("break-at-start")
+                .short("s")
+                .long("break-at-start")
+                .help("add breakpoint at start"),
+        ).arg(
+            Arg::with_name("trace")
+                .short("t")
+                .long("trace")
+                .help("trace execution to file")
+                .takes_value(true),
+        ).arg(
+            Arg::with_name("verbose")
+                .long("verbose")
+                .short("v")
+                .help("verbose mode"),
+        );
 
     let matches = app.get_matches_from_safe_borrow(&mut env::args_os());
     match matches {
@@ -60,7 +67,10 @@ pub fn start_shell() {
                 log::LogLevelFilter::Info
             };
 
-            init_logger(level).expect(&format!("Failed to initialize logger with level: {:?}", level));
+            init_logger(level).expect(&format!(
+                "Failed to initialize logger with level: {:?}",
+                level
+            ));
 
             let cartridge_filename = result.value_of("file").unwrap();
             let cartridge_handle = Cartridge::load_from_games_directory(cartridge_filename);
@@ -95,8 +105,8 @@ pub fn start_shell() {
                 }
 
                 cpu.run(&cartridge);
-            }       
-        },
+            }
+        }
 
         Err(error) => {
             eprintln!("{}", error.to_string());

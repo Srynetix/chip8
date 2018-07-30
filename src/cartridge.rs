@@ -1,17 +1,17 @@
 //! CHIP-8 cartridge
 
+use std::error::Error;
+use std::fmt;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
-use std::error::Error;
-use std::fmt;
 
 use std::env;
 use std::path::{Path, PathBuf};
 
-use super::types::{C8Byte, C8Addr};
-use super::opcodes::{get_opcode_enum, get_opcode_str, extract_opcode_from_array};
-use super::memory::{INITIAL_MEMORY_POINTER};
+use super::memory::INITIAL_MEMORY_POINTER;
+use super::opcodes::{extract_opcode_from_array, get_opcode_enum, get_opcode_str};
+use super::types::{C8Addr, C8Byte};
 
 /// Cartridge max size
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
@@ -22,7 +22,7 @@ const AVAILABLE_EXTENSIONS: [&str; 3] = ["", "ch8", "CH8"];
 /// CHIP-8 cartridge type
 pub struct Cartridge {
     title: String,
-    data: Vec<C8Byte>
+    data: Vec<C8Byte>,
 }
 
 /// Missing Cartridge error
@@ -42,16 +42,15 @@ impl fmt::Display for MissingCartridgeError {
 }
 
 impl Cartridge {
-
     /// Get game path.
-    /// 
+    ///
     /// Automatically add extension if not in name.
     /// Supported extensions are: ch8, CH8
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `name` - Game name
-    /// 
+    ///
     fn get_game_path(name: &str) -> Result<String, Box<Error>> {
         // Concat games directory to path
         let mut game_path = Cartridge::get_games_directory();
@@ -75,11 +74,11 @@ impl Cartridge {
     }
 
     /// Load cartridge from path
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `path` - Path to file
-    /// 
+    ///
     pub fn load_from_games_directory(path: &str) -> Result<Cartridge, Box<Error>> {
         let game_path = Cartridge::get_game_path(path)?;
         let mut file = File::open(game_path)?;
@@ -87,19 +86,17 @@ impl Cartridge {
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
         file.read_to_end(&mut contents)?;
 
-        Ok(
-            Cartridge {
-                title: path.to_string(),
-                data: contents
-            }
-        )
+        Ok(Cartridge {
+            title: path.to_string(),
+            data: contents,
+        })
     }
 
     /// Get games directory
     fn get_games_directory() -> PathBuf {
         let cargo_path = match env::var("CARGO_MANIFEST_DIR") {
             Ok(path) => path,
-            Err(_) => ".".to_string()
+            Err(_) => ".".to_string(),
         };
 
         Path::new(&cargo_path).join("games")
@@ -111,9 +108,9 @@ impl Cartridge {
     }
 
     /// Disassemble cartridge
-    /// 
+    ///
     /// Returns a tuple (code, assembly, verbose)
-    /// 
+    ///
     pub fn disassemble(&self) -> (Vec<C8Addr>, Vec<String>, Vec<String>) {
         let mut code_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
         let mut assembly_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
@@ -136,35 +133,40 @@ impl Cartridge {
     }
 
     /// Print disassembly
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `output_file` - Output file
-    /// 
+    ///
     pub fn print_disassembly(&self, output_file: &str) {
         let (code, assembly, verbose) = self.disassemble();
         let mut ptr_value = INITIAL_MEMORY_POINTER;
-            
+
         if output_file == "-" {
             println!("> Disassembly:");
             for i in 0..assembly.len() {
-                println!("{:04X}| ({:04X})  {:20} ; {}", ptr_value, code[i], assembly[i], verbose[i]);
+                println!(
+                    "{:04X}| ({:04X})  {:20} ; {}",
+                    ptr_value, code[i], assembly[i], verbose[i]
+                );
                 ptr_value += 2;
             }
         } else {
             println!("> Disassembly dumped to file {}", output_file);
             let mut file_handle = OpenOptions::new()
-                                    .create(true)
-                                    .write(true)
-                                    .open(output_file)
-                                    .unwrap();
+                .create(true)
+                .write(true)
+                .open(output_file)
+                .unwrap();
 
             for i in 0..assembly.len() {
-                writeln!(file_handle, "{:04X}| ({:04X})  {:20} ; {}", ptr_value, code[i], assembly[i], verbose[i]).unwrap();                
+                writeln!(
+                    file_handle,
+                    "{:04X}| ({:04X})  {:20} ; {}",
+                    ptr_value, code[i], assembly[i], verbose[i]
+                ).unwrap();
                 ptr_value += 2;
-            }   
+            }
         }
-
-        
     }
 }

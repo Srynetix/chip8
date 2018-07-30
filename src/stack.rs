@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::types::{C8Byte, C8Addr};
+use super::types::{C8Addr, C8Byte};
 
 /// CHIP-8 CPU stack depth
 const STACK_DEPTH: usize = 16;
@@ -11,16 +11,15 @@ const STACK_DEPTH: usize = 16;
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Stack {
     data: Vec<C8Addr>,
-    pointer: C8Byte
+    pointer: C8Byte,
 }
 
 impl Stack {
-
     /// Create new stack
     pub fn new() -> Self {
         Stack {
             data: vec![0; STACK_DEPTH],
-            pointer: 0
+            pointer: 0,
         }
     }
 
@@ -61,11 +60,11 @@ impl Stack {
     }
 
     /// Load from save
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `stack` - Stack
-    /// 
+    ///
     pub fn load_from_save(&mut self, stack: Stack) {
         self.data = stack.data;
         self.pointer = stack.pointer;

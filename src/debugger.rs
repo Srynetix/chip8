@@ -1,8 +1,8 @@
 //! CHIP-8 debugger
 
-use super::types::{C8Addr, convert_hex_addr};
 use super::cpu::CPU;
 use super::opcodes::{get_opcode_enum, get_opcode_str};
+use super::types::{convert_hex_addr, C8Addr};
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
@@ -10,7 +10,7 @@ use rustyline::Editor;
 /// Debugger
 pub struct Debugger<'a> {
     addr: C8Addr,
-    cpu: &'a CPU
+    cpu: &'a CPU,
 }
 
 /// Debugger command
@@ -35,23 +35,19 @@ pub enum Command {
     /// List breakpoints
     ListBreakpoints,
     /// Show help
-    Help
+    Help,
 }
 
 impl<'a> Debugger<'a> {
-
     /// Create new debugger
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cpu` - CPU reference
     /// * `addr` - Starting address
-    /// 
+    ///
     pub fn new(cpu: &'a CPU, addr: C8Addr) -> Debugger<'a> {
-        Debugger {
-            addr,
-            cpu
-        }
+        Debugger { addr, cpu }
     }
 
     /// Run
@@ -59,8 +55,12 @@ impl<'a> Debugger<'a> {
         let mut rl = Editor::<()>::new();
 
         println!("Debugger on address {:04X}.", self.addr);
-        
-        let opcode = self.cpu.peripherals.memory.read_opcode_at_address(self.addr);
+
+        let opcode = self
+            .cpu
+            .peripherals
+            .memory
+            .read_opcode_at_address(self.addr);
         let opcode_enum = get_opcode_enum(opcode);
         let (opcode_asm, opcode_txt) = get_opcode_str(&opcode_enum);
         println!("  - {:20} ; {}", opcode_asm, opcode_txt);
@@ -74,56 +74,51 @@ impl<'a> Debugger<'a> {
             match readline {
                 Ok(line) => {
                     rl.add_history_entry(line.as_ref());
-                    
+
                     if let Some(ref command) = self.read_command(&line) {
                         last_command = Some(command.clone());
 
                         match *command {
-                            Command::Dump(ref device) => {
-                                match &device[..] {
-                                    "memory" | "m" => println!("{:?}", self.cpu.peripherals.memory),
-                                    "video" | "v" => self.cpu.peripherals.screen.dump_screen(),
-                                    "input" | "i" => println!("{:?}", self.cpu.peripherals.input),
-                                    "registers" | "r" => println!("{:?}", self.cpu.registers),
-                                    "stack" | "s" => println!("{:?}", self.cpu.stack),
-                                    "timers" | "t" => {
-                                        println!("{:?}", self.cpu.delay_timer);
-                                        println!("{:?}", self.cpu.sound_timer);
-                                    },
-                                    _ => self.cpu.show_debug()
+                            Command::Dump(ref device) => match &device[..] {
+                                "memory" | "m" => println!("{:?}", self.cpu.peripherals.memory),
+                                "video" | "v" => self.cpu.peripherals.screen.dump_screen(),
+                                "input" | "i" => println!("{:?}", self.cpu.peripherals.input),
+                                "registers" | "r" => println!("{:?}", self.cpu.registers),
+                                "stack" | "s" => println!("{:?}", self.cpu.stack),
+                                "timers" | "t" => {
+                                    println!("{:?}", self.cpu.delay_timer);
+                                    println!("{:?}", self.cpu.sound_timer);
                                 }
+                                _ => self.cpu.show_debug(),
                             },
                             Command::ReadMemory(addr, count) => {
                                 println!("Reading memory at {:04X} on {} byte(s).", addr, count);
-                                println!("{:?}", self.cpu.peripherals.memory.read_data_at_offset(addr, count));
-                            },
+                                println!(
+                                    "{:?}",
+                                    self.cpu.peripherals.memory.read_data_at_offset(addr, count)
+                                );
+                            }
                             Command::Show => {
                                 println!("  - {:20} ; {}", opcode_asm, opcode_txt);
-                            },
-                            Command::Help => {
-                                self.show_help()
-                            },
-                            Command::ListBreakpoints => {
-                                self.cpu.breakpoints.dump_breakpoints()
                             }
-                            _ => {
-                                break 'running
-                            }
+                            Command::Help => self.show_help(),
+                            Command::ListBreakpoints => self.cpu.breakpoints.dump_breakpoints(),
+                            _ => break 'running,
                         }
                     } else {
                         println!("{}: command unknown", line);
                     }
-                },
+                }
 
                 Err(ReadlineError::Interrupted) => {
                     last_command = Some(Command::Quit);
-                    break 'running
-                },
+                    break 'running;
+                }
 
                 Err(ReadlineError::Eof) => {
                     last_command = Some(Command::Quit);
-                    break 'running
-                },
+                    break 'running;
+                }
 
                 Err(err) => {
                     println!("Error in readline: {:?}", err);
@@ -135,11 +130,11 @@ impl<'a> Debugger<'a> {
     }
 
     /// Read command
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cmd` - Read command
-    /// 
+    ///
     fn read_command(&self, cmd: &str) -> Option<Command> {
         let cmd_split: Vec<&str> = cmd.split(' ').collect();
         let command = cmd_split[0];
@@ -167,17 +162,15 @@ impl<'a> Debugger<'a> {
             "help" | "h" => Some(Command::Help),
             "read-mem" | "rmem" => {
                 if cmd_split.len() == 3 {
-                    Some(
-                        Command::ReadMemory(
-                            convert_hex_addr(cmd_split[1]),
-                            cmd_split[2].parse::<C8Addr>().unwrap()
-                        )
-                    )
+                    Some(Command::ReadMemory(
+                        convert_hex_addr(cmd_split[1]),
+                        cmd_split[2].parse::<C8Addr>().unwrap(),
+                    ))
                 } else {
                     println!("usage: read-mem addr count");
                     None
                 }
-            },
+            }
             "add-bp" | "ab" => {
                 if cmd_split.len() == 2 {
                     Some(Command::AddBreakpoint(convert_hex_addr(cmd_split[1])))
@@ -185,19 +178,17 @@ impl<'a> Debugger<'a> {
                     println!("usage: add-bp addr");
                     None
                 }
-            },
+            }
             "rem-bp" | "rb" => {
                 if cmd_split.len() == 2 {
-                    Some(Command::RemoveBreakpoint(convert_hex_addr(cmd_split[1])))                    
+                    Some(Command::RemoveBreakpoint(convert_hex_addr(cmd_split[1])))
                 } else {
                     println!("usage: rem-bp addr");
                     None
                 }
-            },
-            "list-bp" | "lb" => {
-                Some(Command::ListBreakpoints)
-            },
-            _ => None
+            }
+            "list-bp" | "lb" => Some(Command::ListBreakpoints),
+            _ => None,
         }
     }
 

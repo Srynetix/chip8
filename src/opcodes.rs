@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use super::types::{C8Byte, C8Addr, C8RegIdx};
+use super::types::{C8Addr, C8Byte, C8RegIdx};
 
 /// CHIP-8 opcode flag/mask
 type OpCodeFlagMask = (C8Addr, C8Addr);
@@ -10,14 +10,12 @@ type OpCodeFlagMask = (C8Addr, C8Addr);
 /// CHIP-8 opcode enum
 #[derive(Debug)]
 pub enum OpCode {
-    
     /// 0nnn - SYS addr
     /// * Jump to a machine code routine at nnn
-    /// 
+    ///
     /// | This instruction is only used on the old computers on which Chip-8 was
     /// | originally implemented.
     /// | It is ignored by modern interpreters.
-
     SYS(C8Addr),
 
     /// 00E0 - CLS
@@ -26,20 +24,20 @@ pub enum OpCode {
 
     /// 00EE - RET
     /// * Return from a subroutine
-    /// 
+    ///
     /// | The interpreter sets the program counter to the address at the top
     /// | of the stack, then subtracts 1 from the stack pointer.
     RET,
-    
+
     /// 1nnn - JP addr
     /// * Jump to location nnn
-    /// 
+    ///
     /// | The interpreter sets the program counter to nnn.
     JP(C8Addr),
 
     /// 2nnn - CALL addr
     /// * Call subroutine at nnn
-    /// 
+    ///
     /// | The interpreter increments the stack pointer,
     /// | then puts the current PC on the top of the stack.
     /// | The PC is then set to nnn.
@@ -47,52 +45,52 @@ pub enum OpCode {
 
     /// 3xkk - SE Vx, byte
     /// * Skip next instruction if Vx = kk
-    /// 
+    ///
     /// | The interpreter compares register Vx to kk, and if they are equal,
     /// | increments the program counter by 2.
     SEByte(C8RegIdx, C8Byte),
 
     /// 4xkk - SNE Vx, byte
     /// * Skip next instruction if Vx != kk
-    /// 
+    ///
     /// | The interpreter compares register Vx to kk, and if they are not equal,
     /// | increments the program counter by 2.
     SNEByte(C8RegIdx, C8Byte),
 
     /// 5xy0 - SE Vx, Vy
     /// * Skip next instruction if Vx = Vy
-    /// 
+    ///
     /// | The interpreter compares register Vx to register Vy, and if they are
     /// | equal, increments the program counter by 2.
     SE(C8RegIdx, C8RegIdx),
 
     /// 6xkk - LD Vx, byte
     /// * Set Vx = kk
-    /// 
+    ///
     /// | The interpreter puts the value kk into register Vx.
     LDByte(C8RegIdx, C8Byte),
 
     /// 7xkk - ADD Vx, byte
     /// * Set Vx = Vx + kk
-    /// 
+    ///
     /// | Adds the value kk to the value of register Vx, then stores the
-    /// | result in Vx. 
+    /// | result in Vx.
     ADDByte(C8RegIdx, C8Byte),
 
     /// 8xy0 - LD Vx, Vy
     /// * Set Vx = Vy
-    /// 
+    ///
     /// | Stores the value of register Vy in register Vx.
     LD(C8RegIdx, C8RegIdx),
 
     /// 8xy1 - OR Vx, Vy
     /// * Set Vx = Vx OR Vy
-    /// 
+    ///
     /// | Performs a bitwise OR on the values of Vx and Vy, then stores the
     /// | result in Vx.
     /// | A bitwise OR compares the corrseponding bits from two values, and
     /// | if either bit is 1, then the same bit in the result is also 1.
-    /// | Otherwise, it is 0. 
+    /// | Otherwise, it is 0.
     OR(C8RegIdx, C8RegIdx),
 
     /// 8xy2 - AND Vx, Vy
@@ -102,22 +100,22 @@ pub enum OpCode {
     /// | result in Vx.
     /// | A bitwise AND compares the corrseponding bits from two values, and if
     /// | both bits are 1, then the same bit in the result is also 1.
-    /// | Otherwise, it is 0. 
+    /// | Otherwise, it is 0.
     AND(C8RegIdx, C8RegIdx),
 
     /// 8xy3 - XOR Vx, Vy
     /// * Set Vx = Vx XOR Vy
-    /// 
+    ///
     /// | Performs a bitwise exclusive OR on the values of Vx and Vy, then
     /// | stores the result in Vx. An exclusive OR compares the corrseponding bits
     /// | from two values, and if the bits are not both the same, then the
     /// | corresponding bit in the result is set to 1.
-    /// | Otherwise, it is 0. 
+    /// | Otherwise, it is 0.
     XOR(C8RegIdx, C8RegIdx),
 
     /// 8xy4 - ADD Vx, Vy
     /// * Set Vx = Vx + Vy, set VF = carry
-    /// 
+    ///
     /// | The values of Vx and Vy are added together.
     /// | If the result is greater than 8 bits (i.e., > 255,) VF is set to 1,
     /// | otherwise 0.
@@ -126,14 +124,14 @@ pub enum OpCode {
 
     /// 8xy5 - SUB Vx, Vy
     /// * Set Vx = Vx - Vy, set VF = NOT borrow
-    /// 
+    ///
     /// | If Vx > Vy, then VF is set to 1, otherwise 0.
     /// | Then Vy is subtracted from Vx, and the results stored in Vx.
     SUB(C8RegIdx, C8RegIdx),
 
     /// 8xy6 - SHR Vx {, Vy}
     /// * Set Vx = Vx SHR 1
-    /// 
+    ///
     /// | If the least-significant bit of Vx is 1, then VF is set to 1,
     /// | otherwise 0.
     /// | Then Vx is divided by 2.
@@ -141,14 +139,14 @@ pub enum OpCode {
 
     /// 8xy7 - SUBN Vx, Vy
     /// * Set Vx = Vy - Vx, set VF = NOT borrow
-    /// 
+    ///
     /// | If Vy > Vx, then VF is set to 1, otherwise 0.
     /// | Then Vx is subtracted from Vy, and the results stored in Vx.
     SUBN(C8RegIdx, C8RegIdx),
 
     /// 8xyE - SHL Vx {, Vy}
     /// * Set Vx = Vx SHL 1
-    /// 
+    ///
     /// | If the most-significant bit of Vx is 1, then VF is set to 1,
     /// | otherwise to 0.
     /// | Then Vx is multiplied by 2.
@@ -156,26 +154,26 @@ pub enum OpCode {
 
     /// 9xy0 - SNE Vx, Vy
     /// * Skip next instruction if Vx != Vy
-    /// 
+    ///
     /// | The values of Vx and Vy are compared, and if they are not equal,
     /// | the program counter is increased by 2.
     SNE(C8RegIdx, C8RegIdx),
 
     /// Annn - LD I, addr
     /// * Set I = nnn
-    /// 
+    ///
     /// | The value of register I is set to nnn.
     LDI(C8Addr),
 
     /// Bnnn - JP V0, addr
     /// * Jump to location nnn + V0
-    /// 
+    ///
     /// | The program counter is set to nnn plus the value of V0.
     JP0(C8Addr),
 
     /// Cxkk - RND Vx, byte
     /// * Set Vx = random byte AND kk
-    /// 
+    ///
     /// | The interpreter generates a random number from 0 to 255,
     /// | which is then ANDed with the value kk.
     /// | The results are stored in Vx.
@@ -185,7 +183,7 @@ pub enum OpCode {
     /// Dxyn - DRW Vx, Vy, nibble
     /// * Display n-byte sprite starting at memory location I at (Vx, Vy),
     ///   set VF = collision
-    /// 
+    ///
     /// | The interpreter reads n bytes from memory, starting at the address
     /// | stored in I.
     /// | These bytes are then displayed as sprites on screen at coordinates
@@ -200,59 +198,59 @@ pub enum OpCode {
 
     /// Ex9E - SKP Vx
     /// * Skip next instruction if key with the value of Vx is pressed
-    /// 
+    ///
     /// | Checks the keyboard, and if the key corresponding to the value of Vx
     /// | is currently in the down position, PC is increased by 2.
     SKP(C8RegIdx),
 
     /// ExA1 - SKNP Vx
     /// * Skip next instruction if key with the value of Vx is not pressed
-    /// 
+    ///
     /// | Checks the keyboard, and if the key corresponding to the value of Vx
     /// | is currently in the up position, PC is increased by 2.
     SKNP(C8RegIdx),
 
     /// Fx07 - LD Vx, DT
     /// * Set Vx = delay timer value
-    /// 
+    ///
     /// | The value of DT is placed into Vx.
     LDGetDelayTimer(C8RegIdx),
 
     /// Fx0A - LD Vx, K
     /// * Wait for a key press, store the value of the key in Vx.
-    /// 
+    ///
     /// | All execution stops until a key is pressed, then the value of that
     /// | key is stored in Vx.
     LDGetKey(C8RegIdx),
 
     /// Fx15 - LD DT, Vx
     /// * Set delay timer = Vx.
-    /// 
+    ///
     /// | DT is set equal to the value of Vx.
     LDSetDelayTimer(C8RegIdx),
 
     /// Fx18 - LD ST, Vx
     /// * Set sound timer = Vx.
-    /// 
+    ///
     /// | ST is set equal to the value of Vx.
     LDSetSoundTimer(C8RegIdx),
 
     /// Fx1E - ADD I, Vx
     /// * Set I = I + Vx
-    /// 
+    ///
     /// | The values of I and Vx are added, and the results are stored in I.
     ADDI(C8RegIdx),
 
     /// Fx29 - LD F, Vx
     /// * Set I = location of sprite for digit Vx.
-    /// 
+    ///
     /// | The value of I is set to the location for the hexadecimal sprite
     /// | corresponding to the value of Vx.
     LDSprite(C8RegIdx),
 
     /// Fx33 - LD B, Vx
     /// * Store BCD representation of Vx in memory locations I, I+1, and I+2.
-    /// 
+    ///
     /// | The interpreter takes the decimal value of Vx, and places the hundreds
     /// | digit in memory at location in I, the tens digit at location I+1, and
     /// | the ones digit at location I+2.
@@ -260,37 +258,36 @@ pub enum OpCode {
 
     /// Fx55 - LD [I], Vx
     /// * Store registers V0 through Vx in memory starting at location I.
-    /// 
+    ///
     /// | The interpreter copies the values of registers V0 through Vx into
     /// | memory, starting at the address in I.
     LDS(C8RegIdx),
 
     /// Fx65 - LD Vx, [I]
     /// * Read registers V0 through Vx from memory starting at location I.
-    /// 
+    ///
     /// | The interpreter reads values from memory starting at location I
     /// | into registers V0 through Vx.
     LDR(C8RegIdx),
 
     /* SUPER CHIP-48 */
-
     /// 00CN - SCRD N
     /// * Scroll display N lines down
-    /// 
+    ///
     /// | This opcode delays until the start of a 60Hz clock cycle before drawing in low resolution mode.
     /// | (Use the delay timer to pace your games in high resolution mode.)
     SCRD(C8Byte),
 
     /// 00FB - SCRR
     /// * Scroll display 4 pixels right
-    /// 
+    ///
     /// | This opcode delays until the start of a 60Hz clock cycle before drawing in low resolution mode.
     /// | (Use the delay timer to pace your games in high resolution mode.)
     SCRR,
 
     /// 00FC - SCRL
     /// * Scroll display 4 pixels left
-    /// 
+    ///
     /// | This opcode delays until the start of a 60Hz clock cycle before drawing in low resolution mode.
     /// | (Use the delay timer to pace your games in high resolution mode.)
     SCRL,
@@ -301,19 +298,19 @@ pub enum OpCode {
 
     /// 00FE - LOW
     /// * Disable extended screen mode
-    /// 
+    ///
     /// | Low resolution (64×32) graphics mode (this is the default).
     LOW,
 
     /// 00FF - HIGH
     /// * Enable extended screen mode
-    /// 
+    ///
     /// | High resolution (128×64) graphics mode.
     HIGH,
 
     /// DXY0 - DRWX
     /// * Same as DRW, with 16x16 sprite.
-    /// 
+    ///
     /// | Same as DRW, however the image is always 16×16 pixels.
     DRWX(C8RegIdx, C8RegIdx),
 
@@ -323,20 +320,20 @@ pub enum OpCode {
 
     /// FX75 - LDX [I], Vx
     /// * Store V0..VX in RPL user flags (X <= 7)
-    /// 
+    ///
     /// | Store the values of registers v0 to vX into the ‘‘flags’’ registers (this means something in the
     /// | HP48 implementation). (X < 8)
     LDXS(C8RegIdx),
 
     /// FX85 - LDX Vx, [I]
     /// * Read V0..VX from RPL user flags (X <= 7)
-    /// 
+    ///
     /// | Read the values of registers v0 to vX from the ‘‘flags’’ registers (this means something in the
     /// | HP48 implementation). (X < 8)
     LDXR(C8RegIdx),
 
     /// xxxx - Data
-    DATA(C8Addr)
+    DATA(C8Addr),
 }
 
 lazy_static! {
@@ -399,11 +396,11 @@ lazy_static! {
 }
 
 /// Extract opcode ID
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `opcode` - Opcode value
-/// 
+///
 fn extract_opcode_id(opcode: C8Addr) -> C8Addr {
     let mut extracted_key = None;
 
@@ -419,25 +416,25 @@ fn extract_opcode_id(opcode: C8Addr) -> C8Addr {
     if extracted_key.is_none() {
         extracted_key = Some(255)
     }
-    
+
     extracted_key.unwrap()
 }
 
 /// Get opcode enum
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `opcode_value` - Opcode value
 /// * `action_id` - Action ID
-/// 
+///
 pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
     let action_id = extract_opcode_id(opcode);
 
-    let b3 = ((opcode & 0x0F00) >> 8) as C8Byte; 
-    let b2 = ((opcode & 0x00F0) >> 4) as C8Byte; 
+    let b3 = ((opcode & 0x0F00) >> 8) as C8Byte;
+    let b2 = ((opcode & 0x00F0) >> 4) as C8Byte;
     let b1 = (opcode & 0x000F) as C8Byte;
 
-    let addr = (C8Addr::from(b3) << 8) + (C8Addr::from(b2) << 4) + C8Addr::from(b1); 
+    let addr = (C8Addr::from(b3) << 8) + (C8Addr::from(b2) << 4) + C8Addr::from(b1);
     let kk = (b2 << 4) + b1;
 
     match action_id {
@@ -479,7 +476,6 @@ pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
         35 => OpCode::LDR(b3),
 
         // S-CHIP
-
         36 => OpCode::SCRD(b1),
         37 => OpCode::SCRR,
         38 => OpCode::SCRL,
@@ -490,17 +486,17 @@ pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
         43 => OpCode::LDXS(b3),
         44 => OpCode::LDXR(b3),
 
-        _ => OpCode::DATA(opcode)
+        _ => OpCode::DATA(opcode),
     }
 }
 
 /// Get string output for an opcode.
 /// Return a tuple: (assembly, verbose).
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `opcode_enum` - Opcode enum
-/// 
+///
 pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
     match *opcode_enum {
         OpCode::SYS(addr) => (format!("SYS {:04X}", addr), format!("Executing system routine at {:04X}", addr)),
@@ -522,15 +518,13 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
         OpCode::SUB(reg1, reg2) => (format!("SUB V{:X}, V{:X}", reg1, reg2), format!("Set V{:X} = V{:X} - V{:X}, set VF = NOT borrow", reg1, reg1, reg2)),
         OpCode::SHR(reg, _) => (format!("SHR V{:X}", reg), format!("Set V{:X} = V{:X} SHR 1", reg, reg)),
         OpCode::SUBN(reg1, reg2) => (format!("SUBN V{:X}, V{:X}", reg1, reg2), format!("Set V{:X} = V{:X} - V{:X}, set VF = NOT borrow", reg1, reg2, reg1)),
-        OpCode::SHL(reg, _) => (format!("SHL V{:X}", reg), format!("Set V{:X} = V{:X} SHL 1", reg, reg)),
-        
+        OpCode::SHL(reg, _) => (format!("SHL V{:X}", reg), format!("Set V{:X} = V{:X} SHL 1", reg, reg)),        
         OpCode::SNE(reg1, reg2) => (format!("SNE V{:X}, V{:X}", reg1, reg2), format!("Skip next instruction if V{:X} != V{:X}", reg1, reg2)),
         OpCode::LDI(addr) => (format!("LD I, {:04X}", addr), format!("Set I = {:04X}", addr)),
         OpCode::JP0(addr) => (format!("JP V0, {:04X}", addr), format!("Jump to location {:04X} + V0", addr)),
 
         OpCode::RND(reg, byte) => (format!("RND V{:X}, {:02X}", reg, byte), format!("Set V{:X} = random byte AND {:02X}", reg, byte)),
         OpCode::DRW(reg1, reg2, byte) => (format!("DRW V{:X}, V{:X}, {:02X}", reg1, reg2, byte), format!("Display sprite starting at mem. location I at (V{:X}, V{:X}) on {} bytes, set VF = collision", reg1, reg2, byte)),
-        
         OpCode::SKP(reg) => (format!("SKP V{:X}", reg), format!("Skip next instruction if key with the value of V{:X} is pressed", reg)),
         OpCode::SKNP(reg) => (format!("SKNP V{:X}", reg), format!("Skip next instruction if key with the value of V{:X} is not pressed", reg)),
         OpCode::LDGetDelayTimer(reg) => (format!("LD V{:X}, DT", reg), format!("Set V{:X} = delay timer value", reg)),
@@ -563,12 +557,12 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
 }
 
 /// Extract opcode from array
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `array` - Array
 /// * `ptr` - Pointer
-/// 
+///
 pub fn extract_opcode_from_array(array: &[u8], ptr: usize) -> C8Addr {
     let array_length = array.len();
 

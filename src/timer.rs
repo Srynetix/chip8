@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::types::{C8Byte};
+use super::types::C8Byte;
 
 /// CHIP-8 CPU timer
 #[derive(Clone, Serialize, Deserialize)]
@@ -12,13 +12,9 @@ pub struct Timer {
 }
 
 impl Timer {
-    
     /// Create new timer
     pub fn new(title: String) -> Self {
-        Timer {
-            title,
-            count: 0
-        }
+        Timer { title, count: 0 }
     }
 
     /// Decrement timer
@@ -35,11 +31,11 @@ impl Timer {
     }
 
     /// Reset timer with value
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `value`: Value
-    /// 
+    ///
     pub fn reset(&mut self, value: C8Byte) -> &Self {
         self.count = value;
         self
@@ -51,11 +47,11 @@ impl Timer {
     }
 
     /// Load from save
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `timer` - Timer
-    /// 
+    ///
     pub fn load_from_save(&mut self, timer: Timer) {
         self.count = timer.count;
         self.title = timer.title;

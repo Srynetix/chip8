@@ -2,25 +2,24 @@
 
 use std::fmt;
 
-use super::types::{C8Addr};
+use super::types::C8Addr;
 
 /// Breakpoints
 #[derive(Default)]
 pub struct Breakpoints(Vec<C8Addr>);
 
 impl Breakpoints {
-    
     /// Init
     pub fn new() -> Self {
         Breakpoints(Vec::new())
     }
 
     /// Register
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `addr` - Address
-    /// 
+    ///
     pub fn register(&mut self, addr: C8Addr) {
         if self.check_breakpoint(addr).is_none() {
             self.0.push(addr);
@@ -28,11 +27,11 @@ impl Breakpoints {
     }
 
     /// Unregister
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `addr` - Address
-    /// 
+    ///
     pub fn unregister(&mut self, addr: C8Addr) {
         if let Some(idx) = self.check_breakpoint(addr) {
             self.0.remove(idx);
@@ -40,11 +39,11 @@ impl Breakpoints {
     }
 
     /// Check for breakpoint
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `addr` - Address
-    /// 
+    ///
     pub fn check_breakpoint(&self, addr: C8Addr) -> Option<usize> {
         self.0.iter().position(|&x| x == addr)
     }
