@@ -67,10 +67,8 @@ pub fn start_shell() {
                 log::LogLevelFilter::Info
             };
 
-            init_logger(level).expect(&format!(
-                "Failed to initialize logger with level: {:?}",
-                level
-            ));
+            init_logger(level)
+                .unwrap_or_else(|_| panic!("Failed to initialize logger with level: {:?}", level));
 
             let cartridge_filename = result.value_of("file").unwrap();
             let cartridge_handle = Cartridge::load_from_games_directory(cartridge_filename);

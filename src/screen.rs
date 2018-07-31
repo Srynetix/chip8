@@ -262,9 +262,9 @@ impl Screen {
 impl fmt::Debug for Screen {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let coef = self.get_screen_size_coef();
-        write!(
+        writeln!(
             f,
-            "    -> Size: {} x {}\n",
+            "    -> Size: {} x {}",
             VIDEO_MEMORY_WIDTH * coef,
             VIDEO_MEMORY_HEIGHT * coef
         )?;
@@ -281,7 +281,7 @@ impl fmt::Debug for Screen {
                 }
             }
 
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
 
         Ok(())

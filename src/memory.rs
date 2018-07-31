@@ -161,14 +161,14 @@ impl fmt::Debug for Memory {
                 write!(f, "{:02X} ", chunk_value)?;
             }
 
-            write!(f, "\n")?;
+            writeln!(f)?;
         }
 
         // Reprint row
         print_separator(f)?;
         print_row(f)?;
 
-        write!(f, "    PC: {:04X}\n", self.pointer)
+        writeln!(f, "    PC: {:04X}", self.pointer)
     }
 }
 
@@ -178,7 +178,7 @@ fn print_separator(f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "---")?;
     }
 
-    write!(f, "\n")
+    writeln!(f)
 }
 
 fn print_row(f: &mut fmt::Formatter) -> fmt::Result {
@@ -187,5 +187,5 @@ fn print_row(f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:02X} ", v * 2)?;
     }
 
-    write!(f, "\n")
+    writeln!(f)
 }

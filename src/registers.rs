@@ -102,9 +102,9 @@ impl Registers {
 impl fmt::Debug for Registers {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         for (idx, rx) in self.data.iter().enumerate() {
-            write!(f, "    V{:X}: {:02X},\n", idx, rx)?;
+            writeln!(f, "    V{:X}: {:02X},", idx, rx)?;
         }
 
-        write!(f, "    I: {:02X}\n", self.i)
+        writeln!(f, "    I: {:02X}", self.i)
     }
 }

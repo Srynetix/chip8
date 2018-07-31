@@ -693,31 +693,31 @@ impl Default for CPU {
 
 impl fmt::Debug for CPU {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "CPU {{\n")?;
+        writeln!(f, "CPU {{")?;
 
-        write!(f, "  memory: {{\n")?;
+        writeln!(f, "  memory: {{")?;
         write!(f, "{:?}", self.peripherals.memory)?;
-        write!(f, "  }},\n")?;
+        writeln!(f, "  }},")?;
 
-        write!(f, "  screen: {{\n")?;
+        writeln!(f, "  screen: {{")?;
         write!(f, "{:?}", self.peripherals.screen)?;
-        write!(f, "  }},\n")?;
+        writeln!(f, "  }},")?;
 
-        write!(f, "  registers: {{\n")?;
+        writeln!(f, "  registers: {{")?;
         write!(f, "{:?}", self.registers)?;
-        write!(f, "  }},\n")?;
+        writeln!(f, "  }},")?;
 
-        write!(f, "  stack: {{\n")?;
+        writeln!(f, "  stack: {{")?;
         write!(f, "{:?}", self.stack)?;
-        write!(f, "  }},\n")?;
+        writeln!(f, "  }},")?;
 
-        write!(f, "  input: {{\n")?;
+        writeln!(f, "  input: {{")?;
         write!(f, "{:?}", self.peripherals.input)?;
-        write!(f, "  }},\n")?;
+        writeln!(f, "  }},")?;
 
-        write!(f, "  delay_timer: {:?},\n", self.delay_timer)?;
-        write!(f, "  sound_timer: {:?}\n", self.sound_timer)?;
+        writeln!(f, "  delay_timer: {:?},", self.delay_timer)?;
+        writeln!(f, "  sound_timer: {:?}", self.sound_timer)?;
 
-        write!(f, "}}\n")
+        writeln!(f, "}}")
     }
 }
