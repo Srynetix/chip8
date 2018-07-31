@@ -162,10 +162,15 @@ impl<'a> Debugger<'a> {
             "help" | "h" => Some(Command::Help),
             "read-mem" | "rmem" => {
                 if cmd_split.len() == 3 {
-                    Some(Command::ReadMemory(
-                        convert_hex_addr(cmd_split[1]),
-                        cmd_split[2].parse::<C8Addr>().unwrap(),
-                    ))
+                    if let Some(addr) = convert_hex_addr(cmd_split[1]) {
+                        Some(Command::ReadMemory(
+                            addr,
+                            cmd_split[2].parse::<C8Addr>().unwrap(),
+                        ))
+                    } else {
+                        println!("error: bad address {}", cmd_split[1]);
+                        None
+                    }
                 } else {
                     println!("usage: read-mem addr count");
                     None
@@ -173,7 +178,12 @@ impl<'a> Debugger<'a> {
             }
             "add-bp" | "ab" => {
                 if cmd_split.len() == 2 {
-                    Some(Command::AddBreakpoint(convert_hex_addr(cmd_split[1])))
+                    if let Some(addr) = convert_hex_addr(cmd_split[1]) {
+                        Some(Command::AddBreakpoint(addr))
+                    } else {
+                        println!("error: bad address {}", cmd_split[1]);
+                        None
+                    }
                 } else {
                     println!("usage: add-bp addr");
                     None
@@ -181,7 +191,12 @@ impl<'a> Debugger<'a> {
             }
             "rem-bp" | "rb" => {
                 if cmd_split.len() == 2 {
-                    Some(Command::RemoveBreakpoint(convert_hex_addr(cmd_split[1])))
+                    if let Some(addr) = convert_hex_addr(cmd_split[1]) {
+                        Some(Command::RemoveBreakpoint(addr))
+                    } else {
+                        println!("error: bad address {}", cmd_split[1]);
+                        None
+                    }
                 } else {
                     println!("usage: rem-bp addr");
                     None

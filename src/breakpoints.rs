@@ -22,6 +22,7 @@ impl Breakpoints {
     ///
     pub fn register(&mut self, addr: C8Addr) {
         if self.check_breakpoint(addr).is_none() {
+            debug!("Registering breakpoint at address {:04X}", addr);
             self.0.push(addr);
         }
     }
@@ -34,6 +35,7 @@ impl Breakpoints {
     ///
     pub fn unregister(&mut self, addr: C8Addr) {
         if let Some(idx) = self.check_breakpoint(addr) {
+            debug!("Unregistering breakpoint at address {:04X}", addr);
             self.0.remove(idx);
         }
     }

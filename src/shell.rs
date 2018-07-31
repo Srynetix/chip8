@@ -96,12 +96,16 @@ pub fn start_shell() {
                 if result.is_present("breakpoint") {
                     let bp_values: Vec<&str> = result.values_of("breakpoint").unwrap().collect();
                     for v in bp_values {
-                        cpu.breakpoints.register(convert_hex_addr(v));
+                        if let Some(addr) = convert_hex_addr(v) {
+                            cpu.breakpoints.register(addr);
+                        } else {
+                            println!("error: bad address {}", v)
+                        }
                     }
                 }
 
                 if result.is_present("break-at-start") {
-                    cpu.breakpoints.register(convert_hex_addr("0200"))
+                    cpu.breakpoints.register(convert_hex_addr("0200").unwrap())
                 }
 
                 cpu.run(&cartridge);

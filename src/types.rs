@@ -15,10 +15,14 @@ pub type C8RegIdx = u8;
 ///
 /// * `s` - Input string
 ///
-pub fn convert_hex_addr(s: &str) -> C8Addr {
-    if &s[2..] == "0x" {
-        C8Addr::from_str_radix(&s[2..], 16).unwrap()
+pub fn convert_hex_addr(s: &str) -> Option<C8Addr> {
+    if s.len() >= 2 && &s[2..] == "0x" {
+        _convert_hex_addr(&s[2..])
     } else {
-        C8Addr::from_str_radix(s, 16).unwrap()
+        _convert_hex_addr(s)
     }
+}
+
+fn _convert_hex_addr(s: &str) -> Option<C8Addr> {
+    C8Addr::from_str_radix(s, 16).ok()
 }
