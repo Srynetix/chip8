@@ -217,11 +217,6 @@ impl InputState {
         self.data.data[key as usize]
     }
 
-    /// Dump
-    pub fn dump(&self) {
-        println!("{:?}", &self);
-    }
-
     /// Load from save
     ///
     /// # Arguments

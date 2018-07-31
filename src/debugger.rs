@@ -1,5 +1,7 @@
 //! CHIP-8 debugger
 
+use std::rc::Rc;
+
 use super::cpu::CPU;
 use super::opcodes::{get_opcode_enum, get_opcode_str};
 use super::types::{convert_hex_addr, C8Addr};
@@ -8,9 +10,9 @@ use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
 /// Debugger
-pub struct Debugger<'a> {
+pub struct Debugger {
     addr: C8Addr,
-    cpu: &'a CPU,
+    cpu: Rc<CPU>,
 }
 
 /// Debugger command
@@ -38,7 +40,7 @@ pub enum Command {
     Help,
 }
 
-impl<'a> Debugger<'a> {
+impl Debugger {
     /// Create new debugger
     ///
     /// # Arguments
@@ -46,8 +48,11 @@ impl<'a> Debugger<'a> {
     /// * `cpu` - CPU reference
     /// * `addr` - Starting address
     ///
-    pub fn new(cpu: &'a CPU, addr: C8Addr) -> Debugger<'a> {
-        Debugger { addr, cpu }
+    pub fn new(cpu: &Rc<CPU>, addr: C8Addr) -> Debugger {
+        Debugger {
+            addr,
+            cpu: cpu.clone(),
+        }
     }
 
     /// Run

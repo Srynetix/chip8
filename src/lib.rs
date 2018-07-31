@@ -25,6 +25,7 @@ mod breakpoints;
 mod cartridge;
 mod cpu;
 mod debugger;
+mod emulator;
 mod font;
 mod input;
 mod logger;
@@ -39,6 +40,4 @@ mod stack;
 mod timer;
 mod types;
 
-pub use cartridge::Cartridge;
-pub use cpu::CPU;
 pub use shell::start_shell;
