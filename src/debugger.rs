@@ -1,5 +1,6 @@
 //! CHIP-8 debugger
 
+use std::cell::RefCell;
 use std::rc::Rc;
 
 use super::cpu::CPU;
@@ -12,7 +13,7 @@ use rustyline::Editor;
 /// Debugger
 pub struct Debugger {
     addr: C8Addr,
-    cpu: Rc<CPU>,
+    cpu: Rc<RefCell<CPU>>,
 }
 
 /// Debugger command
@@ -48,7 +49,7 @@ impl Debugger {
     /// * `cpu` - CPU reference
     /// * `addr` - Starting address
     ///
-    pub fn new(cpu: &Rc<CPU>, addr: C8Addr) -> Debugger {
+    pub fn new(cpu: &Rc<RefCell<CPU>>, addr: C8Addr) -> Debugger {
         Debugger {
             addr,
             cpu: cpu.clone(),
@@ -58,11 +59,11 @@ impl Debugger {
     /// Run
     pub fn run(&self) -> Option<Command> {
         let mut rl = Editor::<()>::new();
-
         println!("Debugger on address {:04X}.", self.addr);
 
         let opcode = self
             .cpu
+            .borrow()
             .peripherals
             .memory
             .read_opcode_at_address(self.addr);
@@ -85,29 +86,39 @@ impl Debugger {
 
                         match *command {
                             Command::Dump(ref device) => match &device[..] {
-                                "memory" | "m" => println!("{:?}", self.cpu.peripherals.memory),
-                                "video" | "v" => self.cpu.peripherals.screen.dump_screen(),
-                                "input" | "i" => println!("{:?}", self.cpu.peripherals.input),
-                                "registers" | "r" => println!("{:?}", self.cpu.registers),
-                                "stack" | "s" => println!("{:?}", self.cpu.stack),
-                                "timers" | "t" => {
-                                    println!("{:?}", self.cpu.delay_timer);
-                                    println!("{:?}", self.cpu.sound_timer);
+                                "memory" | "m" => {
+                                    println!("{:?}", self.cpu.borrow().peripherals.memory)
                                 }
-                                _ => self.cpu.show_debug(),
+                                "video" | "v" => self.cpu.borrow().peripherals.screen.dump_screen(),
+                                "input" | "i" => {
+                                    println!("{:?}", self.cpu.borrow().peripherals.input)
+                                }
+                                "registers" | "r" => println!("{:?}", self.cpu.borrow().registers),
+                                "stack" | "s" => println!("{:?}", self.cpu.borrow().stack),
+                                "timers" | "t" => {
+                                    println!("{:?}", self.cpu.borrow().delay_timer);
+                                    println!("{:?}", self.cpu.borrow().sound_timer);
+                                }
+                                _ => self.cpu.borrow().show_debug(),
                             },
                             Command::ReadMemory(addr, count) => {
                                 println!("Reading memory at {:04X} on {} byte(s).", addr, count);
                                 println!(
                                     "{:?}",
-                                    self.cpu.peripherals.memory.read_data_at_offset(addr, count)
+                                    self.cpu
+                                        .borrow()
+                                        .peripherals
+                                        .memory
+                                        .read_data_at_offset(addr, count)
                                 );
                             }
                             Command::Show => {
                                 println!("  - {:20} ; {}", opcode_asm, opcode_txt);
                             }
                             Command::Help => self.show_help(),
-                            Command::ListBreakpoints => self.cpu.breakpoints.dump_breakpoints(),
+                            Command::ListBreakpoints => {
+                                self.cpu.borrow().breakpoints.dump_breakpoints()
+                            }
                             _ => break 'running,
                         }
                     } else {

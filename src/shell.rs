@@ -2,12 +2,10 @@
 
 use std::env;
 use std::process;
-use std::rc::Rc;
 
 use super::cartridge::Cartridge;
 use super::emulator::Emulator;
 use super::logger::init_logger;
-use super::types::convert_hex_addr;
 
 use clap::{App, Arg};
 use log;
@@ -88,28 +86,19 @@ pub fn start_shell() {
             } else {
                 let mut emulator = Emulator::new();
 
-                {
-                    let mut cpu = Rc::get_mut(&mut emulator.cpu).unwrap();
+                if result.is_present("trace") {
+                    emulator.set_tracefile(result.value_of("trace").unwrap());
+                }
 
-                    if result.is_present("trace") {
-                        cpu.tracefile(result.value_of("trace").unwrap());
+                if result.is_present("breakpoint") {
+                    let bp_values: Vec<&str> = result.values_of("breakpoint").unwrap().collect();
+                    for v in bp_values {
+                        emulator.register_breakpoint(v);
                     }
+                }
 
-                    if result.is_present("breakpoint") {
-                        let bp_values: Vec<&str> =
-                            result.values_of("breakpoint").unwrap().collect();
-                        for v in bp_values {
-                            if let Some(addr) = convert_hex_addr(v) {
-                                cpu.breakpoints.register(addr);
-                            } else {
-                                println!("error: bad address {}", v)
-                            }
-                        }
-                    }
-
-                    if result.is_present("break-at-start") {
-                        cpu.breakpoints.register(convert_hex_addr("0200").unwrap())
-                    }
+                if result.is_present("break-at-start") {
+                    emulator.register_breakpoint("0200");
                 }
 
                 emulator.run(&cartridge);
