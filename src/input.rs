@@ -55,6 +55,7 @@ pub struct InputStateFlags {
 pub struct InputState {
     event_pump: sdl2::EventPump,
     key_binding: HashMap<C8Byte, Keycode>,
+    /// State data
     pub data: InputStateData,
 }
 

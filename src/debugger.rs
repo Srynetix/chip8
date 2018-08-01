@@ -27,7 +27,7 @@ pub enum Command {
     Show,
     /// Dump CPU
     Dump(String),
-    /// Read memory at offset,
+    /// Read memory at offset
     ReadMemory(C8Addr, C8Addr),
     /// Next instruction
     Next,

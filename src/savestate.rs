@@ -18,13 +18,21 @@ use super::timer::Timer;
 /// CHIP-8 save state
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SaveState {
+    /// Input state data
     pub input_data: InputStateData,
+    /// Memory
     pub memory: Memory,
+    /// Registers
     pub registers: Registers,
+    /// Screen data
     pub screen_data: ScreenData,
+    /// Stack
     pub stack: Stack,
+    /// Delay timer
     pub delay_timer: Timer,
+    /// Sound timer
     pub sound_timer: Timer,
+    /// Instruction count
     pub instruction_count: usize,
 }
 

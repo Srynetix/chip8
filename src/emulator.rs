@@ -1,4 +1,4 @@
-//! Emulator
+//! CHIP-8 emulator
 
 use std::cell::RefCell;
 use std::fs::OpenOptions;
@@ -18,7 +18,10 @@ const TIMER_FRAME_LIMIT: i64 = 16;
 const CPU_FRAME_LIMIT: i64 = 2;
 const SCREEN_FRAME_LIMIT: i64 = 16;
 
+/// CHIP-8 emulator
+#[derive(Default)]
 pub struct Emulator {
+    /// CPU handle
     pub cpu: Rc<RefCell<CPU>>,
 }
 

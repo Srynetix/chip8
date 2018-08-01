@@ -28,7 +28,9 @@ const SCHIP_WINDOW_TITLE: &str = "Super CHIP-8 Emulator";
 /// Screen mode
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ScreenMode {
+    /// Standard screen
     Standard,
+    /// Extended screen
     Extended,
 }
 
@@ -42,6 +44,7 @@ pub struct ScreenData {
 
 /// CHIP-8 screen memory struct
 pub struct Screen {
+    /// Screen data
     pub data: ScreenData,
     renderer: sdl2::render::WindowCanvas,
 }
