@@ -4,6 +4,7 @@ use std::error::Error;
 use std::fmt;
 use std::fs::File;
 use std::fs::OpenOptions;
+use std::io;
 use std::io::prelude::*;
 
 use std::env;
@@ -17,6 +18,10 @@ use super::types::{C8Addr, C8Byte};
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
 
 /// Available extensions
+///
+/// - No extension ("")
+/// - CH8 extension (.ch8/.CH8)
+///
 const AVAILABLE_EXTENSIONS: [&str; 3] = ["", "ch8", "CH8"];
 
 /// CHIP-8 cartridge type
@@ -45,7 +50,7 @@ impl Cartridge {
     /// Get game path.
     ///
     /// Automatically add extension if not in name.
-    /// Supported extensions are: ch8, CH8
+    /// Supported extensions are: "", "ch8", "CH8"
     ///
     /// # Arguments
     ///
@@ -68,12 +73,7 @@ impl Cartridge {
         Err(Box::new(MissingCartridgeError(name.to_string())))
     }
 
-    /// Get cartridge title
-    pub fn get_title(&self) -> &str {
-        &self.title
-    }
-
-    /// Load cartridge from path
+    /// Load cartridge from games directory.
     ///
     /// # Arguments
     ///
@@ -86,13 +86,23 @@ impl Cartridge {
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
         file.read_to_end(&mut contents)?;
 
-        Ok(Cartridge {
-            title: path.to_string(),
-            data: contents,
-        })
+        Cartridge::load_from_string(path, &contents)
     }
 
-    /// Get games directory
+    /// Load cartridge from bytes.
+    ///
+    /// # Arguments
+    ///
+    /// * `bytes` - Bytes contents
+    ///
+    pub fn load_from_string(title: &str, bytes: &[C8Byte]) -> Result<Cartridge, Box<Error>> {
+        let title = title.to_string();
+        let data = bytes.to_vec();
+
+        Ok(Cartridge { title, data })
+    }
+
+    /// Get games directory.
     fn get_games_directory() -> PathBuf {
         let cargo_path = match env::var("CARGO_MANIFEST_DIR") {
             Ok(path) => path,
@@ -102,14 +112,19 @@ impl Cartridge {
         Path::new(&cargo_path).join("games")
     }
 
-    /// Get internal data
+    /// Get cartridge title.
+    pub fn get_title(&self) -> &str {
+        &self.title
+    }
+
+    /// Get internal data.
     pub fn get_data(&self) -> &[C8Byte] {
         &self.data
     }
 
-    /// Disassemble cartridge
+    /// Disassemble cartridge.
     ///
-    /// Returns a tuple (code, assembly, verbose)
+    /// Returns a tuple (code, assembly, verbose).
     ///
     pub fn disassemble(&self) -> (Vec<C8Addr>, Vec<String>, Vec<String>) {
         let mut code_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
@@ -132,41 +147,76 @@ impl Cartridge {
         (code_output, assembly_output, verbose_output)
     }
 
-    /// Print disassembly
+    /// Write disassembly to file.
+    ///
+    /// If file is '-', print to console.
     ///
     /// # Arguments
     ///
-    /// * `output_file` - Output file
+    /// * `output_file` - Output stream
     ///
-    pub fn print_disassembly(&self, output_file: &str) {
-        let (code, assembly, verbose) = self.disassemble();
-        let mut ptr_value = INITIAL_MEMORY_POINTER;
-
+    pub fn write_disassembly_to_file(&self, output_file: &str) {
         if output_file == "-" {
             println!("> Disassembly:");
-            for i in 0..assembly.len() {
-                println!(
-                    "{:04X}| ({:04X})  {:20} ; {}",
-                    ptr_value, code[i], assembly[i], verbose[i]
-                );
-                ptr_value += 2;
-            }
+            self.write_disassembly_to_stream(&mut io::stdout());
         } else {
-            println!("> Disassembly dumped to file {}", output_file);
+            println!("> Disassembly dumped to file {}.", output_file);
             let mut file_handle = OpenOptions::new()
                 .create(true)
                 .write(true)
                 .open(output_file)
                 .unwrap();
 
-            for i in 0..assembly.len() {
-                writeln!(
-                    file_handle,
-                    "{:04X}| ({:04X})  {:20} ; {}",
-                    ptr_value, code[i], assembly[i], verbose[i]
-                ).unwrap();
-                ptr_value += 2;
-            }
+            self.write_disassembly_to_stream(&mut file_handle);
         }
+    }
+
+    /// Write disassembly to stream.
+    ///
+    /// # Arguments
+    ///
+    /// * `output_stream` - Output stream
+    ///
+    pub fn write_disassembly_to_stream<W: Write>(&self, output_stream: &mut W) {
+        let (code, assembly, verbose) = self.disassemble();
+        let mut ptr_value = INITIAL_MEMORY_POINTER;
+
+        for i in 0..assembly.len() {
+            writeln!(
+                output_stream,
+                "{:04X}| ({:04X})  {:20} ; {}",
+                ptr_value, code[i], assembly[i], verbose[i]
+            ).unwrap();
+            ptr_value += 2;
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_load_from_string() {
+        let example: &[C8Byte] = b"\x00\xE0\x63\x00";
+        let cartridge = Cartridge::load_from_string("Test", example);
+        assert!(cartridge.is_ok());
+
+        let cartridge = cartridge.unwrap();
+        let mut disasm_raw = Vec::new();
+        cartridge.print_disassembly_to_stream(&mut disasm_raw);
+        let disasm_str = ::std::str::from_utf8(&disasm_raw).unwrap();
+
+        let disasm_lines: Vec<_> = disasm_str.split("\n").collect();
+        println!("{:?}", disasm_lines);
+
+        assert_eq!(
+            disasm_lines[0],
+            "0200| (00E0)  CLS                  ; Clearing screen"
+        );
+        assert_eq!(
+            disasm_lines[1],
+            "0202| (6300)  LD V3, 00            ; Set V3 = 00"
+        );
     }
 }

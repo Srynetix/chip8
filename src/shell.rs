@@ -82,7 +82,7 @@ pub fn start_shell() {
 
             if result.is_present("disassemble") {
                 let dis_file = result.value_of("disassemble").unwrap();
-                cartridge.print_disassembly(dis_file);
+                cartridge.write_disassembly_to_file(dis_file);
             } else {
                 let mut emulator = Emulator::new();
 
