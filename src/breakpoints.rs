@@ -40,7 +40,7 @@ impl Breakpoints {
         }
     }
 
-    /// Check for breakpoint
+    /// Check if breakpoint is already registered.
     ///
     /// # Arguments
     ///
@@ -50,7 +50,7 @@ impl Breakpoints {
         self.0.iter().position(|&x| x == addr)
     }
 
-    /// Dump breakpoints
+    /// Dump breakpoints in console
     pub fn dump_breakpoints(&self) {
         println!("{:?}", &self);
     }
