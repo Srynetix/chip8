@@ -1,6 +1,8 @@
 chip8
 =====
 
+![screen](assets/screen.gif)
+
 CHIP-8 emulator written in Rust.
 
 Uses rust-sdl2 for windowing and rendering.
