@@ -67,7 +67,8 @@ impl Screen {
                 WINDOW_TITLE,
                 (VIDEO_MEMORY_WIDTH * RENDERER_SCALE) as u32,
                 (VIDEO_MEMORY_HEIGHT * RENDERER_SCALE) as u32,
-            ).position_centered()
+            )
+            .position_centered()
             .build()
             .unwrap();
 
@@ -216,7 +217,8 @@ impl Screen {
                     (y * (RENDERER_SCALE / coef)) as i32,
                     (RENDERER_SCALE / coef) as u32,
                     (RENDERER_SCALE / coef) as u32,
-                )).expect("Error while drawing.");
+                ))
+                .expect("Error while drawing.");
         }
 
         self.renderer.present();

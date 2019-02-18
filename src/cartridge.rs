@@ -186,7 +186,8 @@ impl Cartridge {
                 output_stream,
                 "{:04X}| ({:04X})  {:20} ; {}",
                 ptr_value, code[i], assembly[i], verbose[i]
-            ).unwrap();
+            )
+            .unwrap();
             ptr_value += 2;
         }
     }

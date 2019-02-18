@@ -15,12 +15,13 @@ pub fn init_logger(level: log::LevelFilter) -> Result<(), log::SetLoggerError> {
     fern::Dispatch::new()
         // Perform allocation-free log formatting
         .format(|out, message, record| {
-            out.finish(format_args!("{}[{}][{}] {}",
-                chrono::Local::now()
-                    .format("[%H:%M:%S]"),
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%H:%M:%S]"),
                 record.target(),
                 record.level(),
-                message))
+                message
+            ))
         })
         // Add blanket level filter -
         .level(level)

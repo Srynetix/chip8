@@ -24,13 +24,15 @@ pub fn start_shell() {
                 .required(true)
                 .help("cartridge name (not the path)")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("disassemble")
                 .long("disassemble")
                 .short("d")
                 .help("disassemble cartridge to file (use '-' to trace in console)")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("breakpoint")
                 .short("b")
                 .long("breakpoint")
@@ -38,18 +40,21 @@ pub fn start_shell() {
                 .number_of_values(1)
                 .help("add breakpoint at address")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("break-at-start")
                 .short("s")
                 .long("break-at-start")
                 .help("add breakpoint at start"),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("trace")
                 .short("t")
                 .long("trace")
                 .help("trace execution to file")
                 .takes_value(true),
-        ).arg(
+        )
+        .arg(
             Arg::with_name("verbose")
                 .long("verbose")
                 .short("v")
