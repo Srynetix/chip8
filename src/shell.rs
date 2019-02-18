@@ -61,9 +61,9 @@ pub fn start_shell() {
         Ok(result) => {
             let level = if result.is_present("verbose") {
                 debug!("D> Using verbose mode.");
-                log::LogLevelFilter::Debug
+                log::LevelFilter::Debug
             } else {
-                log::LogLevelFilter::Info
+                log::LevelFilter::Info
             };
 
             init_logger(level)

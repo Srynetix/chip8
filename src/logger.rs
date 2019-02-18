@@ -11,7 +11,7 @@ use log;
 ///
 /// - `level` - Log level
 ///
-pub fn init_logger(level: log::LogLevelFilter) -> Result<(), log::SetLoggerError> {
+pub fn init_logger(level: log::LevelFilter) -> Result<(), log::SetLoggerError> {
     fern::Dispatch::new()
         // Perform allocation-free log formatting
         .format(|out, message, record| {
