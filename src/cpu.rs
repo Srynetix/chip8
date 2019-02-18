@@ -418,7 +418,7 @@ impl CPU {
                 // Store registers V0 through reg in memory starting at I
                 let ri = self.registers.get_i_register();
 
-                for ridx in 0..(reg + 1) {
+                for ridx in 0..=reg {
                     let r = self.registers.get_register(ridx);
                     self.peripherals
                         .memory
@@ -429,7 +429,7 @@ impl CPU {
                 // Read registers V0 through reg from memory starting at I
                 let ri = self.registers.get_i_register();
 
-                for ridx in 0..(reg + 1) {
+                for ridx in 0..=reg {
                     let byte = self
                         .peripherals
                         .memory
