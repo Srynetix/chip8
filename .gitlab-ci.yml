@@ -14,13 +14,13 @@ image: "liuchong/rustup:stable"
 # You will often need this when you (or any of your dependencies) depends on C code.
 before_script:
 - apt-get update -yqq
-- rustup toolchain install nightly
-- rustup component add clippy-preview --toolchain nightly
+- rustup toolchain install stable
+- rustup component add clippy
 - apt-get install -yqq --no-install-recommends libsdl2-dev
 
 # Use cargo to test the project
 test:cargo:
   script:
   - rustc --version && cargo --version      # Print version info for debugging
-  - cargo +nightly clippy                   # Clippy check
+  - cargo clippy                            # Clippy check
   - cargo test --all --verbose
