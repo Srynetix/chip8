@@ -57,7 +57,7 @@ impl Breakpoints {
 }
 
 impl fmt::Debug for Breakpoints {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "Breakpoints:")?;
         if self.0.is_empty() {
             writeln!(f, "  None")?;

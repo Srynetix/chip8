@@ -144,7 +144,7 @@ impl Memory {
 }
 
 impl fmt::Debug for Memory {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Print row
         print_row(f)?;
         print_separator(f)?;
@@ -172,7 +172,7 @@ impl fmt::Debug for Memory {
     }
 }
 
-fn print_separator(f: &mut fmt::Formatter) -> fmt::Result {
+fn print_separator(f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "                ")?;
     for _ in 0..CHUNK_SIZE {
         write!(f, "---")?;
@@ -181,7 +181,7 @@ fn print_separator(f: &mut fmt::Formatter) -> fmt::Result {
     writeln!(f)
 }
 
-fn print_row(f: &mut fmt::Formatter) -> fmt::Result {
+fn print_row(f: &mut fmt::Formatter<'_>) -> fmt::Result {
     write!(f, "                ")?;
     for v in 0..CHUNK_SIZE {
         write!(f, "{:02X} ", v * 2)?;

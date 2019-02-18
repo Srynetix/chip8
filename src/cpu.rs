@@ -494,7 +494,7 @@ impl Default for CPU {
 }
 
 impl fmt::Debug for CPU {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "CPU {{")?;
 
         writeln!(f, "  memory: {{")?;

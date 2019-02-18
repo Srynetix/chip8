@@ -242,7 +242,7 @@ impl InputState {
 }
 
 impl fmt::Debug for InputState {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (idx, v) in self.data.data.iter().enumerate() {
             writeln!(f, "    K{:X}: {}", idx, v)?;
         }

@@ -263,7 +263,7 @@ impl Screen {
 }
 
 impl fmt::Debug for Screen {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let coef = self.get_screen_size_coef();
         writeln!(
             f,

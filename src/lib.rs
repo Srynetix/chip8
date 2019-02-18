@@ -9,15 +9,6 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-extern crate bincode;
-extern crate chrono;
-extern crate clap;
-extern crate fern;
-extern crate rand;
-extern crate rustyline;
-extern crate sdl2;
-extern crate time;
-
 #[macro_use]
 mod macros;
 
@@ -40,4 +31,4 @@ pub mod stack;
 pub mod timer;
 pub mod types;
 
-pub use shell::start_shell;
+pub use crate::shell::start_shell;

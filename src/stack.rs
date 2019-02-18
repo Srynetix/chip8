@@ -72,7 +72,7 @@ impl Stack {
 }
 
 impl fmt::Debug for Stack {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         for (idx, v) in self.data.iter().enumerate() {
             writeln!(f, "    S{:X}: {:04X},", idx, v)?;
         }

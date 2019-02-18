@@ -41,7 +41,7 @@ impl Error for MissingCartridgeError {
 }
 
 impl fmt::Display for MissingCartridgeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Game cartridge is not found: {}", self.0)
     }
 }
@@ -56,7 +56,7 @@ impl Cartridge {
     ///
     /// * `name` - Game name
     ///
-    fn get_game_path(name: &str) -> Result<String, Box<Error>> {
+    fn get_game_path(name: &str) -> Result<String, Box<dyn Error>> {
         // Concat games directory to path
         let mut game_path = Cartridge::get_games_directory();
         game_path.push(name);
@@ -79,7 +79,7 @@ impl Cartridge {
     ///
     /// * `path` - Path to file
     ///
-    pub fn load_from_games_directory(path: &str) -> Result<Cartridge, Box<Error>> {
+    pub fn load_from_games_directory(path: &str) -> Result<Cartridge, Box<dyn Error>> {
         let game_path = Cartridge::get_game_path(path)?;
         let mut file = File::open(game_path)?;
 
@@ -95,7 +95,7 @@ impl Cartridge {
     ///
     /// * `bytes` - Bytes contents
     ///
-    pub fn load_from_string(title: &str, bytes: &[C8Byte]) -> Result<Cartridge, Box<Error>> {
+    pub fn load_from_string(title: &str, bytes: &[C8Byte]) -> Result<Cartridge, Box<dyn Error>> {
         let title = title.to_string();
         let data = bytes.to_vec();
 

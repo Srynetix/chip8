@@ -59,7 +59,7 @@ impl Timer {
 }
 
 impl fmt::Debug for Timer {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:02X}", self.count)
     }
 }

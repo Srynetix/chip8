@@ -84,7 +84,7 @@ pub fn start_shell() {
                 let dis_file = result.value_of("disassemble").unwrap();
                 cartridge.write_disassembly_to_file(dis_file);
             } else {
-                let mut emulator = Emulator::new();
+                let emulator = Emulator::new();
 
                 if result.is_present("trace") {
                     emulator.set_tracefile(result.value_of("trace").unwrap());
