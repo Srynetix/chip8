@@ -4,15 +4,19 @@ version = "0.9.0"
 authors = ["Denis BOURGE <denis.bourge@sharingcloud.com>"]
 
 [dependencies]
-lazy_static = "1.0"
-rand = "0.4"
-log = "0.3"
-sdl2 = "0.31"
+lazy_static = "1.2"
+rand = "0.6"
+log = "0.4"
 time = "0.1"
-clap = "2.29"
-fern = "0.4"
+clap = "2.32"
+fern = "0.5"
 chrono = "0.4"
-bincode = "1.0"
+bincode = "1.1"
 serde = "1.0"
 serde_derive = "1.0"
-rustyline = "1.0"
+rustyline = "3.0"
+
+[dependencies.sdl2]
+version = "0.32.1"
+default-features = false
+features = ["bundled"]
