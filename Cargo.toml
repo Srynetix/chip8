@@ -3,6 +3,7 @@ name = "chip8"
 version = "0.9.1"
 authors = ["Denis BOURGE <denis.bourge@sharingcloud.com>"]
 edition = "2018"
+build = "build.rs"
 
 [dependencies]
 lazy_static = "1.2"
@@ -20,4 +21,4 @@ rustyline = "3.0"
 [dependencies.sdl2]
 version = "0.32.1"
 default-features = false
-features = ["bundled"]
+features = ["ttf"]
