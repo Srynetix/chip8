@@ -7,6 +7,9 @@ fn main() {
         let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
         let mut lib_dir = manifest_dir.clone();
         let mut dll_dir = manifest_dir.clone();
+        lib_dir.push("sdl");
+        dll_dir.push("sdl");
+        
         if target.contains("msvc") {
             lib_dir.push("msvc");
             dll_dir.push("msvc");
