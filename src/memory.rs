@@ -17,6 +17,7 @@ pub const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
 pub struct Memory {
     data: Vec<C8Byte>,
     pointer: C8Addr,
+    code_end_pointer: C8Addr,
 }
 
 impl Memory {
@@ -25,6 +26,7 @@ impl Memory {
         Memory {
             data: vec![0; MEMORY_SIZE],
             pointer: INITIAL_MEMORY_POINTER,
+            code_end_pointer: INITIAL_MEMORY_POINTER,
         }
     }
 
@@ -38,6 +40,11 @@ impl Memory {
     pub fn write_data_at_offset(&mut self, offset: C8Addr, data: &[C8Byte]) {
         for (idx, v) in data.iter().enumerate() {
             self.data[(offset + idx as C8Addr) as usize] = *v;
+        }
+
+        let end_ptr = offset + (data.len() as C8Addr);
+        if end_ptr > self.code_end_pointer {
+            self.code_end_pointer = end_ptr;
         }
     }
 
@@ -108,11 +115,17 @@ impl Memory {
     /// Reset pointer at initial value
     pub fn reset_pointer(&mut self) {
         self.pointer = INITIAL_MEMORY_POINTER;
+        self.code_end_pointer = INITIAL_MEMORY_POINTER;
     }
 
     /// Read opcode
     pub fn read_opcode(&self) -> C8Addr {
         self.read_opcode_at_address(self.pointer)
+    }
+
+    /// Get end pointer
+    pub fn get_end_pointer(&self) -> C8Addr {
+        self.code_end_pointer
     }
 
     /// Read opcode at address
@@ -125,10 +138,28 @@ impl Memory {
         extract_opcode_from_array(&self.data, addr as usize)
     }
 
+    /// Read multiple opcode at address
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - Address
+    /// * `count` - Count
+    ///
+    pub fn read_opcodes_at_address(&self, addr: C8Addr, count: C8Addr) -> Vec<C8Addr> {
+        let mut output = vec![];
+        for c in 0..count {
+            let current = addr + (c * 2);
+            output.push(self.read_opcode_at_address(current));
+        }
+
+        output
+    }
+
     /// Reset memory
     pub fn reset(&mut self) {
         self.data = vec![0; MEMORY_SIZE];
         self.pointer = INITIAL_MEMORY_POINTER;
+        self.code_end_pointer = INITIAL_MEMORY_POINTER;
     }
 
     /// Load from save
@@ -140,6 +171,7 @@ impl Memory {
     pub fn load_from_save(&mut self, memory: Memory) {
         self.data = memory.data;
         self.pointer = memory.pointer;
+        self.code_end_pointer = memory.code_end_pointer;
     }
 }
 

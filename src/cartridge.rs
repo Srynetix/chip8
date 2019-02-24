@@ -207,9 +207,7 @@ mod tests {
         let mut disasm_raw = Vec::new();
         cartridge.write_disassembly_to_stream(&mut disasm_raw);
         let disasm_str = ::std::str::from_utf8(&disasm_raw).unwrap();
-
         let disasm_lines: Vec<_> = disasm_str.split("\n").collect();
-        println!("{:?}", disasm_lines);
 
         assert_eq!(
             disasm_lines[0],

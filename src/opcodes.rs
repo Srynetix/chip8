@@ -332,6 +332,9 @@ pub enum OpCode {
     /// | HP48 implementation). (X < 8)
     LDXR(C8RegIdx),
 
+    /// 0000 - EMPTY
+    EMPTY,
+
     /// xxxx - Data
     DATA(C8Addr),
 }
@@ -380,7 +383,6 @@ lazy_static! {
         m.insert(35, (0xF065, 0xF0FF));     // Fx65
 
         // S-CHIP
-
         m.insert(36, (0x00C0, 0xFFF0));     // 00Cn
         m.insert(37, (0x00FB, 0xFFFF));     // 00FB
         m.insert(38, (0x00FC, 0xFFFF));     // 00FC
@@ -390,6 +392,8 @@ lazy_static! {
         m.insert(42, (0xF030, 0xF0FF));     // Fx30
         m.insert(43, (0xF075, 0xF0FF));     // Fx75
         m.insert(44, (0xF085, 0xF0FF));     // Fx85
+
+        m.insert(45, (0x0000, 0xFFFF));     // 0000
 
         m
     };
@@ -424,8 +428,7 @@ fn extract_opcode_id(opcode: C8Addr) -> C8Addr {
 ///
 /// # Arguments
 ///
-/// * `opcode_value` - Opcode value
-/// * `action_id` - Action ID
+/// * `opcode` - Opcode value
 ///
 pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
     let action_id = extract_opcode_id(opcode);
@@ -485,6 +488,8 @@ pub fn get_opcode_enum(opcode: C8Addr) -> OpCode {
         42 => OpCode::LDXSprite(b3),
         43 => OpCode::LDXS(b3),
         44 => OpCode::LDXR(b3),
+
+        45 => OpCode::EMPTY,
 
         _ => OpCode::DATA(opcode),
     }
@@ -552,6 +557,7 @@ pub fn get_opcode_str(opcode_enum: &OpCode) -> (String, String) {
         OpCode::LDXS(reg) => (format!("LDX [I], V{:X}", reg), format!("Store V0..V{:X} in RPL user flags", reg)),
         OpCode::LDXR(reg) => (format!("LDX V{:X}, [I]", reg), format!("Read V0..V{:X} from RPL user flags", reg)),
 
+        OpCode::EMPTY => ("EMPTY".into(), "- Empty".into()),
         OpCode::DATA(opcode) => (format!("DATA {:04X}", opcode), format!("- Data ({:04X})", opcode))
     }
 }

@@ -17,14 +17,18 @@ pub struct Debugger {
 }
 
 /// Debugger command
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Command {
     /// Quit
     Quit,
     /// Continue
     Continue,
-    /// Show line
-    Show,
+    /// Show current line
+    Where,
+    /// Current line with context
+    List(u16),
+    /// Complete source
+    LongList,
     /// Dump CPU
     Dump(String),
     /// Read memory at offset
@@ -39,6 +43,8 @@ pub enum Command {
     ListBreakpoints,
     /// Show help
     Help,
+    /// Empty
+    Empty,
 }
 
 impl Debugger {
@@ -56,23 +62,57 @@ impl Debugger {
         }
     }
 
-    /// Run
-    pub fn run(&self) -> Option<Command> {
-        let mut rl = Editor::<()>::new();
-        println!("Debugger on address {:04X}.", self.addr);
-
+    /// Show line
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - Address
+    ///
+    fn show_line(&self, addr: C8Addr) {
         let opcode = self
             .cpu
             .borrow()
             .peripherals
             .memory
-            .read_opcode_at_address(self.addr);
+            .read_opcode_at_address(addr);
         let opcode_enum = get_opcode_enum(opcode);
-        let (opcode_asm, opcode_txt) = get_opcode_str(&opcode_enum);
-        println!("  - {:20} ; {}", opcode_asm, opcode_txt);
+        let (asm, txt) = get_opcode_str(&opcode_enum);
+
+        let cursor = if self.addr == addr { "-->" } else { "" };
+
+        println!("{:04X}> {:3} {:20} ; {}", addr, cursor, asm, txt);
+    }
+
+    /// Show line context
+    fn show_line_context(&self, prev_size: u16, next_size: u16) {
+        let base_addr = self.addr;
+
+        // Limit = 0200
+        let min_limit = std::cmp::max(base_addr - prev_size * 2, 0x0200);
+        let max_limit = base_addr + next_size * 2;
+
+        for addr in (min_limit..=max_limit).step_by(2) {
+            self.show_line(addr);
+        }
+    }
+
+    /// Show complete source
+    fn show_source(&self) {
+        let code_end_pointer = self.cpu.borrow().peripherals.memory.get_end_pointer();
+        for addr in (0x0200..=code_end_pointer).step_by(2) {
+            self.show_line(addr)
+        }
+    }
+
+    /// Run
+    pub fn run(&self) -> Option<Command> {
+        let mut rl = Editor::<()>::new();
+        println!("Debugger on address {:04X}.", self.addr);
+
+        self.show_line_context(1, 1);
 
         #[allow(unused_assignments)]
-        let mut last_command = None;
+        let mut last_command: Option<Command> = None;
 
         'running: loop {
             let readline = rl.readline("> ");
@@ -112,13 +152,14 @@ impl Debugger {
                                         .read_data_at_offset(addr, count)
                                 );
                             }
-                            Command::Show => {
-                                println!("  - {:20} ; {}", opcode_asm, opcode_txt);
-                            }
+                            Command::Where => self.show_line(self.addr),
+                            Command::List(sz) => self.show_line_context(sz, sz),
+                            Command::LongList => self.show_source(),
                             Command::Help => self.show_help(),
                             Command::ListBreakpoints => {
                                 self.cpu.borrow().breakpoints.dump_breakpoints()
                             }
+                            Command::Empty => {}
                             _ => break 'running,
                         }
                     } else {
@@ -173,7 +214,20 @@ impl Debugger {
                     None
                 }
             }
-            "show" | "s" => Some(Command::Show),
+            "where" | "w" => Some(Command::Where),
+            "list" | "l" => {
+                if cmd_split.len() == 1 {
+                    // Default context (2, 2)
+                    Some(Command::List(2))
+                } else if cmd_split.len() == 2 {
+                    let sz = cmd_split[1].parse::<u16>().unwrap();
+                    Some(Command::List(sz))
+                } else {
+                    println!("usage: list [context_size=2]");
+                    None
+                }
+            }
+            "longlist" | "ll" => Some(Command::LongList),
             "next" | "n" => Some(Command::Next),
             "help" | "h" => Some(Command::Help),
             "read-mem" | "rmem" => {
@@ -192,7 +246,7 @@ impl Debugger {
                     None
                 }
             }
-            "add-bp" | "ab" => {
+            "add-bp" | "b" => {
                 if cmd_split.len() == 2 {
                     if let Some(addr) = convert_hex_addr(cmd_split[1]) {
                         Some(Command::AddBreakpoint(addr))
@@ -219,6 +273,7 @@ impl Debugger {
                 }
             }
             "list-bp" | "lb" => Some(Command::ListBreakpoints),
+            "" => Some(Command::Empty),
             _ => None,
         }
     }
@@ -228,9 +283,11 @@ impl Debugger {
         println!("Available commands: ");
         println!("  continue|c      - Continue");
         println!("  dump|d          - Dump device");
-        println!("  show|s          - Show line");
+        println!("  where|w         - Show current line");
+        println!("  list|l          - Show current line with context");
+        println!("  longlist|ll     - Show complete source");
         println!("  next|n          - Step");
-        println!("  add-bp|ab       - Add breakpoint at address");
+        println!("  add-bp|b        - Add breakpoint at address");
         println!("  rem-bp|rb       - Remove breakpoint at address");
         println!("  list-bp|lb      - List breakpoints");
         println!("  read-mem|rmem   - Read memory at offset");

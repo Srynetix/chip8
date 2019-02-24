@@ -70,3 +70,25 @@ impl fmt::Debug for Breakpoints {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_breakpoints() {
+        let mut bps = Breakpoints::new();
+
+        assert!(bps.check_breakpoint(0x1234).is_none());
+
+        bps.register(0x1234);
+        bps.register(0x1234);
+        assert!(bps.check_breakpoint(0x1234).is_some());
+
+        bps.unregister(0x1234);
+        assert!(bps.check_breakpoint(0x1234).is_none());
+        bps.unregister(0x1234);
+
+        bps.dump_breakpoints();
+    }
+}

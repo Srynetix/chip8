@@ -7,13 +7,13 @@ use super::cartridge::Cartridge;
 use super::emulator::Emulator;
 use super::logger::init_logger;
 
-use clap::{App, Arg};
+use clap::{App, Arg, ArgMatches};
 use log;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Start shell
-pub fn start_shell() {
+pub fn start_shell(args: &[&str]) {
     let mut app = App::new("chip8")
         .version(VERSION)
         .author("Denis B. <bourge.denis@gmail.com>")
@@ -61,57 +61,65 @@ pub fn start_shell() {
                 .help("verbose mode"),
         );
 
-    let matches = app.get_matches_from_safe_borrow(&mut env::args_os());
+    let matches = if args.is_empty() {
+        app.get_matches_from_safe_borrow(&mut env::args_os())
+    } else {
+        app.get_matches_from_safe_borrow(args)
+    };
+
     match matches {
-        Ok(result) => {
-            let level = if result.is_present("verbose") {
-                debug!("D> Using verbose mode.");
-                log::LevelFilter::Debug
-            } else {
-                log::LevelFilter::Info
-            };
-
-            init_logger(level)
-                .unwrap_or_else(|_| panic!("Failed to initialize logger with level: {:?}", level));
-
-            let cartridge_filename = result.value_of("file").unwrap();
-            let cartridge_handle = Cartridge::load_from_games_directory(cartridge_filename);
-
-            if let Err(error) = cartridge_handle {
-                println!("{}", error);
-                process::exit(1);
-            }
-
-            // Extract cartridge
-            let cartridge = cartridge_handle.unwrap();
-
-            if result.is_present("disassemble") {
-                let dis_file = result.value_of("disassemble").unwrap();
-                cartridge.write_disassembly_to_file(dis_file);
-            } else {
-                let emulator = Emulator::new();
-
-                if result.is_present("trace") {
-                    emulator.set_tracefile(result.value_of("trace").unwrap());
-                }
-
-                if result.is_present("breakpoint") {
-                    let bp_values: Vec<&str> = result.values_of("breakpoint").unwrap().collect();
-                    for v in bp_values {
-                        emulator.register_breakpoint(v);
-                    }
-                }
-
-                if result.is_present("break-at-start") {
-                    emulator.register_breakpoint("0200");
-                }
-
-                emulator.run(&cartridge);
-            }
-        }
+        Ok(result) => parse_args(&result),
 
         Err(error) => {
             eprintln!("{}", error.to_string());
         }
+    }
+}
+
+/// Parse arguments
+pub fn parse_args(matches: &ArgMatches<'_>) {
+    let level = if matches.is_present("verbose") {
+        debug!("D> Using verbose mode.");
+        log::LevelFilter::Debug
+    } else {
+        log::LevelFilter::Info
+    };
+
+    init_logger(level)
+        .unwrap_or_else(|_| panic!("Failed to initialize logger with level: {:?}", level));
+
+    let cartridge_filename = matches.value_of("file").unwrap();
+    let cartridge_handle = Cartridge::load_from_games_directory(cartridge_filename);
+
+    if let Err(error) = cartridge_handle {
+        println!("{}", error);
+        process::exit(1);
+    }
+
+    // Extract cartridge
+    let cartridge = cartridge_handle.unwrap();
+
+    if matches.is_present("disassemble") {
+        let dis_file = matches.value_of("disassemble").unwrap();
+        cartridge.write_disassembly_to_file(dis_file);
+    } else {
+        let emulator = Emulator::new();
+
+        if matches.is_present("trace") {
+            emulator.set_tracefile(matches.value_of("trace").unwrap());
+        }
+
+        if matches.is_present("breakpoint") {
+            let bp_values: Vec<&str> = matches.values_of("breakpoint").unwrap().collect();
+            for v in bp_values {
+                emulator.register_breakpoint(v);
+            }
+        }
+
+        if matches.is_present("break-at-start") {
+            emulator.register_breakpoint("0200");
+        }
+
+        emulator.run(&cartridge);
     }
 }

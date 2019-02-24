@@ -3,5 +3,5 @@
 use chip8;
 
 fn main() {
-    chip8::start_shell();
+    chip8::start_shell(&[]);
 }

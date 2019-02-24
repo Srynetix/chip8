@@ -474,6 +474,9 @@ impl CPU {
                 println!("Executing LDXR");
             }
 
+            OpCode::EMPTY => {
+                // Unknown
+            }
             OpCode::DATA(_) => {
                 // Unknown
             }

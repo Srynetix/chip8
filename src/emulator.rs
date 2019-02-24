@@ -132,7 +132,6 @@ impl Emulator {
                 let savestate = SaveState::save_from_cpu(&self.cpu.borrow());
                 savestate.write_to_file(&format!("{}.sav", game_name));
 
-                // self.savestate = Some(;
                 println!("State saved.");
             }
 

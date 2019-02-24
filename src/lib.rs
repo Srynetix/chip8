@@ -31,4 +31,5 @@ pub mod stack;
 pub mod timer;
 pub mod types;
 
+pub use crate::emulator::Emulator;
 pub use crate::shell::start_shell;
