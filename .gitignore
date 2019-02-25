@@ -2,8 +2,7 @@
 /target/
 **/*.rs.bk
 
-/SDL2.dll
-
 /*.dump
 /*.log
 /*.sav
+/*.dll
