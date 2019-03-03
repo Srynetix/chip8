@@ -30,6 +30,7 @@ pub mod shell;
 pub mod stack;
 pub mod timer;
 pub mod types;
+pub mod window;
 
 pub use crate::emulator::Emulator;
 pub use crate::shell::start_shell;
