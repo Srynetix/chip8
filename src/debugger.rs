@@ -80,7 +80,7 @@ impl Debugger {
 
         let cursor = if self.addr == addr { "-->" } else { "" };
 
-        println!("{:04X}> {:3} {:20} ; {}", addr, cursor, asm, txt);
+        println!("{:04X}| {:3} {:20} ; {}", addr, cursor, asm, txt);
     }
 
     /// Show line context
