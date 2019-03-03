@@ -31,7 +31,7 @@ impl Scene for HomeScene {
     fn init(&mut self) {}
     fn destroy(&mut self) {}
 
-    fn render(&self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
+    fn render(&mut self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
         clear_screen(ctx.canvas);
 
         {
@@ -78,7 +78,7 @@ impl Scene for HomeScene {
         Ok(())
     }
 
-    fn input(&mut self, event_pump: &mut EventPump, ctx: &mut SceneContext) {
+    fn input(&mut self, ctx: &mut SceneContext, event_pump: &mut EventPump) {
         let f2 = Scancode::from_keycode(Keycode::F2).unwrap();
         let f10 = Scancode::from_keycode(Keycode::F10).unwrap();
 

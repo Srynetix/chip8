@@ -134,12 +134,14 @@ impl SceneManager {
     /// Run loop
     pub fn run_loop(
         &mut self,
-        ctx: &mut SceneContext,
+        scene_context: &mut SceneContext,
         draw_context: &mut DrawContext,
         event_pump: &mut EventPump,
     ) {
-        while ctx.running {
-            let scene = self.get_current_scene(ctx).expect("missing scene");
+        while scene_context.running {
+            let scene = self
+                .get_current_scene(scene_context)
+                .expect("missing scene");
             for event in event_pump.poll_iter() {
                 match event {
                     Event::KeyDown {
@@ -147,14 +149,14 @@ impl SceneManager {
                         ..
                     }
                     | Event::Quit { .. } => {
-                        ctx.quit();
+                        scene_context.quit();
                     }
                     _ => {}
                 }
             }
 
             scene.render(draw_context).unwrap();
-            scene.input(event_pump, ctx);
+            scene.input(scene_context, event_pump);
 
             draw_context.canvas.present();
         }

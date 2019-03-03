@@ -65,7 +65,7 @@ impl Scene for DebugScene {
     fn init(&mut self) {}
     fn destroy(&mut self) {}
 
-    fn render(&self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
+    fn render(&mut self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
         clear_screen(ctx.canvas);
 
         self.game_frame.render(ctx)?;
@@ -75,7 +75,7 @@ impl Scene for DebugScene {
         Ok(())
     }
 
-    fn input(&mut self, _event_pump: &mut EventPump, _ctx: &mut SceneContext) {}
+    fn input(&mut self, _ctx: &mut SceneContext, _event_pump: &mut EventPump) {}
 }
 
 struct GameFrame {
