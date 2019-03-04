@@ -5,7 +5,9 @@ use std::error::Error;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-use sdl2::ttf::{Font, Sdl2TtfContext};
+use sdl2::ttf::Sdl2TtfContext;
+
+pub use sdl2::ttf::Font;
 
 /// Missing font error
 #[derive(Debug)]

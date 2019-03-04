@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 
 use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
 use super::draw::DrawContext;
@@ -16,6 +15,8 @@ pub struct SceneContext {
     pub current_scene_name: Option<String>,
     /// Running
     pub running: bool,
+    /// Cache data
+    pub cache_data: HashMap<String, String>,
 }
 
 impl Default for SceneContext {
@@ -23,6 +24,7 @@ impl Default for SceneContext {
         Self {
             current_scene_name: None,
             running: true,
+            cache_data: HashMap::new(),
         }
     }
 }
@@ -41,6 +43,16 @@ impl SceneContext {
     /// Set current scene
     pub fn set_current_scene(&mut self, name: &str) {
         self.current_scene_name = Some(String::from(name));
+    }
+
+    /// Set cache data
+    pub fn set_cache_data(&mut self, key: &str, value: String) {
+        self.cache_data.insert(String::from(key), value);
+    }
+
+    /// Get cache data
+    pub fn get_cache_data(&self, key: &str) -> Option<String> {
+        self.cache_data.get(key).cloned()
     }
 }
 
@@ -120,13 +132,13 @@ impl SceneManager {
             // Destroy previous scene
             if let Some(scene) = last_loaded_scene {
                 let scene = self.get_scene(&scene).expect("missing scene");
-                scene.destroy();
+                scene.destroy(ctx);
             }
 
             // Load new scene
             if let Some(scene) = &ctx.current_scene_name {
                 let scene = self.get_scene(&scene).expect("missing scene");
-                scene.init();
+                scene.init(ctx);
             }
         }
     }
@@ -144,13 +156,15 @@ impl SceneManager {
                 .expect("missing scene");
             for event in event_pump.poll_iter() {
                 match event {
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Escape),
-                        ..
-                    }
-                    | Event::Quit { .. } => {
+                    Event::Quit { .. } => {
                         scene_context.quit();
                     }
+                    Event::KeyDown {
+                        keycode: Some(kc), ..
+                    } => scene.keydown(scene_context, kc),
+                    Event::KeyUp {
+                        keycode: Some(kc), ..
+                    } => scene.keyup(scene_context, kc),
                     _ => {}
                 }
             }

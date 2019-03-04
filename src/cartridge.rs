@@ -1,14 +1,15 @@
 //! CHIP-8 cartridge
 
+use std::env;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
 use std::io::prelude::*;
-
-use std::env;
 use std::path::{Path, PathBuf};
+
+use walkdir;
 
 use super::memory::INITIAL_MEMORY_POINTER;
 use super::opcodes::{extract_opcode_from_array, get_opcode_enum, get_opcode_str};
@@ -71,6 +72,22 @@ impl Cartridge {
         }
 
         Err(Box::new(MissingCartridgeError(name.to_string())))
+    }
+
+    /// List games from directory.
+    pub fn list_from_games_directory() -> Vec<String> {
+        let mut res = vec![];
+        for entry in walkdir::WalkDir::new(Self::get_games_directory().to_str().unwrap())
+            .into_iter()
+            .filter_map(|e| e.ok())
+        {
+            let fname = entry.file_name().to_string_lossy();
+            if fname.ends_with(".ch8") || fname.ends_with(".CH8") {
+                res.push(fname.into_owned());
+            }
+        }
+
+        res
     }
 
     /// Load cartridge from games directory.
@@ -217,5 +234,11 @@ mod tests {
             disasm_lines[1],
             "0202| (6300)  LD V3, 00            ; Set V3 = 00"
         );
+    }
+
+    #[test]
+    fn test_game_list() {
+        let game_list = Cartridge::list_from_games_directory();
+        assert!(game_list.len() > 0);
     }
 }

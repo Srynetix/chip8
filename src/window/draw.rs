@@ -1,14 +1,14 @@
 //! Draw utils
 
-use std::error::Error;
-
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
 use sdl2::render::{TextureCreator, TextureQuery, WindowCanvas};
 use sdl2::ttf::Font;
 use sdl2::video::WindowContext;
 
 use super::font::FontHandler;
+use crate::error::CResult;
+
+pub use sdl2::rect::Rect;
 
 macro_rules! rectf(
     ($x:expr, $y:expr, $w:expr, $h:expr) => (
@@ -42,10 +42,7 @@ pub fn clear_screen(canvas: &mut sdl2::render::WindowCanvas) {
 }
 
 /// Draw frame
-pub fn draw_frame(
-    canvas: &mut sdl2::render::WindowCanvas,
-    rect: Rect,
-) -> Result<(), Box<dyn Error>> {
+pub fn draw_frame(canvas: &mut sdl2::render::WindowCanvas, rect: Rect) -> CResult {
     canvas.set_draw_color(Color::RGB(255, 255, 255));
     canvas.draw_rect(rect)?;
 
@@ -60,14 +57,23 @@ pub fn draw_text(
     text: &str,
     x: u32,
     y: u32,
-) -> Result<(), Box<dyn Error>> {
-    let surface = font.render(text).blended(Color::RGB(255, 255, 255))?;
-    let texture = texture_creator.create_texture_from_surface(&surface)?;
+) -> CResult {
+    let split_text = text.split('\n');
+    let cur_x = x;
+    let mut cur_y = y;
+    let font_height = font.height() as u32 + 4 as u32;
 
-    let TextureQuery { width, height, .. } = texture.query();
-    let target = rectf!(x, y, width, height);
+    for text in split_text {
+        let surface = font.render(text).blended(Color::RGB(255, 255, 255))?;
+        let texture = texture_creator.create_texture_from_surface(&surface)?;
 
-    canvas.copy(&texture, None, Some(target))?;
+        let TextureQuery { width, height, .. } = texture.query();
+        let target = rectf!(cur_x, cur_y, width, height);
+
+        canvas.copy(&texture, None, Some(target))?;
+
+        cur_y += font_height;
+    }
 
     Ok(())
 }

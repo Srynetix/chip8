@@ -1,11 +1,11 @@
 //! Debug scene
 
-use std::error::Error;
-
+use sdl2::keyboard::Keycode;
 use sdl2::rect::Rect;
 use sdl2::EventPump;
 
 use crate::cartridge::Cartridge;
+use crate::error::CResult;
 use crate::window::draw::{
     clear_screen, draw_text, DrawContext, SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -62,10 +62,10 @@ impl DebugScene {
 }
 
 impl Scene for DebugScene {
-    fn init(&mut self) {}
-    fn destroy(&mut self) {}
+    fn init(&mut self, _ctx: &mut SceneContext) {}
+    fn destroy(&mut self, _ctx: &mut SceneContext) {}
 
-    fn render(&mut self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
+    fn render(&mut self, ctx: &mut DrawContext) -> CResult {
         clear_screen(ctx.canvas);
 
         self.game_frame.render(ctx)?;
@@ -75,6 +75,8 @@ impl Scene for DebugScene {
         Ok(())
     }
 
+    fn keydown(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
+    fn keyup(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
     fn input(&mut self, _ctx: &mut SceneContext, _event_pump: &mut EventPump) {}
 }
 
@@ -89,7 +91,7 @@ impl GameFrame {
         }
     }
 
-    pub fn render(&self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
+    pub fn render(&self, ctx: &mut DrawContext) -> CResult {
         self.frame.render(ctx)?;
         Ok(())
     }
@@ -106,7 +108,7 @@ impl InfoFrame {
         }
     }
 
-    pub fn render(&self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
+    pub fn render(&self, ctx: &mut DrawContext) -> CResult {
         self.frame.render(ctx)?;
         Ok(())
     }
@@ -129,7 +131,7 @@ impl ConsoleFrame {
         self.buffer.push(String::from(text))
     }
 
-    pub fn render(&self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
+    pub fn render(&self, ctx: &mut DrawContext) -> CResult {
         let font = ctx.font_handler.get_font("default", 8).unwrap();
         let mut cursor_y = self.frame.rect.y() + 4;
         let char_height = font.height() + 4;

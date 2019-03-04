@@ -1,10 +1,9 @@
 //! Home scene
 
-use std::error::Error;
-
-use sdl2::keyboard::{Keycode, Scancode};
+use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
+use crate::error::CResult;
 use crate::window::draw::{
     clear_screen, draw_frame, draw_text, DrawContext, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -28,10 +27,10 @@ impl HomeScene {
 }
 
 impl Scene for HomeScene {
-    fn init(&mut self) {}
-    fn destroy(&mut self) {}
+    fn init(&mut self, _ctx: &mut SceneContext) {}
+    fn destroy(&mut self, _ctx: &mut SceneContext) {}
 
-    fn render(&mut self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
+    fn render(&mut self, ctx: &mut DrawContext) -> CResult {
         clear_screen(ctx.canvas);
 
         {
@@ -78,14 +77,14 @@ impl Scene for HomeScene {
         Ok(())
     }
 
-    fn input(&mut self, ctx: &mut SceneContext, event_pump: &mut EventPump) {
-        let f2 = Scancode::from_keycode(Keycode::F2).unwrap();
-        let f10 = Scancode::from_keycode(Keycode::F10).unwrap();
-
-        if event_pump.keyboard_state().is_scancode_pressed(f2) {
-            ctx.set_current_scene("debug");
-        } else if event_pump.keyboard_state().is_scancode_pressed(f10) {
-            ctx.quit();
+    fn keydown(&mut self, ctx: &mut SceneContext, kc: Keycode) {
+        match kc {
+            Keycode::F2 => ctx.set_current_scene("explorer"),
+            Keycode::Escape | Keycode::F10 => ctx.quit(),
+            _ => {}
         }
     }
+
+    fn keyup(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
+    fn input(&mut self, _ctx: &mut SceneContext, _pump: &mut EventPump) {}
 }

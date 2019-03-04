@@ -1,10 +1,9 @@
 //! Frame
 
-use std::error::Error;
-
 use sdl2::rect::Rect;
 
 use super::draw::{draw_frame, draw_text, DrawContext};
+use crate::error::CResult;
 
 /// Frame
 pub struct Frame {
@@ -24,7 +23,7 @@ impl Frame {
     }
 
     /// Render frame
-    pub fn render(&self, ctx: &mut DrawContext) -> Result<(), Box<dyn Error>> {
+    pub fn render(&self, ctx: &mut DrawContext) -> CResult {
         draw_frame(ctx.canvas, self.rect)?;
 
         let font = ctx.font_handler.get_font("default", 10).unwrap();
