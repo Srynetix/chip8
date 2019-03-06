@@ -4,7 +4,8 @@ use crate::error::CResult;
 use crate::window::draw::{draw_text, DrawContext, Rect, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::window::frame::Frame;
 
-const STATUS_HEIGHT: u32 = 64;
+/// Status height
+pub const STATUS_HEIGHT: u32 = 64;
 
 /// Status frame
 pub struct StatusFrame {

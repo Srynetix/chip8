@@ -5,7 +5,7 @@ use std::fmt;
 use super::types::{C8Addr, C8Byte, C8RegIdx};
 
 /// CHIP-8 register count
-const REGISTER_COUNT: usize = 16;
+pub const REGISTER_COUNT: usize = 16;
 
 /// CHIP-8 CPU Registers
 #[derive(Clone, Serialize, Deserialize, Default)]
@@ -42,6 +42,11 @@ impl Registers {
     /// Get I register
     pub fn get_i_register(&self) -> C8Addr {
         self.i
+    }
+
+    /// Get registers
+    pub fn get_registers(&self) -> &[C8Byte] {
+        &self.data
     }
 
     /// Set register value

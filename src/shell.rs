@@ -120,6 +120,6 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
             emulator.register_breakpoint("0200");
         }
 
-        emulator.run(&cartridge);
+        emulator.run_loop(&cartridge);
     }
 }

@@ -4,7 +4,7 @@ use super::input::InputState;
 use super::memory::Memory;
 use super::screen::Screen;
 
-use sdl2;
+// use sdl2;
 
 /// Peripherals
 pub struct Peripherals {
@@ -19,13 +19,10 @@ pub struct Peripherals {
 impl Peripherals {
     /// Create peripherals
     pub fn new() -> Self {
-        // Create SDL context
-        let context = sdl2::init().unwrap();
-
         Peripherals {
-            input: InputState::new(&context),
+            input: InputState::new(),
             memory: Memory::new(),
-            screen: Screen::new(&context),
+            screen: Screen::new(),
         }
     }
 }

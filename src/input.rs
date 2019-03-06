@@ -9,23 +9,21 @@
 
 use std::collections::HashMap;
 use std::fmt;
-use std::thread::sleep;
-use std::time::Duration;
 
 use super::types::{C8Byte, C8RegIdx};
 
-use sdl2;
-use sdl2::event::Event;
+// use sdl2;
 use sdl2::keyboard::{Keycode, Scancode};
+use sdl2::EventPump;
 
 /// Input state count
 pub const INPUT_STATE_COUNT: usize = 16;
 /// Input empty key
 pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
 
-const RESET_KEYCODE: Keycode = Keycode::F5;
-const SAVE_STATE_KEYCODE: Keycode = Keycode::F7;
-const LOAD_STATE_KEYCODE: Keycode = Keycode::F8;
+// const RESET_KEYCODE: Keycode = Keycode::F5;
+// const SAVE_STATE_KEYCODE: Keycode = Keycode::F7;
+// const LOAD_STATE_KEYCODE: Keycode = Keycode::F8;
 
 /// Input state data
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -53,20 +51,13 @@ pub struct InputStateFlags {
 
 /// Input state struct
 pub struct InputState {
-    event_pump: sdl2::EventPump,
-    key_binding: HashMap<C8Byte, Keycode>,
     /// State data
     pub data: InputStateData,
+    key_binding: HashMap<C8Byte, Keycode>,
 }
 
-impl InputState {
-    /// Create new input state
-    ///
-    /// # Arguments
-    ///
-    /// * `context` - SDL2 context
-    ///
-    pub fn new(context: &sdl2::Sdl) -> Self {
+impl Default for InputState {
+    fn default() -> Self {
         let vec = vec![0; INPUT_STATE_COUNT];
 
         let mut initial_binding = HashMap::new();
@@ -90,8 +81,7 @@ impl InputState {
         initial_binding.insert(0xB, Keycode::C);
         initial_binding.insert(0xF, Keycode::V);
 
-        InputState {
-            event_pump: context.event_pump().unwrap(),
+        Self {
             key_binding: initial_binding,
             data: InputStateData {
                 data: vec,
@@ -106,48 +96,58 @@ impl InputState {
             },
         }
     }
+}
+
+impl InputState {
+    /// Create new input state
+    pub fn new() -> Self {
+        Default::default()
+    }
 
     /// Update input state
     pub fn update_state(&mut self) {
-        let events: Vec<Event> = self.event_pump.poll_iter().collect();
+        // let events: Vec<Event> = self.event_pump.poll_iter().collect();
 
-        for event in events {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => {
-                    self.data.flags.should_close = true;
-                }
-                Event::KeyDown {
-                    keycode: Some(RESET_KEYCODE),
-                    ..
-                } => {
-                    self.data.flags.should_reset = true;
-                }
-                Event::KeyDown {
-                    keycode: Some(LOAD_STATE_KEYCODE),
-                    ..
-                } => {
-                    self.data.flags.should_load = true;
-                }
-                Event::KeyDown {
-                    keycode: Some(SAVE_STATE_KEYCODE),
-                    ..
-                } => {
-                    self.data.flags.should_save = true;
-                }
-                _ => {}
-            }
-        }
+        // for event in events {
+        //     match event {
+        //         Event::Quit { .. }
+        //         | Event::KeyDown {
+        //             keycode: Some(Keycode::Escape),
+        //             ..
+        //         } => {
+        //             self.data.flags.should_close = true;
+        //         }
+        //         Event::KeyDown {
+        //             keycode: Some(RESET_KEYCODE),
+        //             ..
+        //         } => {
+        //             self.data.flags.should_reset = true;
+        //         }
+        //         Event::KeyDown {
+        //             keycode: Some(LOAD_STATE_KEYCODE),
+        //             ..
+        //         } => {
+        //             self.data.flags.should_load = true;
+        //         }
+        //         Event::KeyDown {
+        //             keycode: Some(SAVE_STATE_KEYCODE),
+        //             ..
+        //         } => {
+        //             self.data.flags.should_save = true;
+        //         }
+        //         _ => {}
+        //     }
+        // }
+    }
 
+    /// Process input
+    pub fn process_input(&mut self, event_pump: &mut EventPump) {
         // Keyboard state
         for key in 0..INPUT_STATE_COUNT {
             let key8 = key as C8Byte;
             let kb = Scancode::from_keycode(self.key_binding[&key8]).unwrap();
 
-            if self.event_pump.keyboard_state().is_scancode_pressed(kb) {
+            if event_pump.keyboard_state().is_scancode_pressed(kb) {
                 self.press(key8);
             } else {
                 self.release(key8);
@@ -157,17 +157,17 @@ impl InputState {
 
     /// Wait for input
     pub fn wait_for_input(&mut self) -> C8Byte {
-        self.data.input_pressed = false;
+        // self.data.input_pressed = false;
 
-        loop {
-            self.update_state();
+        // loop {
+        //     self.update_state();
 
-            if self.data.input_pressed || self.data.flags.should_close {
-                break;
-            }
+        //     if self.data.input_pressed || self.data.flags.should_close {
+        //         break;
+        //     }
 
-            sleep(Duration::from_millis(10));
-        }
+        //     sleep(Duration::from_millis(10));
+        // }
 
         self.data.last_pressed_key
     }
@@ -216,6 +216,16 @@ impl InputState {
         }
 
         self.data.data[key as usize]
+    }
+
+    /// Get input data
+    pub fn get_data(&self) -> &[C8Byte] {
+        &self.data.data
+    }
+
+    /// Get last pressed key
+    pub fn get_last_pressed_key(&self) -> C8Byte {
+        self.data.last_pressed_key
     }
 
     /// Load from save

@@ -1,5 +1,6 @@
 //! Scene
 
+use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
@@ -11,8 +12,10 @@ use crate::error::CResult;
 pub trait Scene {
     /// Initialize
     fn init(&mut self, ctx: &mut SceneContext);
-    /// Input
-    fn input(&mut self, ctx: &mut SceneContext, event_pump: &mut EventPump);
+    /// Event
+    fn event(&mut self, ctx: &mut SceneContext, e: &Event);
+    /// Update
+    fn update(&mut self, ctx: &mut SceneContext, event_pump: &mut EventPump);
     /// Key up
     fn keyup(&mut self, ctx: &mut SceneContext, code: Keycode);
     /// Key down

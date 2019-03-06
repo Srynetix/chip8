@@ -1,5 +1,6 @@
 //! Explorer scene
 
+use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
@@ -13,6 +14,13 @@ use crate::window::scenemanager::SceneContext;
 use crate::window::frames::list_frame::{ListFrame, ListFrameData};
 use crate::window::frames::status_frame::StatusFrame;
 use crate::window::frames::title_frame::TitleFrame;
+
+const STATUS_TEXT: &str = "\
+                           UP - Move up        F3 - Debug\n\
+                           DOWN - Move down\n\
+                           RETURN - Confirm\n\
+                           ESCAPE - Quit\
+                           ";
 
 /// Explorer scene
 pub struct ExplorerScene {
@@ -54,13 +62,14 @@ impl Scene for ExplorerScene {
     fn init(&mut self, _ctx: &mut SceneContext) {
         self.game_list = Cartridge::list_from_games_directory();
 
-        self.status_frame
-            .set_status("UP - Move up\nDOWN - Move down\nRETURN - Confirm\nESCAPE - Quit");
+        self.status_frame.set_status(STATUS_TEXT);
     }
 
     fn destroy(&mut self, _ctx: &mut SceneContext) {
         self.game_list.clear();
     }
+
+    fn event(&mut self, _ctx: &mut SceneContext, _e: &Event) {}
 
     fn render(&mut self, ctx: &mut DrawContext) -> CResult {
         clear_screen(ctx.canvas);
@@ -77,7 +86,7 @@ impl Scene for ExplorerScene {
         Ok(())
     }
 
-    fn input(&mut self, _ctx: &mut SceneContext, _event_pump: &mut EventPump) {}
+    fn update(&mut self, _ctx: &mut SceneContext, _event_pump: &mut EventPump) {}
 
     fn keydown(&mut self, ctx: &mut SceneContext, kc: Keycode) {
         match kc {
@@ -86,6 +95,11 @@ impl Scene for ExplorerScene {
             }
             Keycode::Down => {
                 self.game_cursor = modulo(self.game_cursor + 1, self.game_list.len() as i32)
+            }
+            Keycode::F3 => {
+                let game = &self.game_list[self.game_cursor as usize];
+                ctx.set_cache_data("selected_game", game.clone());
+                ctx.set_current_scene("debug");
             }
             Keycode::Escape => ctx.set_current_scene("home"),
             Keycode::Return => {

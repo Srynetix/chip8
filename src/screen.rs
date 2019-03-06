@@ -5,12 +5,13 @@
 
 use std::fmt;
 
+use super::error::CResult;
 use super::font::FONT_CHAR_WIDTH;
 use super::types::C8Byte;
 
 use sdl2;
 use sdl2::pixels::Color;
-use sdl2::rect::Rect;
+use sdl2::render::WindowCanvas;
 
 /// Video memory width
 pub const VIDEO_MEMORY_WIDTH: usize = 64;
@@ -19,11 +20,8 @@ pub const VIDEO_MEMORY_HEIGHT: usize = 32;
 /// Renderer scale
 pub const RENDERER_SCALE: usize = 10;
 
-const PIXEL_FADE_COEFFICIENT: f32 = 0.9;
+const PIXEL_FADE_COEFFICIENT: f32 = 0.8;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
-
-const WINDOW_TITLE: &str = "CHIP-8 Emulator";
-const SCHIP_WINDOW_TITLE: &str = "Super CHIP-8 Emulator";
 
 /// Screen mode
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,46 +44,27 @@ pub struct ScreenData {
 pub struct Screen {
     /// Screen data
     pub data: ScreenData,
-    renderer: sdl2::render::WindowCanvas,
 }
 
-impl Screen {
-    /// Create new video memory
-    ///
-    /// # Arguments
-    ///
-    /// * `context` - SDL2 context
-    ///
-    pub fn new(context: &sdl2::Sdl) -> Self {
+impl Default for Screen {
+    fn default() -> Self {
         let data = vec![0; VIDEO_MEMORY_SIZE];
         let alpha = vec![0; VIDEO_MEMORY_SIZE];
 
-        let video_subsystem = context.video().unwrap();
-
-        let window = video_subsystem
-            .window(
-                WINDOW_TITLE,
-                (VIDEO_MEMORY_WIDTH * RENDERER_SCALE) as u32,
-                (VIDEO_MEMORY_HEIGHT * RENDERER_SCALE) as u32,
-            )
-            .position_centered()
-            .build()
-            .unwrap();
-
-        let mut renderer = window.into_canvas().build().unwrap();
-
-        renderer.set_draw_color(Color::RGB(0, 0, 0));
-        renderer.clear();
-        renderer.present();
-
         Screen {
-            renderer,
             data: ScreenData {
                 data,
                 alpha,
                 mode: ScreenMode::Standard,
             },
         }
+    }
+}
+
+impl Screen {
+    /// Create new screen
+    pub fn new() -> Self {
+        Default::default()
     }
 
     /// Reload screen for mode
@@ -100,11 +79,6 @@ impl Screen {
         let coef = self.get_screen_size_coef();
         self.data.data = vec![0; VIDEO_MEMORY_SIZE * coef * coef];
         self.data.alpha = vec![0; VIDEO_MEMORY_SIZE * coef * coef];
-
-        match self.data.mode {
-            ScreenMode::Standard => self.set_title(WINDOW_TITLE),
-            ScreenMode::Extended => self.set_title(SCHIP_WINDOW_TITLE),
-        }
     }
 
     /// Get screen size coef
@@ -146,8 +120,6 @@ impl Screen {
             }
         }
 
-        self.render();
-
         collision
     }
 
@@ -156,8 +128,6 @@ impl Screen {
         for x in 0..self.data.data.len() {
             self.data.data[x] = 0
         }
-
-        self.render();
     }
 
     /// Fade pixels
@@ -167,11 +137,6 @@ impl Screen {
                 self.data.alpha[x] = (f32::from(self.data.alpha[x]) * PIXEL_FADE_COEFFICIENT) as u8;
             }
         }
-    }
-
-    /// Set title
-    fn set_title(&mut self, title: &str) {
-        self.renderer.window_mut().set_title(title).unwrap();
     }
 
     /// Toggle pixel position
@@ -199,29 +164,28 @@ impl Screen {
     }
 
     /// Render screen
-    pub fn render(&mut self) {
-        let coef = self.get_screen_size_coef();
-        self.renderer.set_draw_color(Color::RGB(0, 0, 0));
-        self.renderer.clear();
-
+    pub fn render(&mut self, origin_x: u32, origin_y: u32, renderer: &mut WindowCanvas) -> CResult {
+        // Render to surface
         for (pos, px) in self.data.data.iter().enumerate() {
-            let x = pos % (VIDEO_MEMORY_WIDTH * coef);
-            let y = pos / (VIDEO_MEMORY_WIDTH * coef);
+            let x = pos % VIDEO_MEMORY_WIDTH;
+            let y = pos / VIDEO_MEMORY_WIDTH;
+
             let alpha = &self.data.alpha[pos];
 
             let color = color_from_byte(*px, *alpha);
-            self.renderer.set_draw_color(color);
-            self.renderer
-                .fill_rect(Rect::new(
-                    (x * (RENDERER_SCALE / coef)) as i32,
-                    (y * (RENDERER_SCALE / coef)) as i32,
-                    (RENDERER_SCALE / coef) as u32,
-                    (RENDERER_SCALE / coef) as u32,
-                ))
-                .expect("Error while drawing.");
+            renderer.set_draw_color(color);
+
+            renderer.fill_rect(rectf!(
+                origin_x as i32 + (x * RENDERER_SCALE) as i32,
+                origin_y as i32 + (y * RENDERER_SCALE) as i32,
+                RENDERER_SCALE as u32,
+                RENDERER_SCALE as u32
+            ))?;
         }
 
-        self.renderer.present();
+        self.fade_pixels();
+
+        Ok(())
     }
 
     /// Toggle pixel w/ X/Y coordinates

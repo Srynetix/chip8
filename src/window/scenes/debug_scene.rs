@@ -1,41 +1,85 @@
 //! Debug scene
 
+use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
-use sdl2::rect::Rect;
 use sdl2::EventPump;
 
 use crate::cartridge::Cartridge;
+use crate::emulator::{Emulator, EmulatorContext};
 use crate::error::CResult;
 use crate::window::draw::{
-    clear_screen, draw_text, DrawContext, SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH,
+    clear_screen, DrawContext, SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
-use crate::window::frame::Frame;
+use crate::window::frames::code_frame::CodeFrame;
+use crate::window::frames::debug_info_frame::DebugInfoFrame;
+use crate::window::frames::game_frame::GameFrame;
+use crate::window::frames::shell_frame::ShellFrame;
+use crate::window::frames::status_frame::{StatusFrame, STATUS_HEIGHT};
+use crate::window::frames::title_frame::{TitleFrame, TITLE_HEIGHT};
 use crate::window::scene::Scene;
 use crate::window::scenemanager::SceneContext;
 
+const STATUS_TEXT: &str = "\
+                           F2 - Cycle\n\
+                           ESCAPE - Quit\
+                           ";
+
+/// Debug focus
+pub enum DebugFocus {
+    /// Main focus
+    Main,
+    /// Shell focus
+    Shell,
+}
+
 /// Debug scene
 pub struct DebugScene {
+    game_name: Option<String>,
+    cartridge: Option<Cartridge>,
     game_frame: GameFrame,
-    info_frame: InfoFrame,
-    console_frame: ConsoleFrame,
+    debug_info_frame: DebugInfoFrame,
+    title_frame: TitleFrame,
+    code_frame: CodeFrame,
+    status_frame: StatusFrame,
+    shell_frame: ShellFrame,
+    emulator: Emulator,
+    emulator_context: EmulatorContext,
+    focus: DebugFocus,
 }
+
+const SHELL_FRAME_HEIGHT: u32 = 64;
+const CODE_FRAME_HEIGHT: u32 =
+    WINDOW_HEIGHT - SCREEN_HEIGHT - SHELL_FRAME_HEIGHT - STATUS_HEIGHT - TITLE_HEIGHT;
 
 impl Default for DebugScene {
     fn default() -> Self {
         Self {
-            game_frame: GameFrame::new(rectf!(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)),
-            info_frame: InfoFrame::new(rectf!(
+            game_frame: GameFrame::new(0, TITLE_HEIGHT),
+            debug_info_frame: DebugInfoFrame::new(rectf!(
                 SCREEN_WIDTH,
-                0,
+                TITLE_HEIGHT,
                 WINDOW_WIDTH - SCREEN_WIDTH,
                 SCREEN_HEIGHT
             )),
-            console_frame: ConsoleFrame::new(rectf!(
+            code_frame: CodeFrame::new(rectf!(
                 0,
-                SCREEN_HEIGHT,
+                SCREEN_HEIGHT + TITLE_HEIGHT,
                 WINDOW_WIDTH,
-                WINDOW_HEIGHT - SCREEN_HEIGHT
+                CODE_FRAME_HEIGHT
             )),
+            title_frame: TitleFrame::new_default("DEBUG"),
+            status_frame: StatusFrame::new_default(),
+            shell_frame: ShellFrame::new(rectf!(
+                0,
+                SCREEN_HEIGHT + CODE_FRAME_HEIGHT + TITLE_HEIGHT,
+                WINDOW_WIDTH,
+                SHELL_FRAME_HEIGHT
+            )),
+            emulator: Emulator::new(),
+            emulator_context: EmulatorContext::new(),
+            game_name: None,
+            cartridge: None,
+            focus: DebugFocus::Main,
         }
     }
 }
@@ -45,111 +89,95 @@ impl DebugScene {
     pub fn new() -> Self {
         Default::default()
     }
-
-    /// Load cartridge dump
-    pub fn load_cartridge_dump(&mut self, cartridge: &Cartridge) {
-        let (_code, assembly, verbose) = cartridge.disassemble();
-        let mut ptr_value = 0x200;
-        for i in 0..assembly.len() {
-            let line = format!(
-                "{:04X}| {:3} {:20} ; {}",
-                ptr_value, "", assembly[i], verbose[i]
-            );
-            self.console_frame.print_text(&line);
-            ptr_value += 2;
-        }
-    }
 }
 
 impl Scene for DebugScene {
-    fn init(&mut self, _ctx: &mut SceneContext) {}
+    fn init(&mut self, ctx: &mut SceneContext) {
+        let game = ctx.get_cache_data("selected_game").unwrap();
+        let cartridge = Cartridge::load_from_games_directory(&game).expect("bad game name");
+
+        self.game_name = Some(game.clone());
+        self.title_frame.set_title(&format!("DEBUG - {}", game));
+
+        {
+            let (_code, assembly, verbose) = cartridge.disassemble();
+            let mut ptr_value = 0x200;
+            for i in 0..assembly.len() {
+                let line = format!(
+                    "{:04X}| {:3} {:20} ; {}",
+                    ptr_value, "", assembly[i], verbose[i]
+                );
+                self.code_frame.add_text(&line);
+                ptr_value += 2;
+            }
+        }
+
+        self.cartridge = Some(cartridge);
+
+        self.emulator = Emulator::new();
+        self.emulator_context = EmulatorContext::new();
+        self.emulator.load_game(self.cartridge.as_ref().unwrap());
+
+        self.status_frame.set_status(STATUS_TEXT);
+    }
+
     fn destroy(&mut self, _ctx: &mut SceneContext) {}
+    fn event(&mut self, _ctx: &mut SceneContext, e: &Event) {
+        if let Event::TextInput { text, .. } = e {
+            if let DebugFocus::Shell = self.focus {
+                    for c in text.chars() {
+                    self.shell_frame.add_char(c);
+                }
+            }
+        }
+    }
 
     fn render(&mut self, ctx: &mut DrawContext) -> CResult {
         clear_screen(ctx.canvas);
 
-        self.game_frame.render(ctx)?;
-        self.info_frame.render(ctx)?;
-        self.console_frame.render(ctx)?;
+        self.title_frame.render(ctx)?;
+        self.game_frame.render(&self.emulator, ctx)?;
+        self.debug_info_frame.render(&self.emulator, ctx)?;
+        self.code_frame.render(ctx)?;
+        self.shell_frame.render(ctx)?;
+        self.status_frame.render(ctx)?;
 
         Ok(())
     }
 
-    fn keydown(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
+    fn keydown(&mut self, ctx: &mut SceneContext, kc: Keycode) {
+        match kc {
+            Keycode::Escape => {
+                ctx.set_current_scene("explorer");
+            }
+            Keycode::F2 => {
+                self.focus = match self.focus {
+                    DebugFocus::Main => {
+                        println!("Shell mode");
+                        self.shell_frame.set_active(true);
+                        DebugFocus::Shell
+                    }
+                    DebugFocus::Shell => {
+                        println!("Main mode");
+                        self.shell_frame.set_active(false);
+                        DebugFocus::Main
+                    }
+                };
+            }
+            Keycode::Backspace => {
+                if let DebugFocus::Shell = self.focus {
+                    self.shell_frame.remove_char();
+                }
+            }
+            Keycode::Return => {
+                if let DebugFocus::Shell = self.focus {
+                    self.shell_frame.validate();
+                }
+            }
+            _ => {}
+        }
+    }
+
     fn keyup(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
-    fn input(&mut self, _ctx: &mut SceneContext, _event_pump: &mut EventPump) {}
-}
-
-struct GameFrame {
-    frame: Frame,
-}
-
-impl GameFrame {
-    pub fn new(rect: Rect) -> Self {
-        Self {
-            frame: Frame::new(rect, "GAME"),
-        }
-    }
-
-    pub fn render(&self, ctx: &mut DrawContext) -> CResult {
-        self.frame.render(ctx)?;
-        Ok(())
-    }
-}
-
-struct InfoFrame {
-    frame: Frame,
-}
-
-impl InfoFrame {
-    pub fn new(rect: Rect) -> Self {
-        Self {
-            frame: Frame::new(rect, "INFO"),
-        }
-    }
-
-    pub fn render(&self, ctx: &mut DrawContext) -> CResult {
-        self.frame.render(ctx)?;
-        Ok(())
-    }
-}
-
-struct ConsoleFrame {
-    frame: Frame,
-    buffer: Vec<String>,
-}
-
-impl ConsoleFrame {
-    pub fn new(rect: Rect) -> Self {
-        Self {
-            frame: Frame::new(rect, "DEBUG"),
-            buffer: vec![],
-        }
-    }
-
-    pub fn print_text(&mut self, text: &str) {
-        self.buffer.push(String::from(text))
-    }
-
-    pub fn render(&self, ctx: &mut DrawContext) -> CResult {
-        let font = ctx.font_handler.get_font("default", 8).unwrap();
-        let mut cursor_y = self.frame.rect.y() + 4;
-        let char_height = font.height() + 4;
-
-        for b in self.buffer.iter() {
-            draw_text(
-                ctx.canvas,
-                ctx.texture_creator,
-                font,
-                b,
-                (self.frame.rect.x() + 4) as u32,
-                cursor_y as u32,
-            )?;
-            cursor_y += char_height;
-        }
-
-        self.frame.render(ctx)?;
-
-        Ok(())
-    }
+    fn update(&mut self, _ctx: &mut SceneContext, _pump: &mut EventPump) {}
 }

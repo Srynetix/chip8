@@ -4,7 +4,9 @@ use crate::error::CResult;
 use crate::window::draw::{draw_text, DrawContext, Rect, WINDOW_WIDTH};
 use crate::window::frame::Frame;
 
-const TITLE_HEIGHT: u32 = 64;
+/// Title height
+pub const TITLE_HEIGHT: u32 = 64;
+
 const PADDING: u32 = 24;
 
 /// Title frame
@@ -28,6 +30,11 @@ impl TitleFrame {
             frame: Frame::new(rectf!(0, 0, WINDOW_WIDTH, TITLE_HEIGHT), "TITLE"),
             title: String::from(title),
         }
+    }
+
+    /// Set title
+    pub fn set_title(&mut self, title: &str) {
+        self.title = String::from(title);
     }
 
     /// Render frame

@@ -1,5 +1,6 @@
 //! Home scene
 
+use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
@@ -77,6 +78,8 @@ impl Scene for HomeScene {
         Ok(())
     }
 
+    fn event(&mut self, _ctx: &mut SceneContext, _e: &Event) {}
+
     fn keydown(&mut self, ctx: &mut SceneContext, kc: Keycode) {
         match kc {
             Keycode::F2 => ctx.set_current_scene("explorer"),
@@ -86,5 +89,5 @@ impl Scene for HomeScene {
     }
 
     fn keyup(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
-    fn input(&mut self, _ctx: &mut SceneContext, _pump: &mut EventPump) {}
+    fn update(&mut self, _ctx: &mut SceneContext, _pump: &mut EventPump) {}
 }

@@ -5,9 +5,6 @@ use std::path::Path;
 
 use sdl2::pixels::Color;
 
-use crate::cartridge::Cartridge;
-use crate::error::CResult;
-
 use super::draw::{DrawContext, WINDOW_HEIGHT, WINDOW_WIDTH};
 use super::font::FontHandler;
 use super::scenemanager::{SceneContext, SceneManager};
@@ -15,12 +12,11 @@ use super::scenes::debug_scene::DebugScene;
 use super::scenes::explorer_scene::ExplorerScene;
 use super::scenes::game_scene::GameScene;
 use super::scenes::home_scene::HomeScene;
+use crate::error::CResult;
 
 /// Emulator window test
 pub fn emulator_window() -> CResult {
     // Load cartridge
-    let cartridge = Cartridge::load_from_games_directory("TEST/BC_test.ch8")?;
-
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
@@ -54,6 +50,7 @@ pub fn emulator_window() -> CResult {
         font_handler: &mut font_handler,
         texture_creator: &texture_creator,
         canvas: &mut canvas,
+        video_subsystem: &video_subsys,
     };
 
     let mut event_pump = sdl_context.event_pump()?;
@@ -62,8 +59,7 @@ pub fn emulator_window() -> CResult {
 
     // Load scenes
     let home_scene = Box::new(HomeScene::new());
-    let mut debug_scene = Box::new(DebugScene::new());
-    debug_scene.load_cartridge_dump(&cartridge);
+    let debug_scene = Box::new(DebugScene::new());
     let explorer_scene = Box::new(ExplorerScene::new());
     let game_scene = Box::new(GameScene::new());
 

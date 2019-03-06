@@ -139,6 +139,9 @@ impl SceneManager {
             if let Some(scene) = &ctx.current_scene_name {
                 let scene = self.get_scene(&scene).expect("missing scene");
                 scene.init(ctx);
+
+                // Set as last loaded
+                self.last_loaded_scene = ctx.current_scene_name.as_ref().cloned();
             }
         }
     }
@@ -165,12 +168,12 @@ impl SceneManager {
                     Event::KeyUp {
                         keycode: Some(kc), ..
                     } => scene.keyup(scene_context, kc),
-                    _ => {}
+                    e => scene.event(scene_context, &e),
                 }
             }
 
             scene.render(draw_context).unwrap();
-            scene.input(scene_context, event_pump);
+            scene.update(scene_context, event_pump);
 
             draw_context.canvas.present();
         }

@@ -38,6 +38,16 @@ impl Stack {
         self.pointer += 1
     }
 
+    /// Get data
+    pub fn get_data(&self) -> &[C8Addr] {
+        &self.data
+    }
+
+    /// Get pointer
+    pub fn get_pointer(&self) -> C8Byte {
+        self.pointer
+    }
+
     /// Pop address from stack
     pub fn pop(&mut self) -> C8Addr {
         if self.pointer == 0 {
