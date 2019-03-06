@@ -8,13 +8,14 @@ use std::path::Path;
 
 use bincode::{deserialize, serialize};
 
-use crate::core::cpu::CPU;
-use crate::core::registers::Registers;
-use crate::core::stack::Stack;
-use crate::core::timer::Timer;
 use crate::peripherals::input::InputStateData;
 use crate::peripherals::memory::Memory;
 use crate::peripherals::screen::ScreenData;
+
+use super::cpu::CPU;
+use super::registers::Registers;
+use super::stack::Stack;
+use super::timer::Timer;
 
 /// Missing save state
 #[derive(Debug)]

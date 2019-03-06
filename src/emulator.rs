@@ -10,8 +10,9 @@ use time::{self, PreciseTime};
 use super::core::cpu::CPU;
 use super::core::error::CResult;
 use super::core::opcodes;
+use super::core::savestate::{MissingSaveState, SaveState};
 use super::core::types::{convert_hex_addr, C8Addr};
-use super::debugger::{Command, MissingSaveState, SaveState};
+use super::debugger::Command;
 use super::peripherals::cartridge::Cartridge;
 
 const TIMER_FRAME_LIMIT: i64 = 16;
