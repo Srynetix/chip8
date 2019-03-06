@@ -1,8 +1,9 @@
 //! CHIP-8 save state
 
-use std::io::{Read, Write};
-
+use std::error::Error;
+use std::fmt;
 use std::fs::File;
+use std::io::{Read, Write};
 use std::path::Path;
 
 use bincode::{deserialize, serialize};
@@ -14,6 +15,22 @@ use crate::core::timer::Timer;
 use crate::peripherals::input::InputStateData;
 use crate::peripherals::memory::Memory;
 use crate::peripherals::screen::ScreenData;
+
+/// Missing save state
+#[derive(Debug)]
+pub struct MissingSaveState(pub String);
+
+impl Error for MissingSaveState {
+    fn description(&self) -> &str {
+        "Missing save state"
+    }
+}
+
+impl fmt::Display for MissingSaveState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Game save state is not found: {}", self.0)
+    }
+}
 
 /// CHIP-8 save state
 #[derive(Clone, Serialize, Deserialize, Debug)]

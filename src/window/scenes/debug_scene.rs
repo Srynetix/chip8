@@ -34,8 +34,8 @@ pub enum DebugFocus {
 
 /// Debug scene
 pub struct DebugScene {
-    game_name: Option<String>,
-    cartridge: Option<Cartridge>,
+    game_name: String,
+    cartridge: Cartridge,
     game_frame: GameFrame,
     debug_info_frame: DebugInfoFrame,
     title_frame: TitleFrame,
@@ -77,8 +77,8 @@ impl Default for DebugScene {
             )),
             emulator: Emulator::new(),
             emulator_context: EmulatorContext::new(),
-            game_name: None,
-            cartridge: None,
+            game_name: String::from("EMPTY"),
+            cartridge: Cartridge::new_empty(),
             focus: DebugFocus::Main,
         }
     }
@@ -96,7 +96,7 @@ impl Scene for DebugScene {
         let game = ctx.get_cache_data("selected_game").unwrap();
         let cartridge = Cartridge::load_from_games_directory(&game).expect("bad game name");
 
-        self.game_name = Some(game.clone());
+        self.game_name = game.clone();
         self.title_frame.set_title(&format!("DEBUG - {}", game));
 
         {
@@ -112,11 +112,11 @@ impl Scene for DebugScene {
             }
         }
 
-        self.cartridge = Some(cartridge);
+        self.cartridge = cartridge;
 
         self.emulator = Emulator::new();
         self.emulator_context = EmulatorContext::new();
-        self.emulator.load_game(self.cartridge.as_ref().unwrap());
+        self.emulator.load_game(&self.cartridge);
 
         self.status_frame.set_status(STATUS_TEXT);
     }

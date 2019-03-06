@@ -20,10 +20,6 @@ pub const INPUT_STATE_COUNT: usize = 16;
 /// Input empty key
 pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
 
-// const RESET_KEYCODE: Keycode = Keycode::F5;
-// const SAVE_STATE_KEYCODE: Keycode = Keycode::F7;
-// const LOAD_STATE_KEYCODE: Keycode = Keycode::F8;
-
 /// Input state data
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputStateData {
@@ -31,21 +27,62 @@ pub struct InputStateData {
     last_pressed_key: C8Byte,
     input_pressed: bool,
 
-    /// Flags
-    pub flags: InputStateFlags,
+    /// Lock
+    pub lock: InputLock,
 }
 
-/// Input state flags
+/// Input lock
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct InputStateFlags {
-    /// Should close
-    pub should_close: bool,
-    /// Should reset
-    pub should_reset: bool,
-    /// Should save
-    pub should_save: bool,
-    /// Should load
-    pub should_load: bool,
+pub struct InputLock {
+    /// Active
+    pub active: bool,
+    /// Register
+    pub register: C8RegIdx,
+    /// Key
+    pub key: C8Byte,
+}
+
+impl InputLock {
+    /// Check if key is set
+    pub fn is_key_set(&self) -> bool {
+        self.key != INPUT_EMPTY_KEY
+    }
+
+    /// Is locked
+    pub fn is_locked(&self) -> bool {
+        self.active
+    }
+
+    /// Lock
+    pub fn lock(&mut self, register: C8RegIdx) -> bool {
+        if self.active {
+            false
+        } else {
+            self.active = true;
+            self.register = register;
+            self.key = INPUT_EMPTY_KEY;
+
+            true
+        }
+    }
+
+    /// Unlock
+    pub fn unlock(&mut self) -> bool {
+        if !self.active {
+            false
+        } else {
+            self.active = false;
+            self.register = INPUT_EMPTY_KEY;
+            self.key = INPUT_EMPTY_KEY;
+
+            true
+        }
+    }
+
+    /// Set key
+    pub fn set_key(&mut self, key: C8Byte) {
+        self.key = key;
+    }
 }
 
 /// Input state struct
@@ -86,11 +123,10 @@ impl Default for InputState {
                 data: vec,
                 last_pressed_key: INPUT_EMPTY_KEY,
                 input_pressed: false,
-                flags: InputStateFlags {
-                    should_close: false,
-                    should_reset: false,
-                    should_save: false,
-                    should_load: false,
+                lock: InputLock {
+                    active: false,
+                    register: 255,
+                    key: 255,
                 },
             },
         }
@@ -101,42 +137,6 @@ impl InputState {
     /// Create new input state
     pub fn new() -> Self {
         Default::default()
-    }
-
-    /// Update input state
-    pub fn update_state(&mut self) {
-        // let events: Vec<Event> = self.event_pump.poll_iter().collect();
-
-        // for event in events {
-        //     match event {
-        //         Event::Quit { .. }
-        //         | Event::KeyDown {
-        //             keycode: Some(Keycode::Escape),
-        //             ..
-        //         } => {
-        //             self.data.flags.should_close = true;
-        //         }
-        //         Event::KeyDown {
-        //             keycode: Some(RESET_KEYCODE),
-        //             ..
-        //         } => {
-        //             self.data.flags.should_reset = true;
-        //         }
-        //         Event::KeyDown {
-        //             keycode: Some(LOAD_STATE_KEYCODE),
-        //             ..
-        //         } => {
-        //             self.data.flags.should_load = true;
-        //         }
-        //         Event::KeyDown {
-        //             keycode: Some(SAVE_STATE_KEYCODE),
-        //             ..
-        //         } => {
-        //             self.data.flags.should_save = true;
-        //         }
-        //         _ => {}
-        //     }
-        // }
     }
 
     /// Process input
@@ -155,20 +155,9 @@ impl InputState {
     }
 
     /// Wait for input
-    pub fn wait_for_input(&mut self) -> C8Byte {
-        // self.data.input_pressed = false;
-
-        // loop {
-        //     self.update_state();
-
-        //     if self.data.input_pressed || self.data.flags.should_close {
-        //         break;
-        //     }
-
-        //     sleep(Duration::from_millis(10));
-        // }
-
-        self.data.last_pressed_key
+    pub fn wait_for_input(&mut self, register: C8RegIdx) {
+        self.data.lock.active = true;
+        self.data.lock.register = register;
     }
 
     /// Press input
@@ -185,6 +174,11 @@ impl InputState {
         self.data.data[key as usize] = 1;
         self.data.last_pressed_key = key;
         self.data.input_pressed = true;
+
+        // Handle lock
+        if self.data.lock.is_locked() && !self.data.lock.is_key_set() {
+            self.data.lock.set_key(key);
+        }
     }
 
     /// Release input
@@ -242,11 +236,6 @@ impl InputState {
         self.data.data = vec![0; INPUT_STATE_COUNT];
         self.data.last_pressed_key = INPUT_EMPTY_KEY;
         self.data.input_pressed = false;
-
-        self.data.flags.should_close = false;
-        self.data.flags.should_reset = false;
-        self.data.flags.should_save = false;
-        self.data.flags.should_load = false;
     }
 }
 

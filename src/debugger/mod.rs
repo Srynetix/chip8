@@ -6,4 +6,4 @@ mod savestate;
 
 pub use _debugger::{Command, Debugger};
 pub use breakpoints::Breakpoints;
-pub use savestate::SaveState;
+pub use savestate::{MissingSaveState, SaveState};

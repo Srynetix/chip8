@@ -49,6 +49,14 @@ impl fmt::Display for MissingCartridgeError {
 }
 
 impl Cartridge {
+    /// New empty cartridge
+    pub fn new_empty() -> Self {
+        Self {
+            title: String::from("EMPTY"),
+            data: vec![],
+        }
+    }
+
     /// Get game path.
     ///
     /// Automatically add extension if not in name.

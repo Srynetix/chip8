@@ -17,8 +17,8 @@ use crate::window::scenemanager::SceneContext;
 
 /// Game scene
 pub struct GameScene {
-    game_name: Option<String>,
-    cartridge: Option<Cartridge>,
+    game_name: String,
+    cartridge: Cartridge,
     game_frame: GameFrame,
     title_frame: TitleFrame,
     keyboard_frame: KeyboardFrame,
@@ -37,8 +37,8 @@ impl Default for GameScene {
         let keyboard_y = game_y + (SCREEN_HEIGHT / 2) - (KEYBOARD_HEIGHT / 2);
 
         Self {
-            game_name: None,
-            cartridge: None,
+            game_name: String::from("EMPTY"),
+            cartridge: Cartridge::new_empty(),
             game_frame: GameFrame::new(game_x, game_y),
             title_frame: TitleFrame::new_default("GAME"),
             keyboard_frame: KeyboardFrame::new(keyboard_x, keyboard_y),
@@ -60,15 +60,16 @@ impl Scene for GameScene {
     fn init(&mut self, ctx: &mut SceneContext) {
         let game = ctx.get_cache_data("selected_game").unwrap();
 
-        self.game_name = Some(game.clone());
-        self.cartridge = Some(Cartridge::load_from_games_directory(&game).expect("bad game name"));
+        self.game_name = game.clone();
+        self.cartridge = Cartridge::load_from_games_directory(&game).expect("bad game name");
 
         self.title_frame.set_title(&format!("GAME - {}", game));
-        self.status_frame.set_status("ESCAPE - Quit");
+        self.status_frame
+            .set_status("F5 - Reset\nF6 - Save state\nF7 - Load state\nESCAPE - Quit");
 
         self.emulator = Emulator::new();
         self.emulator_context = EmulatorContext::new();
-        self.emulator.load_game(self.cartridge.as_ref().unwrap());
+        self.emulator.load_game(&self.cartridge);
     }
 
     fn destroy(&mut self, _ctx: &mut SceneContext) {}
@@ -96,12 +97,28 @@ impl Scene for GameScene {
 
         // Step emulation
         self.emulator
-            .step(self.cartridge.as_ref().unwrap(), &mut self.emulator_context);
+            .step(&self.cartridge, &mut self.emulator_context);
     }
 
     fn keydown(&mut self, ctx: &mut SceneContext, kc: Keycode) {
-        if let Keycode::Escape = kc {
-            ctx.set_current_scene("explorer");
+        match kc {
+            Keycode::Escape => {
+                ctx.set_current_scene("explorer");
+            }
+            Keycode::F5 => {
+                self.emulator
+                    .reset(&self.cartridge, &mut self.emulator_context);
+                println!("Reset !");
+            }
+            Keycode::F6 => {
+                self.emulator.save_state(&self.game_name);
+                println!("State saved !");
+            }
+            Keycode::F7 => match self.emulator.load_state(&self.game_name) {
+                Ok(()) => println!("State loaded !"),
+                Err(e) => eprintln!("Error: {}", e),
+            },
+            _ => {}
         }
     }
 

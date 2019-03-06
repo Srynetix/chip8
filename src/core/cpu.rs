@@ -374,8 +374,7 @@ impl CPU {
                 self.registers.set_register(reg, dt);
             }
             OpCode::LDGetKey(reg) => {
-                let key = self.peripherals.input.wait_for_input();
-                self.registers.set_register(reg, key);
+                self.peripherals.input.wait_for_input(reg);
             }
             OpCode::LDSetDelayTimer(reg) => {
                 // Set delay timer value from registry

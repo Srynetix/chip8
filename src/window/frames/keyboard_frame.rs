@@ -16,7 +16,7 @@ const KEY_MARGIN: u32 = 8;
 /// Keyboard width
 pub const KEYBOARD_WIDTH: u32 = (KEY_SIZE + KEY_MARGIN * 2) * 4;
 /// Keyboard height
-pub const KEYBOARD_HEIGHT: u32 = (KEY_SIZE + KEY_MARGIN * 2) * 4;
+pub const KEYBOARD_HEIGHT: u32 = (KEY_SIZE + KEY_MARGIN * 2) * 5;
 
 lazy_static! {
     static ref KEY_POSITIONS: HashMap<C8Byte, (u32, u32)> = {
@@ -56,9 +56,58 @@ impl KeyboardFrame {
         }
     }
 
-    /// Render
-    pub fn render(&mut self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
+    fn render_wait_indicator(&self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
         let font = ctx.font_handler.get_or_create_font("default", 16).unwrap();
+
+        let grey_color = Color::RGB(127, 127, 127);
+        let white_color = Color::RGB(255, 255, 255);
+
+        let wait_x = KEY_SIZE + KEY_MARGIN * 2;
+        let wait_y = (KEY_SIZE + KEY_MARGIN * 2) * 4;
+        let wait_w = (KEY_SIZE + KEY_MARGIN * 2) * 2;
+        let wait_h = KEY_SIZE + KEY_MARGIN * 2;
+
+        let locked = emulator
+            .cpu
+            .borrow()
+            .peripherals
+            .input
+            .data
+            .lock
+            .is_locked();
+        let color = if locked { white_color } else { grey_color };
+
+        let wait_sz = font.size_of("WAIT").unwrap();
+
+        // Render wait
+        draw_text_ex(
+            ctx.canvas,
+            ctx.texture_creator,
+            font,
+            "WAIT",
+            self.frame.rect.x() as u32 + wait_x + wait_w / 2 - wait_sz.0 / 2,
+            self.frame.rect.y() as u32 + wait_y + wait_h / 2 - wait_sz.1 / 2,
+            color,
+        )?;
+
+        let old_color = ctx.canvas.draw_color();
+        ctx.canvas.set_draw_color(color);
+        ctx.canvas.draw_rect(rectf!(
+            self.frame.rect.x() as u32 + wait_x,
+            self.frame.rect.y() as u32 + wait_y,
+            wait_w,
+            wait_h
+        ))?;
+        ctx.canvas.set_draw_color(old_color);
+
+        Ok(())
+    }
+
+    fn render_keyboard(&self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
+        let font = ctx.font_handler.get_or_create_font("default", 16).unwrap();
+
+        let grey_color = Color::RGB(127, 127, 127);
+        let white_color = Color::RGB(255, 255, 255);
 
         for (idx, v) in emulator
             .cpu
@@ -70,8 +119,8 @@ impl KeyboardFrame {
             .enumerate()
         {
             let color = match v {
-                0 => Color::RGB(127, 127, 127),
-                _ => Color::RGB(255, 255, 255),
+                0 => grey_color,
+                _ => white_color,
             };
 
             let (x, y) = KEY_POSITIONS[&(idx as C8Byte)];
@@ -94,21 +143,28 @@ impl KeyboardFrame {
             )?;
 
             let old_color = ctx.canvas.draw_color();
-
             ctx.canvas.set_draw_color(color);
-
             ctx.canvas.draw_rect(rectf!(
                 self.frame.rect.x() as u32 + x * (KEY_SIZE + KEY_MARGIN * 2),
                 self.frame.rect.y() as u32 + y * (KEY_SIZE + KEY_MARGIN * 2),
                 KEY_SIZE + KEY_MARGIN * 2,
                 KEY_SIZE + KEY_MARGIN * 2
             ))?;
-
             ctx.canvas.set_draw_color(old_color);
         }
 
-        // Render !
-        self.frame.render(ctx)?;
         Ok(())
+    }
+
+    /// Render
+    pub fn render(&mut self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
+        // Render keyboard
+        self.render_keyboard(emulator, ctx)?;
+
+        // Render wait indicator
+        self.render_wait_indicator(emulator, ctx)?;
+
+        // Render !
+        self.frame.render(ctx)
     }
 }

@@ -157,6 +157,7 @@ impl SceneManager {
             let scene = self
                 .get_current_scene(scene_context)
                 .expect("missing scene");
+
             for event in event_pump.poll_iter() {
                 match event {
                     Event::Quit { .. } => {
