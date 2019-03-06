@@ -2,8 +2,8 @@
 
 use std::fmt;
 
-use super::opcodes::extract_opcode_from_array;
-use super::types::{C8Addr, C8Byte};
+use crate::core::opcodes::extract_opcode_from_array;
+use crate::core::types::{C8Addr, C8Byte};
 
 /// CHIP-8 CPU memory vars
 const MEMORY_SIZE: usize = 4096;

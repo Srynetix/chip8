@@ -4,14 +4,14 @@ use std::fmt;
 
 use rand::random;
 
-use super::breakpoints::Breakpoints;
-use super::cartridge::Cartridge;
+use crate::debugger::{Breakpoints, SaveState};
+use crate::peripherals::cartridge::Cartridge;
+use crate::peripherals::screen::ScreenMode;
+use crate::peripherals::Peripherals;
+
 use super::font::{Font, FONT_CHAR_HEIGHT, FONT_DATA_ADDR};
 use super::opcodes::OpCode;
-use super::peripherals::Peripherals;
 use super::registers::Registers;
-use super::savestate::SaveState;
-use super::screen::ScreenMode;
 use super::stack::Stack;
 use super::timer::Timer;
 use super::types::{C8Addr, C8Byte};

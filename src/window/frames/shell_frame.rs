@@ -3,7 +3,7 @@
 use sdl2::rect::Rect;
 use time::PreciseTime;
 
-use crate::error::CResult;
+use crate::core::error::CResult;
 use crate::window::draw::{draw_text, DrawContext};
 use crate::window::frame::Frame;
 

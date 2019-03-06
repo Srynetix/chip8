@@ -10,11 +10,10 @@
 use std::collections::HashMap;
 use std::fmt;
 
-use super::types::{C8Byte, C8RegIdx};
-
-// use sdl2;
 use sdl2::keyboard::{Keycode, Scancode};
 use sdl2::EventPump;
+
+use crate::core::types::{C8Byte, C8RegIdx};
 
 /// Input state count
 pub const INPUT_STATE_COUNT: usize = 16;

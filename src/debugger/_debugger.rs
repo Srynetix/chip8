@@ -3,12 +3,12 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use super::cpu::CPU;
-use super::opcodes::{get_opcode_enum, get_opcode_str};
-use super::types::{convert_hex_addr, C8Addr};
-
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
+
+use crate::core::cpu::CPU;
+use crate::core::opcodes::{get_opcode_enum, get_opcode_str};
+use crate::core::types::{convert_hex_addr, C8Addr};
 
 /// Debugger
 pub struct Debugger {

@@ -4,16 +4,15 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
-use crate::cartridge::Cartridge;
-use crate::error::CResult;
-use crate::math::modulo;
+use crate::core::error::CResult;
+use crate::core::math::modulo;
+use crate::peripherals::cartridge::Cartridge;
 use crate::window::draw::{clear_screen, DrawContext, WINDOW_HEIGHT, WINDOW_WIDTH};
-use crate::window::scene::Scene;
-use crate::window::scenemanager::SceneContext;
-
 use crate::window::frames::list_frame::{ListFrame, ListFrameData};
 use crate::window::frames::status_frame::StatusFrame;
 use crate::window::frames::title_frame::TitleFrame;
+use crate::window::scene::Scene;
+use crate::window::scenemanager::SceneContext;
 
 const STATUS_TEXT: &str = "\
                            UP - Move up        F3 - Debug\n\

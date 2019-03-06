@@ -2,8 +2,9 @@
 
 use sdl2::rect::Rect;
 
+use crate::core::error::CResult;
+
 use super::draw::{draw_frame, draw_text, DrawContext};
-use crate::error::CResult;
 
 /// Frame
 pub struct Frame {

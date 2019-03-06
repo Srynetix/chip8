@@ -4,9 +4,9 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
-use crate::cartridge::Cartridge;
+use crate::core::error::CResult;
 use crate::emulator::{Emulator, EmulatorContext};
-use crate::error::CResult;
+use crate::peripherals::cartridge::Cartridge;
 use crate::window::draw::{
     clear_screen, DrawContext, SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH,
 };
@@ -125,7 +125,7 @@ impl Scene for DebugScene {
     fn event(&mut self, _ctx: &mut SceneContext, e: &Event) {
         if let Event::TextInput { text, .. } = e {
             if let DebugFocus::Shell = self.focus {
-                    for c in text.chars() {
+                for c in text.chars() {
                     self.shell_frame.add_char(c);
                 }
             }

@@ -1,9 +1,11 @@
-//! App
+//! Window
 
 use std::env;
 use std::path::Path;
 
 use sdl2::pixels::Color;
+
+use crate::core::error::CResult;
 
 use super::draw::{DrawContext, WINDOW_HEIGHT, WINDOW_WIDTH};
 use super::font::FontHandler;
@@ -12,10 +14,9 @@ use super::scenes::debug_scene::DebugScene;
 use super::scenes::explorer_scene::ExplorerScene;
 use super::scenes::game_scene::GameScene;
 use super::scenes::home_scene::HomeScene;
-use crate::error::CResult;
 
-/// Emulator window test
-pub fn emulator_window() -> CResult {
+/// Start window
+pub fn start_window() -> CResult {
     // Load cartridge
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;

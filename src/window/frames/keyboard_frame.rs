@@ -4,9 +4,9 @@ use std::collections::HashMap;
 
 use sdl2::pixels::Color;
 
+use crate::core::error::CResult;
+use crate::core::types::C8Byte;
 use crate::emulator::Emulator;
-use crate::error::CResult;
-use crate::types::C8Byte;
 use crate::window::draw::{draw_text_ex, DrawContext};
 use crate::window::frame::Frame;
 

@@ -5,13 +5,13 @@
 
 use std::fmt;
 
-use super::error::CResult;
-use super::font::FONT_CHAR_WIDTH;
-use super::types::C8Byte;
-
 use sdl2;
 use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
+
+use crate::core::error::CResult;
+use crate::core::font::FONT_CHAR_WIDTH;
+use crate::core::types::C8Byte;
 
 /// Video memory width
 pub const VIDEO_MEMORY_WIDTH: usize = 64;

@@ -10,28 +10,11 @@ extern crate log;
 extern crate serde_derive;
 
 #[macro_use]
-mod macros;
-
-pub mod breakpoints;
-pub mod cartridge;
-pub mod cpu;
+pub mod core;
 pub mod debugger;
 pub mod emulator;
-pub mod error;
-pub mod font;
-pub mod input;
-pub mod logger;
-pub mod math;
-pub mod memory;
-pub mod opcodes;
 pub mod peripherals;
-pub mod registers;
-pub mod savestate;
-pub mod screen;
 pub mod shell;
-pub mod stack;
-pub mod timer;
-pub mod types;
 pub mod window;
 
 pub use crate::emulator::Emulator;

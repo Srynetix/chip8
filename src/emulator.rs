@@ -5,14 +5,14 @@ use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::process;
 use std::rc::Rc;
+
 use time::{self, PreciseTime};
 
-use super::cartridge::Cartridge;
-use super::cpu::CPU;
-use super::debugger::{Command, Debugger};
-use super::opcodes;
-use super::savestate::SaveState;
-use super::types::{convert_hex_addr, C8Addr};
+use super::core::cpu::CPU;
+use super::core::opcodes;
+use super::core::types::{convert_hex_addr, C8Addr};
+use super::debugger::{Command, Debugger, SaveState};
+use super::peripherals::cartridge::Cartridge;
 
 const TIMER_FRAME_LIMIT: i64 = 16;
 const CPU_FRAME_LIMIT: i64 = 2;

@@ -4,8 +4,6 @@ use super::input::InputState;
 use super::memory::Memory;
 use super::screen::Screen;
 
-// use sdl2;
-
 /// Peripherals
 pub struct Peripherals {
     /// Input

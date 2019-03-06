@@ -3,9 +3,9 @@
 use std::env;
 use std::process;
 
-use super::cartridge::Cartridge;
+use super::core::logger::init_logger;
 use super::emulator::Emulator;
-use super::logger::init_logger;
+use super::peripherals::cartridge::Cartridge;
 
 use clap::{App, Arg, ArgMatches};
 use log;

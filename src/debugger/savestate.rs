@@ -7,13 +7,13 @@ use std::path::Path;
 
 use bincode::{deserialize, serialize};
 
-use super::cpu::CPU;
-use super::input::InputStateData;
-use super::memory::Memory;
-use super::registers::Registers;
-use super::screen::ScreenData;
-use super::stack::Stack;
-use super::timer::Timer;
+use crate::core::cpu::CPU;
+use crate::core::registers::Registers;
+use crate::core::stack::Stack;
+use crate::core::timer::Timer;
+use crate::peripherals::input::InputStateData;
+use crate::peripherals::memory::Memory;
+use crate::peripherals::screen::ScreenData;
 
 /// CHIP-8 save state
 #[derive(Clone, Serialize, Deserialize, Debug)]

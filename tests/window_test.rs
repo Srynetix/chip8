@@ -1,8 +1,8 @@
 //! Window test
 
-use chip8::window::emulator_window;
+use chip8::window::start_window;
 
 #[test]
 fn window_test() {
-    emulator_window().unwrap();
+    start_window().unwrap();
 }

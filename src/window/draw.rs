@@ -6,10 +6,11 @@ use sdl2::ttf::Font;
 use sdl2::video::WindowContext;
 use sdl2::VideoSubsystem;
 
-use super::font::FontHandler;
-use crate::error::CResult;
-
 pub use sdl2::rect::Rect;
+
+use crate::core::error::CResult;
+
+use super::font::FontHandler;
 
 /// Screen width
 pub const SCREEN_WIDTH: u32 = 640;

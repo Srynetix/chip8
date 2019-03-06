@@ -4,9 +4,10 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
+use crate::core::error::CResult;
+
 use super::draw::DrawContext;
 use super::scenemanager::SceneContext;
-use crate::error::CResult;
 
 /// Scene trait
 pub trait Scene {

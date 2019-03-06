@@ -11,9 +11,10 @@ use std::path::{Path, PathBuf};
 
 use walkdir;
 
+use crate::core::opcodes::{extract_opcode_from_array, get_opcode_enum, get_opcode_str};
+use crate::core::types::{C8Addr, C8Byte};
+
 use super::memory::INITIAL_MEMORY_POINTER;
-use super::opcodes::{extract_opcode_from_array, get_opcode_enum, get_opcode_str};
-use super::types::{C8Addr, C8Byte};
 
 /// Cartridge max size
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;

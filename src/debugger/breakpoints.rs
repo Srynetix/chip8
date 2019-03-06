@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use super::types::C8Addr;
+use crate::core::types::C8Addr;
 
 /// Breakpoints
 #[derive(Default)]

@@ -4,7 +4,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
-use crate::error::CResult;
+use crate::core::error::CResult;
 use crate::window::draw::{
     clear_screen, draw_frame, draw_text, DrawContext, WINDOW_HEIGHT, WINDOW_WIDTH,
 };

@@ -4,9 +4,9 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
-use crate::cartridge::Cartridge;
+use crate::core::error::CResult;
 use crate::emulator::{Emulator, EmulatorContext};
-use crate::error::CResult;
+use crate::peripherals::cartridge::Cartridge;
 use crate::window::draw::{clear_screen, DrawContext, SCREEN_HEIGHT, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::window::frames::game_frame::GameFrame;
 use crate::window::frames::keyboard_frame::{KeyboardFrame, KEYBOARD_HEIGHT, KEYBOARD_WIDTH};

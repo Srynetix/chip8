@@ -4,7 +4,7 @@ use std::cmp;
 
 use sdl2::rect::Rect;
 
-use crate::error::CResult;
+use crate::core::error::CResult;
 use crate::window::draw::{draw_text, DrawContext};
 use crate::window::font::Font;
 use crate::window::frame::Frame;
