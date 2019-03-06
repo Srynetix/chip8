@@ -21,6 +21,7 @@ use crate::window::scenemanager::SceneContext;
 
 const STATUS_TEXT: &str = "\
                            F2 - Cycle\n\
+                           F10 - Dump\n\
                            ESCAPE - Quit\
                            ";
 
@@ -173,6 +174,12 @@ impl Scene for DebugScene {
                 if let DebugFocus::Shell = self.focus {
                     self.shell_frame.validate();
                 }
+            }
+            Keycode::F10 => {
+                let filename = format!("{}.dump", self.cartridge.get_title());
+                self.cartridge.write_disassembly_to_file(&filename);
+
+                println!("Cartridge disassembled to {}.", filename);
             }
             _ => {}
         }
