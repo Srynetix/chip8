@@ -69,10 +69,16 @@ impl DebuggerContext {
     }
 }
 
+impl Default for Debugger {
+    fn default() -> Self {
+        Self {}
+    }
+}
+
 impl Debugger {
     /// Create new debugger
     pub fn new() -> Self {
-        Self {}
+        Default::default()
     }
 
     /// Show line
@@ -195,7 +201,7 @@ impl Debugger {
             self.read_line(&mut rl, cpu, &mut ctx);
         }
 
-        ctx.last_command.map(|x| x.clone())
+        ctx.last_command.as_ref().cloned()
     }
 
     /// Run
