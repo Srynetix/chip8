@@ -1,5 +1,7 @@
 //! Game scene
 
+use std::path::Path;
+
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
@@ -58,12 +60,12 @@ impl GameScene {
 
 impl Scene for GameScene {
     fn init(&mut self, ctx: &mut SceneContext) {
-        let game = ctx.get_cache_data("selected_game").unwrap();
+        let game_path = ctx.get_cache_data("selected_game_path").unwrap();
 
-        self.game_name = game.clone();
-        self.cartridge = Cartridge::load_from_games_directory(&game).expect("bad game name");
+        self.game_name = Cartridge::get_game_name(Path::new(&game_path));
+        self.cartridge = Cartridge::load_from_games_directory(&game_path).expect("bad game name");
 
-        self.title_frame.set_title(&format!("GAME - {}", game));
+        self.title_frame.set_title(&format!("GAME - {}", self.game_name));
         self.status_frame
             .set_status("F5 - Reset\nF6 - Save state\nF7 - Load state\nESCAPE - Quit");
 

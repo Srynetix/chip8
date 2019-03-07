@@ -62,7 +62,7 @@ impl Scene for HomeScene {
             // Draw instructions
             let font = ctx.font_handler.get_or_create_font("default", 32)?;
             let txt1 = "F2 - LOAD GAME";
-            let txt2 = "F10 - QUIT";
+            let txt2 = "ESCAPE - QUIT";
             let sz1 = font.size_of(txt1).unwrap();
             let sz2 = font.size_of(txt2).unwrap();
 
@@ -83,7 +83,7 @@ impl Scene for HomeScene {
     fn keydown(&mut self, ctx: &mut SceneContext, kc: Keycode) {
         match kc {
             Keycode::F2 => ctx.set_current_scene("explorer"),
-            Keycode::Escape | Keycode::F10 => ctx.quit(),
+            Keycode::Escape => ctx.quit(),
             _ => {}
         }
     }

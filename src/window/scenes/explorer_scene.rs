@@ -97,13 +97,13 @@ impl Scene for ExplorerScene {
             }
             Keycode::F3 => {
                 let game = &self.game_list[self.game_cursor as usize];
-                ctx.set_cache_data("selected_game", game.clone());
+                ctx.set_cache_data("selected_game_path", game.clone());
                 ctx.set_current_scene("debug");
             }
             Keycode::Escape => ctx.set_current_scene("home"),
             Keycode::Return => {
                 let game = &self.game_list[self.game_cursor as usize];
-                ctx.set_cache_data("selected_game", game.clone());
+                ctx.set_cache_data("selected_game_path", game.clone());
                 ctx.set_current_scene("game");
             }
             _ => {}

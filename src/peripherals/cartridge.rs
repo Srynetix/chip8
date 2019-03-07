@@ -18,17 +18,19 @@ use super::memory::INITIAL_MEMORY_POINTER;
 
 /// Cartridge max size
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
+const EMPTY_GAME_NAME: &str = "<EMPTY>";
 
 /// Available extensions
 ///
 /// - No extension ("")
 /// - CH8 extension (.ch8/.CH8)
 ///
-const AVAILABLE_EXTENSIONS: [&str; 3] = ["", "ch8", "CH8"];
+const AVAILABLE_EXTENSIONS: [&str; 5] = ["", "ch8", "CH8", "c8k", "C8K"];
 
 /// CHIP-8 cartridge type
 pub struct Cartridge {
     title: String,
+    path: String,
     data: Vec<C8Byte>,
 }
 
@@ -52,7 +54,8 @@ impl Cartridge {
     /// New empty cartridge
     pub fn new_empty() -> Self {
         Self {
-            title: String::from("EMPTY"),
+            title: String::from(EMPTY_GAME_NAME),
+            path: String::from(""),
             data: vec![],
         }
     }
@@ -83,16 +86,43 @@ impl Cartridge {
         Err(Box::new(MissingCartridgeError(name.to_string())))
     }
 
+    /// Get game name from path
+    pub fn get_game_name(path: &Path) -> String {
+        match path.file_stem() {
+            Some(stem) => stem.to_string_lossy().to_uppercase().replace("_", " "),
+            None => String::from(EMPTY_GAME_NAME),
+        }
+    }
+
+    /// Check game extension
+    fn check_game_extension(path: &Path) -> bool {
+        // Handle empty path
+        if path.to_string_lossy().is_empty() {
+            return false;
+        }
+
+        match path.extension() {
+            Some(ext) => match ext.to_string_lossy().as_ref() {
+                "ch8" | "CH8" | "c8k" | "C8K" => true,
+                _ => false
+            }
+            None => true
+        }
+    }
+
     /// List games from directory.
     pub fn list_from_games_directory() -> Vec<String> {
         let mut res = vec![];
-        for entry in walkdir::WalkDir::new(Self::get_games_directory().to_str().unwrap())
+        let game_dir = Self::get_games_directory();
+
+        for entry in walkdir::WalkDir::new(game_dir.to_str().unwrap())
             .into_iter()
             .filter_map(|e| e.ok())
         {
-            let fname = entry.file_name().to_string_lossy();
-            if fname.ends_with(".ch8") || fname.ends_with(".CH8") {
-                res.push(fname.into_owned());
+            // Remove game_dir from entry
+            let fname = entry.path().strip_prefix(&game_dir).unwrap();
+            if Self::check_game_extension(&fname) {
+                res.push(fname.to_string_lossy().into_owned());
             }
         }
 
@@ -107,12 +137,14 @@ impl Cartridge {
     ///
     pub fn load_from_games_directory(path: &str) -> Result<Cartridge, Box<dyn Error>> {
         let game_path = Cartridge::get_game_path(path)?;
-        let mut file = File::open(game_path)?;
+        let mut file = File::open(&game_path)?;
 
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
         file.read_to_end(&mut contents)?;
 
-        Cartridge::load_from_string(path, &contents)
+        // Strip path
+        let game_name = Self::get_game_name(Path::new(&game_path));
+        Cartridge::load_from_string(&game_name, &game_path, &contents)
     }
 
     /// Load cartridge from bytes.
@@ -121,11 +153,12 @@ impl Cartridge {
     ///
     /// * `bytes` - Bytes contents
     ///
-    pub fn load_from_string(title: &str, bytes: &[C8Byte]) -> Result<Cartridge, Box<dyn Error>> {
+    pub fn load_from_string(title: &str, path: &str, bytes: &[C8Byte]) -> Result<Cartridge, Box<dyn Error>> {
         let title = title.to_string();
         let data = bytes.to_vec();
+        let path = path.to_string();
 
-        Ok(Cartridge { title, data })
+        Ok(Cartridge { title, data, path })
     }
 
     /// Get games directory.
@@ -141,6 +174,11 @@ impl Cartridge {
     /// Get cartridge title.
     pub fn get_title(&self) -> &str {
         &self.title
+    }
+
+    /// Get cartridge path.
+    pub fn get_path(&self) -> &str {
+        &self.path
     }
 
     /// Get internal data.
@@ -226,7 +264,7 @@ mod tests {
     #[test]
     fn test_load_from_string() {
         let example: &[C8Byte] = b"\x00\xE0\x63\x00";
-        let cartridge = Cartridge::load_from_string("Test", example);
+        let cartridge = Cartridge::load_from_string("Test", "", example);
         assert!(cartridge.is_ok());
 
         let cartridge = cartridge.unwrap();
@@ -249,5 +287,25 @@ mod tests {
     fn test_game_list() {
         let game_list = Cartridge::list_from_games_directory();
         assert!(game_list.len() > 0);
+    }
+
+    #[test]
+    fn test_game_name() {
+        assert_eq!(Cartridge::get_game_name(Path::new("TOTO.ch8")), String::from("TOTO"));
+        assert_eq!(Cartridge::get_game_name(Path::new("TEST/TOTO.ch8")), String::from("TOTO"));
+        assert_eq!(Cartridge::get_game_name(Path::new("TEST/TOTO_TUTU.c8k")), String::from("TOTO TUTU"));
+        assert_eq!(Cartridge::get_game_name(Path::new("SUPERCHIP/TOTO")), String::from("TOTO"));
+        assert_eq!(Cartridge::get_game_name(Path::new("")), String::from(EMPTY_GAME_NAME));
+    }
+
+    #[test]
+    fn test_game_extension() {
+        assert!(Cartridge::check_game_extension(Path::new("TOTO.ch8")));
+        assert!(Cartridge::check_game_extension(Path::new("TOTO.c8k")));
+        assert!(Cartridge::check_game_extension(Path::new("TEST/TOTO.c8k")));
+        assert!(Cartridge::check_game_extension(Path::new("TEST/TOTO")));
+        assert!(!Cartridge::check_game_extension(Path::new("TOTO.txt")));
+        assert!(!Cartridge::check_game_extension(Path::new("TEST/TOTO.bat")));
+        assert!(!Cartridge::check_game_extension(Path::new("")));
     }
 }

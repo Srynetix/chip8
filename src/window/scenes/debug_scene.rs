@@ -1,5 +1,7 @@
 //! Debug scene
 
+use std::path::Path;
+
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
@@ -94,11 +96,11 @@ impl DebugScene {
 
 impl Scene for DebugScene {
     fn init(&mut self, ctx: &mut SceneContext) {
-        let game = ctx.get_cache_data("selected_game").unwrap();
-        let cartridge = Cartridge::load_from_games_directory(&game).expect("bad game name");
+        let game_path = ctx.get_cache_data("selected_game_path").unwrap();
+        let cartridge = Cartridge::load_from_games_directory(&game_path).expect("bad game name");
 
-        self.game_name = game.clone();
-        self.title_frame.set_title(&format!("DEBUG - {}", game));
+        self.game_name = Cartridge::get_game_name(Path::new(&game_path));
+        self.title_frame.set_title(&format!("DEBUG - {}", self.game_name));
 
         {
             let (_code, assembly, verbose) = cartridge.disassemble();
