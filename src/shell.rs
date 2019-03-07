@@ -6,6 +6,7 @@ use std::process;
 use super::core::logger::init_logger;
 use super::emulator::Emulator;
 use super::peripherals::cartridge::Cartridge;
+use super::window::start_window;
 
 use clap::{App, Arg, ArgMatches};
 use log;
@@ -21,7 +22,6 @@ pub fn start_shell(args: &[&str]) {
         .arg(
             Arg::with_name("file")
                 .value_name("FILENAME")
-                .required(true)
                 .help("cartridge name (not the path)")
                 .takes_value(true),
         )
@@ -59,6 +59,11 @@ pub fn start_shell(args: &[&str]) {
                 .long("verbose")
                 .short("v")
                 .help("verbose mode"),
+        )
+        .arg(
+            Arg::with_name("gui")
+                .long("gui")
+                .help("GUI mode")
         );
 
     let matches = if args.is_empty() {
@@ -88,38 +93,51 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
     init_logger(level)
         .unwrap_or_else(|_| panic!("Failed to initialize logger with level: {:?}", level));
 
-    let cartridge_filename = matches.value_of("file").unwrap();
-    let cartridge_handle = Cartridge::load_from_games_directory(cartridge_filename);
-
-    if let Err(error) = cartridge_handle {
-        println!("{}", error);
-        process::exit(1);
-    }
-
-    // Extract cartridge
-    let cartridge = cartridge_handle.unwrap();
-
-    if matches.is_present("disassemble") {
-        let dis_file = matches.value_of("disassemble").unwrap();
-        cartridge.write_disassembly_to_file(dis_file);
+    if matches.is_present("gui") {
+        if let Err(e) = start_window() {
+            eprintln!("execution error: {}", e);
+            process::exit(1);
+        }
     } else {
-        let emulator = Emulator::new();
-
-        if matches.is_present("trace") {
-            emulator.set_tracefile(matches.value_of("trace").unwrap());
-        }
-
-        if matches.is_present("breakpoint") {
-            let bp_values: Vec<&str> = matches.values_of("breakpoint").unwrap().collect();
-            for v in bp_values {
-                emulator.register_breakpoint(v);
+        let cartridge_filename = match matches.value_of("file") {
+            Some(f) => f,
+            None => {
+                eprintln!("error: missing file argument. show help with --help.");
+                process::exit(1);
             }
+        };
+
+        let cartridge_handle = Cartridge::load_from_games_directory(cartridge_filename);
+        if let Err(error) = cartridge_handle {
+            eprintln!("{}", error);
+            process::exit(1);
         }
 
-        if matches.is_present("break-at-start") {
-            emulator.register_breakpoint("0200");
-        }
+        // Extract cartridge
+        let cartridge = cartridge_handle.unwrap();
 
-        emulator.run_loop(&cartridge);
+        if matches.is_present("disassemble") {
+            let dis_file = matches.value_of("disassemble").unwrap();
+            cartridge.write_disassembly_to_file(dis_file);
+        } else {
+            let emulator = Emulator::new();
+
+            if matches.is_present("trace") {
+                emulator.set_tracefile(matches.value_of("trace").unwrap());
+            }
+
+            if matches.is_present("breakpoint") {
+                let bp_values: Vec<&str> = matches.values_of("breakpoint").unwrap().collect();
+                for v in bp_values {
+                    emulator.register_breakpoint(v);
+                }
+            }
+
+            if matches.is_present("break-at-start") {
+                emulator.register_breakpoint("0200");
+            }
+
+            emulator.run_loop(&cartridge);
+        }
     }
 }

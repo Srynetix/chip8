@@ -10,11 +10,10 @@ use crate::core::cpu::CPU;
 use crate::core::opcodes::{get_opcode_enum, get_opcode_str};
 use crate::core::types::{convert_hex_addr, C8Addr};
 
+type CPURef = Rc<RefCell<CPU>>;
+
 /// Debugger
-pub struct Debugger {
-    addr: C8Addr,
-    cpu: Rc<RefCell<CPU>>,
-}
+pub struct Debugger {}
 
 /// Debugger command
 #[derive(Clone, Debug, PartialEq)]
@@ -47,19 +46,33 @@ pub enum Command {
     Empty,
 }
 
+/// Debugger context
+pub struct DebuggerContext {
+    last_command: Option<Command>,
+    running: bool,
+    address: C8Addr,
+}
+
+impl Default for DebuggerContext {
+    fn default() -> Self {
+        Self {
+            last_command: None,
+            address: 0,
+            running: true
+        }
+    }
+}
+
+impl DebuggerContext {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
 impl Debugger {
     /// Create new debugger
-    ///
-    /// # Arguments
-    ///
-    /// * `cpu` - CPU reference
-    /// * `addr` - Starting address
-    ///
-    pub fn new(cpu: &Rc<RefCell<CPU>>, addr: C8Addr) -> Debugger {
-        Debugger {
-            addr,
-            cpu: cpu.clone(),
-        }
+    pub fn new() -> Self {
+        Self {}
     }
 
     /// Show line
@@ -68,9 +81,8 @@ impl Debugger {
     ///
     /// * `addr` - Address
     ///
-    fn show_line(&self, addr: C8Addr) {
-        let opcode = self
-            .cpu
+    fn show_line(&self, cpu: &CPURef, ctx: &DebuggerContext, addr: C8Addr) {
+        let opcode = cpu
             .borrow()
             .peripherals
             .memory
@@ -78,113 +90,200 @@ impl Debugger {
         let opcode_enum = get_opcode_enum(opcode);
         let (asm, txt) = get_opcode_str(&opcode_enum);
 
-        let cursor = if self.addr == addr { "-->" } else { "" };
+        let cursor = if ctx.address == addr { "-->" } else { "" };
 
         println!("{:04X}| {:3} {:20} ; {}", addr, cursor, asm, txt);
     }
 
     /// Show line context
-    fn show_line_context(&self, prev_size: u16, next_size: u16) {
-        let base_addr = self.addr;
+    fn show_line_context(&self, cpu: &CPURef, ctx: &DebuggerContext, prev_size: u16, next_size: u16) {
+        let base_addr = ctx.address;
 
         // Limit = 0200
         let min_limit = std::cmp::max(base_addr - prev_size * 2, 0x0200);
         let max_limit = base_addr + next_size * 2;
 
         for addr in (min_limit..=max_limit).step_by(2) {
-            self.show_line(addr);
+            self.show_line(cpu, ctx, addr);
         }
     }
 
     /// Show complete source
-    fn show_source(&self) {
-        let code_end_pointer = self.cpu.borrow().peripherals.memory.get_end_pointer();
+    fn show_source(&self, cpu: &CPURef, ctx: &DebuggerContext) {
+        let code_end_pointer = cpu.borrow().peripherals.memory.get_end_pointer();
         for addr in (0x0200..=code_end_pointer).step_by(2) {
-            self.show_line(addr)
+            self.show_line(cpu, ctx, addr);
         }
+    }
+
+    fn read_line(&self, rl: &mut rustyline::Editor<()>, cpu: &CPURef, ctx: &mut DebuggerContext) {
+        let readline = rl.readline("> ");
+
+        match readline {
+            Ok(line) => {
+                rl.add_history_entry(line.as_ref());
+
+                if let Some(ref command) = self.read_command(&line) {
+                    ctx.last_command = Some(command.clone());
+                    self.handle_command(cpu, ctx, command.clone());
+                } else {
+                    println!("{}: command unknown", line);
+                }
+            }
+
+            Err(ReadlineError::Interrupted) => {
+                ctx.last_command = Some(Command::Quit);
+            }
+
+            Err(ReadlineError::Eof) => {
+                ctx.last_command = Some(Command::Quit);
+            }
+
+            Err(err) => {
+                println!("Error in readline: {:?}", err);
+            }
+        }
+    }
+
+    fn handle_command(&self, cpu: &CPURef, ctx: &DebuggerContext, command: Command) {
+        match command {
+            Command::Dump(ref device) => match &device[..] {
+                "memory" | "m" => {
+                    println!("{:?}", cpu.borrow().peripherals.memory)
+                }
+                "video" | "v" => cpu.borrow().peripherals.screen.dump_screen(),
+                "input" | "i" => {
+                    println!("{:?}", cpu.borrow().peripherals.input)
+                }
+                "registers" | "r" => println!("{:?}", cpu.borrow().registers),
+                "stack" | "s" => println!("{:?}", cpu.borrow().stack),
+                "timers" | "t" => {
+                    println!("{:?}", cpu.borrow().delay_timer);
+                    println!("{:?}", cpu.borrow().sound_timer);
+                }
+                _ => cpu.borrow().show_debug(),
+            },
+            Command::ReadMemory(addr, count) => {
+                println!("Reading memory at {:04X} on {} byte(s).", addr, count);
+                println!(
+                    "{:?}",
+                    cpu
+                        .borrow()
+                        .peripherals
+                        .memory
+                        .read_data_at_offset(addr, count)
+                );
+            }
+            Command::Where => self.show_line(cpu, ctx, ctx.address),
+            Command::List(sz) => self.show_line_context(cpu, ctx, sz, sz),
+            Command::LongList => self.show_source(cpu, ctx),
+            Command::Help => self.show_help(),
+            Command::ListBreakpoints => {
+                cpu.borrow().breakpoints.dump_breakpoints()
+            }
+            Command::Empty => {}
+            _ => {}
+        }
+    }
+
+    /// Run loop
+    pub fn run_loop(&self, cpu: &CPURef, addr: C8Addr) -> Option<Command> {
+        let mut rl = Editor::<()>::new();
+        println!("Debugger on address {:04X}.", addr);
+
+        let mut ctx = DebuggerContext::new();
+        ctx.address = addr;
+
+        self.show_line_context(cpu, &ctx, 1, 1);
+
+        while ctx.running {
+            self.read_line(&mut rl, cpu, &mut ctx);
+        }
+
+        ctx.last_command.map(|x| x.clone())
     }
 
     /// Run
-    pub fn run(&self) -> Option<Command> {
-        let mut rl = Editor::<()>::new();
-        println!("Debugger on address {:04X}.", self.addr);
+    // pub fn run(&self) -> Option<Command> {
+    //     let mut rl = Editor::<()>::new();
+    //     println!("Debugger on address {:04X}.", self.addr);
 
-        self.show_line_context(1, 1);
+    //     self.show_line_context(1, 1);
 
-        #[allow(unused_assignments)]
-        let mut last_command: Option<Command> = None;
+    //     #[allow(unused_assignments)]
+    //     let mut last_command: Option<Command> = None;
 
-        'running: loop {
-            let readline = rl.readline("> ");
+    //     'running: loop {
+    //         let readline = rl.readline("> ");
 
-            match readline {
-                Ok(line) => {
-                    rl.add_history_entry(line.as_ref());
+    //         match readline {
+    //             Ok(line) => {
+    //                 rl.add_history_entry(line.as_ref());
 
-                    if let Some(ref command) = self.read_command(&line) {
-                        last_command = Some(command.clone());
+    //                 if let Some(ref command) = self.read_command(&line) {
+    //                     last_command = Some(command.clone());
 
-                        match *command {
-                            Command::Dump(ref device) => match &device[..] {
-                                "memory" | "m" => {
-                                    println!("{:?}", self.cpu.borrow().peripherals.memory)
-                                }
-                                "video" | "v" => self.cpu.borrow().peripherals.screen.dump_screen(),
-                                "input" | "i" => {
-                                    println!("{:?}", self.cpu.borrow().peripherals.input)
-                                }
-                                "registers" | "r" => println!("{:?}", self.cpu.borrow().registers),
-                                "stack" | "s" => println!("{:?}", self.cpu.borrow().stack),
-                                "timers" | "t" => {
-                                    println!("{:?}", self.cpu.borrow().delay_timer);
-                                    println!("{:?}", self.cpu.borrow().sound_timer);
-                                }
-                                _ => self.cpu.borrow().show_debug(),
-                            },
-                            Command::ReadMemory(addr, count) => {
-                                println!("Reading memory at {:04X} on {} byte(s).", addr, count);
-                                println!(
-                                    "{:?}",
-                                    self.cpu
-                                        .borrow()
-                                        .peripherals
-                                        .memory
-                                        .read_data_at_offset(addr, count)
-                                );
-                            }
-                            Command::Where => self.show_line(self.addr),
-                            Command::List(sz) => self.show_line_context(sz, sz),
-                            Command::LongList => self.show_source(),
-                            Command::Help => self.show_help(),
-                            Command::ListBreakpoints => {
-                                self.cpu.borrow().breakpoints.dump_breakpoints()
-                            }
-                            Command::Empty => {}
-                            _ => break 'running,
-                        }
-                    } else {
-                        println!("{}: command unknown", line);
-                    }
-                }
+    //                     match *command {
+    //                         Command::Dump(ref device) => match &device[..] {
+    //                             "memory" | "m" => {
+    //                                 println!("{:?}", self.cpu.borrow().peripherals.memory)
+    //                             }
+    //                             "video" | "v" => self.cpu.borrow().peripherals.screen.dump_screen(),
+    //                             "input" | "i" => {
+    //                                 println!("{:?}", self.cpu.borrow().peripherals.input)
+    //                             }
+    //                             "registers" | "r" => println!("{:?}", self.cpu.borrow().registers),
+    //                             "stack" | "s" => println!("{:?}", self.cpu.borrow().stack),
+    //                             "timers" | "t" => {
+    //                                 println!("{:?}", self.cpu.borrow().delay_timer);
+    //                                 println!("{:?}", self.cpu.borrow().sound_timer);
+    //                             }
+    //                             _ => self.cpu.borrow().show_debug(),
+    //                         },
+    //                         Command::ReadMemory(addr, count) => {
+    //                             println!("Reading memory at {:04X} on {} byte(s).", addr, count);
+    //                             println!(
+    //                                 "{:?}",
+    //                                 self.cpu
+    //                                     .borrow()
+    //                                     .peripherals
+    //                                     .memory
+    //                                     .read_data_at_offset(addr, count)
+    //                             );
+    //                         }
+    //                         Command::Where => self.show_line(self.addr),
+    //                         Command::List(sz) => self.show_line_context(sz, sz),
+    //                         Command::LongList => self.show_source(),
+    //                         Command::Help => self.show_help(),
+    //                         Command::ListBreakpoints => {
+    //                             self.cpu.borrow().breakpoints.dump_breakpoints()
+    //                         }
+    //                         Command::Empty => {}
+    //                         _ => break 'running,
+    //                     }
+    //                 } else {
+    //                     println!("{}: command unknown", line);
+    //                 }
+    //             }
 
-                Err(ReadlineError::Interrupted) => {
-                    last_command = Some(Command::Quit);
-                    break 'running;
-                }
+    //             Err(ReadlineError::Interrupted) => {
+    //                 last_command = Some(Command::Quit);
+    //                 break 'running;
+    //             }
 
-                Err(ReadlineError::Eof) => {
-                    last_command = Some(Command::Quit);
-                    break 'running;
-                }
+    //             Err(ReadlineError::Eof) => {
+    //                 last_command = Some(Command::Quit);
+    //                 break 'running;
+    //             }
 
-                Err(err) => {
-                    println!("Error in readline: {:?}", err);
-                }
-            }
-        }
+    //             Err(err) => {
+    //                 println!("Error in readline: {:?}", err);
+    //             }
+    //         }
+    //     }
 
-        last_command
-    }
+    //     last_command
+    // }
 
     /// Read command
     ///
