@@ -60,11 +60,7 @@ pub fn start_shell(args: &[&str]) {
                 .short("v")
                 .help("verbose mode"),
         )
-        .arg(
-            Arg::with_name("gui")
-                .long("gui")
-                .help("GUI mode")
-        );
+        .arg(Arg::with_name("gui").long("gui").help("GUI mode"));
 
     let matches = if args.is_empty() {
         app.get_matches_from_safe_borrow(&mut env::args_os())

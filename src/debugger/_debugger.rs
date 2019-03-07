@@ -58,7 +58,7 @@ impl Default for DebuggerContext {
         Self {
             last_command: None,
             address: 0,
-            running: true
+            running: true,
         }
     }
 }
@@ -82,11 +82,7 @@ impl Debugger {
     /// * `addr` - Address
     ///
     fn show_line(&self, cpu: &CPURef, ctx: &DebuggerContext, addr: C8Addr) {
-        let opcode = cpu
-            .borrow()
-            .peripherals
-            .memory
-            .read_opcode_at_address(addr);
+        let opcode = cpu.borrow().peripherals.memory.read_opcode_at_address(addr);
         let opcode_enum = get_opcode_enum(opcode);
         let (asm, txt) = get_opcode_str(&opcode_enum);
 
@@ -96,7 +92,13 @@ impl Debugger {
     }
 
     /// Show line context
-    fn show_line_context(&self, cpu: &CPURef, ctx: &DebuggerContext, prev_size: u16, next_size: u16) {
+    fn show_line_context(
+        &self,
+        cpu: &CPURef,
+        ctx: &DebuggerContext,
+        prev_size: u16,
+        next_size: u16,
+    ) {
         let base_addr = ctx.address;
 
         // Limit = 0200
@@ -148,13 +150,9 @@ impl Debugger {
     fn handle_command(&self, cpu: &CPURef, ctx: &DebuggerContext, command: Command) {
         match command {
             Command::Dump(ref device) => match &device[..] {
-                "memory" | "m" => {
-                    println!("{:?}", cpu.borrow().peripherals.memory)
-                }
+                "memory" | "m" => println!("{:?}", cpu.borrow().peripherals.memory),
                 "video" | "v" => cpu.borrow().peripherals.screen.dump_screen(),
-                "input" | "i" => {
-                    println!("{:?}", cpu.borrow().peripherals.input)
-                }
+                "input" | "i" => println!("{:?}", cpu.borrow().peripherals.input),
                 "registers" | "r" => println!("{:?}", cpu.borrow().registers),
                 "stack" | "s" => println!("{:?}", cpu.borrow().stack),
                 "timers" | "t" => {
@@ -167,8 +165,7 @@ impl Debugger {
                 println!("Reading memory at {:04X} on {} byte(s).", addr, count);
                 println!(
                     "{:?}",
-                    cpu
-                        .borrow()
+                    cpu.borrow()
                         .peripherals
                         .memory
                         .read_data_at_offset(addr, count)
@@ -178,9 +175,7 @@ impl Debugger {
             Command::List(sz) => self.show_line_context(cpu, ctx, sz, sz),
             Command::LongList => self.show_source(cpu, ctx),
             Command::Help => self.show_help(),
-            Command::ListBreakpoints => {
-                cpu.borrow().breakpoints.dump_breakpoints()
-            }
+            Command::ListBreakpoints => cpu.borrow().breakpoints.dump_breakpoints(),
             Command::Empty => {}
             _ => {}
         }

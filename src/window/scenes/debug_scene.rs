@@ -100,7 +100,8 @@ impl Scene for DebugScene {
         let cartridge = Cartridge::load_from_games_directory(&game_path).expect("bad game name");
 
         self.game_name = Cartridge::get_game_name(Path::new(&game_path));
-        self.title_frame.set_title(&format!("DEBUG - {}", self.game_name));
+        self.title_frame
+            .set_title(&format!("DEBUG - {}", self.game_name));
 
         {
             let (_code, assembly, verbose) = cartridge.disassemble();

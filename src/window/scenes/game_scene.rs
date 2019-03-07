@@ -65,7 +65,8 @@ impl Scene for GameScene {
         self.game_name = Cartridge::get_game_name(Path::new(&game_path));
         self.cartridge = Cartridge::load_from_games_directory(&game_path).expect("bad game name");
 
-        self.title_frame.set_title(&format!("GAME - {}", self.game_name));
+        self.title_frame
+            .set_title(&format!("GAME - {}", self.game_name));
         self.status_frame
             .set_status("F5 - Reset\nF6 - Save state\nF7 - Load state\nESCAPE - Quit");
 

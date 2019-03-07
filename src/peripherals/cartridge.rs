@@ -104,9 +104,9 @@ impl Cartridge {
         match path.extension() {
             Some(ext) => match ext.to_string_lossy().as_ref() {
                 "ch8" | "CH8" | "c8k" | "C8K" => true,
-                _ => false
-            }
-            None => true
+                _ => false,
+            },
+            None => true,
         }
     }
 
@@ -153,7 +153,11 @@ impl Cartridge {
     ///
     /// * `bytes` - Bytes contents
     ///
-    pub fn load_from_string(title: &str, path: &str, bytes: &[C8Byte]) -> Result<Cartridge, Box<dyn Error>> {
+    pub fn load_from_string(
+        title: &str,
+        path: &str,
+        bytes: &[C8Byte],
+    ) -> Result<Cartridge, Box<dyn Error>> {
         let title = title.to_string();
         let data = bytes.to_vec();
         let path = path.to_string();
@@ -291,11 +295,26 @@ mod tests {
 
     #[test]
     fn test_game_name() {
-        assert_eq!(Cartridge::get_game_name(Path::new("TOTO.ch8")), String::from("TOTO"));
-        assert_eq!(Cartridge::get_game_name(Path::new("TEST/TOTO.ch8")), String::from("TOTO"));
-        assert_eq!(Cartridge::get_game_name(Path::new("TEST/TOTO_TUTU.c8k")), String::from("TOTO TUTU"));
-        assert_eq!(Cartridge::get_game_name(Path::new("SUPERCHIP/TOTO")), String::from("TOTO"));
-        assert_eq!(Cartridge::get_game_name(Path::new("")), String::from(EMPTY_GAME_NAME));
+        assert_eq!(
+            Cartridge::get_game_name(Path::new("TOTO.ch8")),
+            String::from("TOTO")
+        );
+        assert_eq!(
+            Cartridge::get_game_name(Path::new("TEST/TOTO.ch8")),
+            String::from("TOTO")
+        );
+        assert_eq!(
+            Cartridge::get_game_name(Path::new("TEST/TOTO_TUTU.c8k")),
+            String::from("TOTO TUTU")
+        );
+        assert_eq!(
+            Cartridge::get_game_name(Path::new("SUPERCHIP/TOTO")),
+            String::from("TOTO")
+        );
+        assert_eq!(
+            Cartridge::get_game_name(Path::new("")),
+            String::from(EMPTY_GAME_NAME)
+        );
     }
 
     #[test]
