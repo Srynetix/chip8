@@ -7,6 +7,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
 use crate::core::error::CResult;
+use crate::debugger::{Command, Debugger, DebuggerContext};
 use crate::emulator::{Emulator, EmulatorContext};
 use crate::peripherals::cartridge::Cartridge;
 use crate::window::draw::{
@@ -18,12 +19,14 @@ use crate::window::frames::game_frame::GameFrame;
 use crate::window::frames::shell_frame::ShellFrame;
 use crate::window::frames::status_frame::{StatusFrame, STATUS_HEIGHT};
 use crate::window::frames::title_frame::{TitleFrame, TITLE_HEIGHT};
+use crate::window::frames::memory_frame::MemoryFrame;
 use crate::window::scene::Scene;
 use crate::window::scenemanager::SceneContext;
 
 const STATUS_TEXT: &str = "\
-                           F2 - Cycle\n\
-                           F10 - Dump\n\
+                           F2 - Shell                 F4 - Step\n\
+                           F3 - Memory                F5 - Continue\n\
+                           F10 - Dump                 F6 - Pause\n\
                            ESCAPE - Quit\
                            ";
 
@@ -33,6 +36,8 @@ pub enum DebugFocus {
     Main,
     /// Shell focus
     Shell,
+    /// Memory focus
+    Memory,
 }
 
 /// Debug scene
@@ -45,14 +50,15 @@ pub struct DebugScene {
     code_frame: CodeFrame,
     status_frame: StatusFrame,
     shell_frame: ShellFrame,
+    memory_frame: MemoryFrame,
+    debugger: Debugger,
+    debugger_context: DebuggerContext,
     emulator: Emulator,
     emulator_context: EmulatorContext,
     focus: DebugFocus,
 }
 
-const SHELL_FRAME_HEIGHT: u32 = 64;
-const CODE_FRAME_HEIGHT: u32 =
-    WINDOW_HEIGHT - SCREEN_HEIGHT - SHELL_FRAME_HEIGHT - STATUS_HEIGHT - TITLE_HEIGHT;
+const CODE_FRAME_HEIGHT: u32 = WINDOW_HEIGHT - SCREEN_HEIGHT - STATUS_HEIGHT - TITLE_HEIGHT;
 
 impl Default for DebugScene {
     fn default() -> Self {
@@ -73,13 +79,21 @@ impl Default for DebugScene {
             title_frame: TitleFrame::new_default("DEBUG"),
             status_frame: StatusFrame::new_default(),
             shell_frame: ShellFrame::new(rectf!(
-                0,
-                SCREEN_HEIGHT + CODE_FRAME_HEIGHT + TITLE_HEIGHT,
-                WINDOW_WIDTH,
-                SHELL_FRAME_HEIGHT
+                WINDOW_WIDTH / 4,
+                WINDOW_HEIGHT / 4,
+                WINDOW_WIDTH / 2,
+                WINDOW_HEIGHT / 2
+            )),
+            memory_frame: MemoryFrame::new(rectf!(
+                32,
+                32,
+                WINDOW_WIDTH - 64,
+                WINDOW_HEIGHT - 64
             )),
             emulator: Emulator::new(),
             emulator_context: EmulatorContext::new(),
+            debugger: Debugger::new(),
+            debugger_context: DebuggerContext::new(),
             game_name: String::from("EMPTY"),
             cartridge: Cartridge::new_empty(),
             focus: DebugFocus::Main,
@@ -122,10 +136,20 @@ impl Scene for DebugScene {
         self.emulator_context = EmulatorContext::new();
         self.emulator.load_game(&self.cartridge);
 
+        self.debugger = Debugger::new();
+        self.debugger_context = DebuggerContext::new();
+        self.debugger_context.set_address(0x0200);
+
         self.status_frame.set_status(STATUS_TEXT);
     }
 
-    fn destroy(&mut self, _ctx: &mut SceneContext) {}
+    fn destroy(&mut self, _ctx: &mut SceneContext) {
+        self.code_frame.reset();
+        self.shell_frame.reset();
+
+        self.focus = DebugFocus::Main;
+    }
+
     fn event(&mut self, _ctx: &mut SceneContext, e: &Event) {
         if let Event::TextInput { text, .. } = e {
             if let DebugFocus::Shell = self.focus {
@@ -141,10 +165,16 @@ impl Scene for DebugScene {
 
         self.title_frame.render(ctx)?;
         self.game_frame.render(&self.emulator, ctx)?;
-        self.debug_info_frame.render(&self.emulator, ctx)?;
+        self.debug_info_frame
+            .render(&self.emulator, &self.debugger_context, ctx)?;
         self.code_frame.render(ctx)?;
-        self.shell_frame.render(ctx)?;
         self.status_frame.render(ctx)?;
+
+        match self.focus {
+            DebugFocus::Shell => self.shell_frame.render(ctx)?,
+            DebugFocus::Memory => self.memory_frame.render(&self.emulator, ctx)?,
+            _ => {}
+        }
 
         Ok(())
     }
@@ -156,17 +186,37 @@ impl Scene for DebugScene {
             }
             Keycode::F2 => {
                 self.focus = match self.focus {
-                    DebugFocus::Main => {
-                        println!("Shell mode");
+                    DebugFocus::Main | DebugFocus::Memory => {
                         self.shell_frame.set_active(true);
                         DebugFocus::Shell
                     }
                     DebugFocus::Shell => {
-                        println!("Main mode");
                         self.shell_frame.set_active(false);
                         DebugFocus::Main
                     }
                 };
+            }
+            Keycode::F3 => {
+                self.focus = match self.focus {
+                    DebugFocus::Main | DebugFocus::Shell => {
+                        DebugFocus::Memory
+                    }
+                    DebugFocus::Memory => {
+                        DebugFocus::Main
+                    }
+                };
+            }
+            Keycode::F4 => {
+                // Step
+                self.debugger_context.is_stepping = true;
+            }
+            Keycode::F5 => {
+                // Continue
+                self.debugger_context.is_continuing = true;
+            }
+            Keycode::F6 => {
+                // Pause
+                self.debugger_context.is_continuing = false;
             }
             Keycode::Backspace => {
                 if let DebugFocus::Shell = self.focus {
@@ -175,7 +225,14 @@ impl Scene for DebugScene {
             }
             Keycode::Return => {
                 if let DebugFocus::Shell = self.focus {
-                    self.shell_frame.validate();
+                    let cmd_str = self.shell_frame.validate();
+                    let cmd = self.debugger.read_command(&cmd_str);
+
+                    match cmd {
+                        Some(Command::Step) => self.debugger_context.is_stepping = true,
+                        Some(Command::Continue) => self.debugger_context.is_continuing = true,
+                        _ => {}
+                    }
                 }
             }
             Keycode::F10 => {
@@ -189,5 +246,35 @@ impl Scene for DebugScene {
     }
 
     fn keyup(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
-    fn update(&mut self, _ctx: &mut SceneContext, _pump: &mut EventPump) {}
+    fn update(&mut self, _ctx: &mut SceneContext, pump: &mut EventPump) {
+        if self.debugger_context.is_continuing {
+            self.emulator
+                .cpu
+                .borrow_mut()
+                .peripherals
+                .input
+                .process_input(pump);
+            self.emulator
+                .step(&self.cartridge, &mut self.emulator_context);
+
+            self.code_frame
+                .set_address(self.emulator.cpu.borrow().peripherals.memory.get_pointer());
+        }
+
+        if self.debugger_context.is_stepping {
+            self.emulator
+                .cpu
+                .borrow_mut()
+                .peripherals
+                .input
+                .process_input(pump);
+            self.emulator
+                .step(&self.cartridge, &mut self.emulator_context);
+
+            self.code_frame
+                .set_address(self.emulator.cpu.borrow().peripherals.memory.get_pointer());
+
+            self.debugger_context.is_stepping = false;
+        }
+    }
 }

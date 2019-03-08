@@ -8,3 +8,4 @@ pub mod list_frame;
 pub mod shell_frame;
 pub mod status_frame;
 pub mod title_frame;
+pub mod memory_frame;

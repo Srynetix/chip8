@@ -52,9 +52,29 @@ impl Scene for HomeScene {
                 ctx.canvas,
                 ctx.texture_creator,
                 font,
-                "CHIP-8",
+                txt,
                 x_pos,
-                y_pos,
+                y_pos - 16,
+            )?;
+
+        }
+
+        {
+            // Draw subtext
+            let font = ctx.font_handler.get_or_create_font("default", 32)?;
+            let txt = "emulator";
+            let sz = font.size_of(txt).unwrap();
+
+            let x_pos = WINDOW_WIDTH / 2 - sz.0 / 2;
+            let y_pos = WINDOW_HEIGHT / 4 - sz.1 / 2;
+
+            draw_text(
+                ctx.canvas,
+                ctx.texture_creator,
+                font,
+                txt,
+                x_pos,
+                y_pos + 32,
             )?;
         }
 

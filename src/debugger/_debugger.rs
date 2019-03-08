@@ -32,8 +32,8 @@ pub enum Command {
     Dump(String),
     /// Read memory at offset
     ReadMemory(C8Addr, C8Addr),
-    /// Next instruction
-    Next,
+    /// Step instruction
+    Step,
     /// Add breakpoint
     AddBreakpoint(C8Addr),
     /// Remove breakpoint
@@ -48,9 +48,16 @@ pub enum Command {
 
 /// Debugger context
 pub struct DebuggerContext {
-    last_command: Option<Command>,
-    running: bool,
-    address: C8Addr,
+    /// Last command
+    pub last_command: Option<Command>,
+    /// Running
+    pub running: bool,
+    /// Address
+    pub address: C8Addr,
+    /// Is stepping
+    pub is_stepping: bool,
+    /// Is continuing
+    pub is_continuing: bool,
 }
 
 impl Default for DebuggerContext {
@@ -59,13 +66,26 @@ impl Default for DebuggerContext {
             last_command: None,
             address: 0,
             running: true,
+            is_stepping: false,
+            is_continuing: false,
         }
     }
 }
 
 impl DebuggerContext {
+    /// Create new context
     pub fn new() -> Self {
         Default::default()
+    }
+
+    /// Set debugger address
+    pub fn set_address(&mut self, addr: C8Addr) {
+        self.address = addr;
+    }
+
+    /// Is paused?
+    pub fn is_paused(&self) -> bool {
+        !self.is_continuing
     }
 }
 
@@ -292,7 +312,7 @@ impl Debugger {
     ///
     /// * `cmd` - Read command
     ///
-    fn read_command(&self, cmd: &str) -> Option<Command> {
+    pub fn read_command(&self, cmd: &str) -> Option<Command> {
         let cmd_split: Vec<&str> = cmd.split(' ').collect();
         let command = cmd_split[0];
 
@@ -328,7 +348,7 @@ impl Debugger {
                 }
             }
             "longlist" | "ll" => Some(Command::LongList),
-            "next" | "n" => Some(Command::Next),
+            "step" | "s" => Some(Command::Step),
             "help" | "h" => Some(Command::Help),
             "read-mem" | "rmem" => {
                 if cmd_split.len() == 3 {
@@ -386,7 +406,7 @@ impl Debugger {
         println!("  where|w         - Show current line");
         println!("  list|l          - Show current line with context");
         println!("  longlist|ll     - Show complete source");
-        println!("  next|n          - Step");
+        println!("  step|s          - Step");
         println!("  add-bp|b        - Add breakpoint at address");
         println!("  rem-bp|rb       - Remove breakpoint at address");
         println!("  list-bp|lb      - List breakpoints");

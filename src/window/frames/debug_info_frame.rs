@@ -3,6 +3,7 @@
 use sdl2::rect::Rect;
 
 use crate::core::error::CResult;
+use crate::debugger::DebuggerContext;
 use crate::emulator::Emulator;
 use crate::window::draw::{draw_text, DrawContext};
 use crate::window::frame::Frame;
@@ -21,7 +22,12 @@ impl DebugInfoFrame {
     }
 
     /// Render
-    pub fn render(&self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
+    pub fn render(
+        &self,
+        emulator: &Emulator,
+        debug_ctx: &DebuggerContext,
+        ctx: &mut DrawContext,
+    ) -> CResult {
         let font = ctx.font_handler.get_or_create_font("default", 8).unwrap();
         let mut output = String::new();
 
@@ -40,7 +46,7 @@ impl DebugInfoFrame {
                     output.push_str("\n");
                 }
 
-                output.push_str(&format!("R{:X}={:02X} ", idx, rgx));
+                output.push_str(&format!("V{:X}={:02X} ", idx, rgx));
             }
 
             output.push_str(&format!(
@@ -108,6 +114,16 @@ impl DebugInfoFrame {
             ));
         }
 
+        {
+            let emulation_state = if debug_ctx.is_paused() {
+                "PAUSED"
+            } else {
+                "RUNNING"
+            };
+
+            output.push_str(&format!("\nEmulation state: {}", emulation_state));
+        }
+
         draw_text(
             ctx.canvas,
             ctx.texture_creator,
@@ -117,7 +133,6 @@ impl DebugInfoFrame {
             self.frame.rect.y() as u32 + 4,
         )?;
 
-        self.frame.render(ctx)?;
-        Ok(())
+        self.frame.render(ctx)
     }
 }

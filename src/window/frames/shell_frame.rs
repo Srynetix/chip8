@@ -1,5 +1,6 @@
 //! Shell frame
 
+use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 use time::PreciseTime;
 
@@ -28,6 +29,13 @@ impl ShellFrame {
         }
     }
 
+    /// Reset frame
+    pub fn reset(&mut self) {
+        self.cmd_buffer.clear();
+        self.active = false;
+        self.cursor_shown = false;
+    }
+
     /// Set frame active
     pub fn set_active(&mut self, value: bool) {
         self.active = value;
@@ -44,10 +52,11 @@ impl ShellFrame {
     }
 
     /// Validate command
-    pub fn validate(&mut self) {
-        while !self.cmd_buffer.is_empty() {
-            self.cmd_buffer.pop();
-        }
+    pub fn validate(&mut self) -> String {
+        let cmd = self.cmd_buffer.clone();
+        self.cmd_buffer.clear();
+
+        cmd
     }
 
     /// Render frame
@@ -55,6 +64,12 @@ impl ShellFrame {
         let font = ctx.font_handler.get_or_create_font("default", 10).unwrap();
         let txt = format!("> {}", self.cmd_buffer);
         let sz = font.size_of(&txt)?;
+
+        // Draw background
+        let old_color = ctx.canvas.draw_color();
+        ctx.canvas.set_draw_color(Color::RGB(0, 0, 0));
+        ctx.canvas.fill_rect(self.frame.rect)?;
+        ctx.canvas.set_draw_color(old_color);
 
         draw_text(
             ctx.canvas,

@@ -6,6 +6,7 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 
 use crate::core::error::CResult;
+use crate::core::types::C8Addr;
 use crate::window::draw::{draw_text, draw_text_ex, DrawContext};
 use crate::window::font::Font;
 use crate::window::frame::Frame;
@@ -25,6 +26,17 @@ impl CodeFrame {
             buffer: vec![],
             cursor: 0,
         }
+    }
+
+    /// Reset
+    pub fn reset(&mut self) {
+        self.buffer = vec![];
+        self.cursor = 0;
+    }
+
+    /// Set code address
+    pub fn set_address(&mut self, addr: C8Addr) {
+        self.cursor = i32::from(addr - 0x0200) / 2;
     }
 
     /// Get max lines

@@ -5,9 +5,12 @@ use std::fmt;
 use crate::core::opcodes::extract_opcode_from_array;
 use crate::core::types::{C8Addr, C8Byte};
 
-/// CHIP-8 CPU memory vars
-const MEMORY_SIZE: usize = 4096;
-const CHUNK_SIZE: usize = 64;
+// CHIP-8 CPU memory vars
+
+/// Memory size
+pub const MEMORY_SIZE: usize = 4096;
+/// Chunk size
+pub const CHUNK_SIZE: usize = 64;
 
 /// CHIP-8 initial memory pointer
 pub const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
@@ -153,6 +156,11 @@ impl Memory {
         }
 
         output
+    }
+
+    /// Get data
+    pub fn get_data(&self) -> &[C8Byte] {
+        &self.data
     }
 
     /// Reset memory
