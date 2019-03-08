@@ -7,6 +7,8 @@ use sdl2::rect::Rect;
 
 use crate::core::error::CResult;
 use crate::core::types::C8Addr;
+use crate::debugger::DebuggerContext;
+use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
 use crate::window::draw::{draw_text, draw_text_ex, DrawContext};
 use crate::window::font::Font;
 use crate::window::frame::Frame;
@@ -15,7 +17,6 @@ use crate::window::frame::Frame;
 pub struct CodeFrame {
     frame: Frame,
     buffer: Vec<String>,
-    cursor: i32,
 }
 
 impl CodeFrame {
@@ -24,19 +25,12 @@ impl CodeFrame {
         Self {
             frame: Frame::new(rect, "ASSEMBLY"),
             buffer: vec![],
-            cursor: 0,
         }
     }
 
     /// Reset
     pub fn reset(&mut self) {
         self.buffer = vec![];
-        self.cursor = 0;
-    }
-
-    /// Set code address
-    pub fn set_address(&mut self, addr: C8Addr) {
-        self.cursor = i32::from(addr - 0x0200) / 2;
     }
 
     /// Get max lines
@@ -53,15 +47,17 @@ impl CodeFrame {
     }
 
     /// Render frame
-    pub fn render(&self, ctx: &mut DrawContext) -> CResult {
+    pub fn render(&self, debug_ctx: &DebuggerContext, ctx: &mut DrawContext) -> CResult {
         let font = ctx.font_handler.get_font("default", 8).unwrap();
         let mut cursor_y = self.frame.rect.y() + 4;
         let char_height = font.height() + 4;
 
+        let current_cursor = self.address_to_cursor(debug_ctx.address);
+
         let max_lines = self.get_max_lines(font);
         let total_lines = self.buffer.len();
 
-        let start_idx = cmp::max(self.cursor + 1 - max_lines as i32, 0) as usize;
+        let start_idx = cmp::max(current_cursor + 1 - max_lines as i32, 0) as usize;
         let end_idx = cmp::min(total_lines, max_lines + start_idx) as usize;
 
         let mut count = start_idx;
@@ -70,7 +66,7 @@ impl CodeFrame {
         let white_color = Color::RGB(255, 255, 255);
 
         for b in self.buffer[start_idx..end_idx].iter() {
-            let color = if count == self.cursor as usize {
+            let color = if count == current_cursor as usize {
                 white_color
             } else {
                 grey_color
@@ -86,13 +82,25 @@ impl CodeFrame {
                 color,
             )?;
 
-            if count == self.cursor as usize {
+            if count == current_cursor as usize {
                 draw_text(
                     ctx.canvas,
                     ctx.texture_creator,
                     font,
                     ">>>",
-                    (self.frame.rect.x() + 52) as u32,
+                    (self.frame.rect.x() + 56) as u32,
+                    cursor_y as u32,
+                )?;
+            }
+
+            // Breakpoint
+            if self.has_breakpoint_at_cursor(count as i32, debug_ctx) {
+                draw_text(
+                    ctx.canvas,
+                    ctx.texture_creator,
+                    font,
+                    "B",
+                    (self.frame.rect.x() + 44) as u32,
                     cursor_y as u32,
                 )?;
             }
@@ -104,5 +112,23 @@ impl CodeFrame {
         self.frame.render(ctx)?;
 
         Ok(())
+    }
+
+    ///////////////
+    // PRIVATE
+
+    fn has_breakpoint_at_cursor(&self, cursor: i32, debug_ctx: &DebuggerContext) -> bool {
+        for b in debug_ctx.breakpoints.0.iter() {
+            let c = self.address_to_cursor(*b);
+            if c == cursor {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn address_to_cursor(&self, addr: C8Addr) -> i32 {
+        i32::from(addr - INITIAL_MEMORY_POINTER) / 2
     }
 }

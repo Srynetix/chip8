@@ -104,13 +104,30 @@ impl DebugInfoFrame {
             }
 
             output.push_str(&format!(
-                "LK={:02X}\n",
+                "LK={:02X} ",
                 emulator
                     .cpu
                     .borrow()
                     .peripherals
                     .input
                     .get_last_pressed_key()
+            ));
+
+            output.push_str(&format!(
+                "WAIT={}\n",
+                if emulator
+                    .cpu
+                    .borrow()
+                    .peripherals
+                    .input
+                    .data
+                    .lock
+                    .is_locked()
+                {
+                    1
+                } else {
+                    0
+                }
             ));
         }
 

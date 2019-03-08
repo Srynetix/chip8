@@ -11,8 +11,6 @@ use super::core::cpu::CPU;
 use super::core::error::CResult;
 use super::core::opcodes;
 use super::core::savestate::{MissingSaveState, SaveState};
-use super::core::types::{convert_hex_addr, C8Addr};
-use super::debugger::Command;
 use super::peripherals::cartridge::Cartridge;
 
 const TIMER_FRAME_LIMIT: i64 = 16;
@@ -40,8 +38,6 @@ pub enum EmulationState {
 
 /// Emulator context
 pub struct EmulatorContext {
-    last_debugger_command: Option<Command>,
-    break_next_instruction: Option<C8Addr>,
     tracefile_handle: Option<File>,
     timer_frametime: PreciseTime,
     cpu_frametime: PreciseTime,
@@ -51,8 +47,6 @@ pub struct EmulatorContext {
 impl Default for EmulatorContext {
     fn default() -> Self {
         Self {
-            last_debugger_command: None,
-            break_next_instruction: None,
             tracefile_handle: None,
             timer_frametime: time::PreciseTime::now(),
             cpu_frametime: time::PreciseTime::now(),
@@ -74,20 +68,6 @@ impl Emulator {
         let cpu = Rc::new(RefCell::new(CPU::new()));
 
         Emulator { cpu }
-    }
-
-    /// Register breakpoint.
-    ///
-    /// # Arguments
-    ///
-    /// * `address` - Address
-    ///
-    pub fn register_breakpoint(&self, addr: &str) {
-        if let Some(addr) = convert_hex_addr(addr) {
-            self.cpu.borrow_mut().breakpoints.register(addr);
-        } else {
-            println!("error while registering breakpoint: bad address {}", addr);
-        }
     }
 
     /// Set CPU tracefile.
@@ -135,8 +115,6 @@ impl Emulator {
         self.cpu.borrow_mut().load_cartridge_data(cartridge);
 
         // Reset vars
-        ctx.last_debugger_command = None;
-        ctx.break_next_instruction = None;
         ctx.timer_frametime = time::PreciseTime::now();
         ctx.cpu_frametime = time::PreciseTime::now();
         ctx.frametime = time::PreciseTime::now();
@@ -183,47 +161,6 @@ impl Emulator {
                 opcode
             );
 
-            // Check for breakpoints
-            // if ctx.break_next_instruction.is_none() {
-            //     let pointer = self.cpu.borrow().peripherals.memory.get_pointer();
-            //     if self
-            //         .cpu
-            //         .borrow()
-            //         .breakpoints
-            //         .check_breakpoint(pointer)
-            //         .is_some()
-            //     {
-            //         ctx.break_next_instruction = Some(pointer);
-            //     }
-            // }
-
-            // Break ?
-            // if let Some(addr) = ctx.break_next_instruction {
-            //     trace_exec!(ctx.tracefile_handle, "{:?}", &self.cpu.borrow());
-
-            //     'debugger: loop {
-            //         {
-            //             let debugger = Debugger::new(&self.cpu, addr);
-            //             ctx.last_debugger_command = debugger.run();
-            //         }
-
-            //         if let Some(ref command) = ctx.last_debugger_command {
-            //             match *command {
-            //                 Command::Quit => process::exit(1),
-            //                 Command::AddBreakpoint(addr) => {
-            //                     println!("Adding breakpoint for address 0x{:04X}", addr);
-            //                     self.cpu.borrow_mut().breakpoints.register(addr);
-            //                 }
-            //                 Command::RemoveBreakpoint(addr) => {
-            //                     println!("Removing breakpoint for address 0x{:04X}", addr);
-            //                     self.cpu.borrow_mut().breakpoints.unregister(addr);
-            //                 }
-            //                 _ => break 'debugger,
-            //             }
-            //         }
-            //     }
-            // }
-
             // Trace
             let opcode_enum = opcodes::get_opcode_enum(opcode);
             let (assembly, verbose) = opcodes::get_opcode_str(&opcode_enum);
@@ -235,20 +172,6 @@ impl Emulator {
             }
 
             self.cpu.borrow_mut().instruction_count += 1;
-
-            // Handle last debugger command
-            // if let Some(ref command) = ctx.last_debugger_command {
-            //     match *command {
-            //         Command::Continue => {
-            //             ctx.break_next_instruction = None;
-            //         }
-            //         Command::Next => {
-            //             ctx.break_next_instruction =
-            //                 Some(self.cpu.borrow().peripherals.memory.get_pointer());
-            //         }
-            //         _ => {}
-            //     }
-            // }
 
             ctx.cpu_frametime = time::PreciseTime::now();
         }

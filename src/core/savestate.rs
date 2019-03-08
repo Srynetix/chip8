@@ -23,13 +23,13 @@ pub struct MissingSaveState(pub String);
 
 impl Error for MissingSaveState {
     fn description(&self) -> &str {
-        "Missing save state"
+        "missing save state"
     }
 }
 
 impl fmt::Display for MissingSaveState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Game save state is not found: {}", self.0)
+        write!(f, "game save state is not found: {}", self.0)
     }
 }
 

@@ -4,9 +4,11 @@ use std::env;
 use std::process;
 
 use super::core::logger::init_logger;
-use super::emulator::Emulator;
+use super::debugger::{Debugger, DebuggerContext};
+use super::emulator::{Emulator, EmulatorContext};
 use super::peripherals::cartridge::Cartridge;
-use super::window::start_window;
+use super::peripherals::memory::INITIAL_MEMORY_POINTER;
+use super::window::{start_window_cli, start_window_gui};
 
 use clap::{App, Arg, ArgMatches};
 use log;
@@ -90,7 +92,7 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
         .unwrap_or_else(|_| panic!("Failed to initialize logger with level: {:?}", level));
 
     if matches.is_present("gui") {
-        if let Err(e) = start_window() {
+        if let Err(e) = start_window_gui() {
             eprintln!("execution error: {}", e);
             process::exit(1);
         }
@@ -116,7 +118,13 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
             let dis_file = matches.value_of("disassemble").unwrap();
             cartridge.write_disassembly_to_file(dis_file);
         } else {
-            let emulator = Emulator::new();
+            let mut emulator = Emulator::new();
+            let mut emulator_context = EmulatorContext::new();
+            emulator.load_game(&cartridge);
+
+            let mut debugger = Debugger::new();
+            let mut debugger_context = DebuggerContext::new();
+            debugger_context.set_address(INITIAL_MEMORY_POINTER);
 
             if matches.is_present("trace") {
                 emulator.set_tracefile(matches.value_of("trace").unwrap());
@@ -125,15 +133,24 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
             if matches.is_present("breakpoint") {
                 let bp_values: Vec<&str> = matches.values_of("breakpoint").unwrap().collect();
                 for v in bp_values {
-                    emulator.register_breakpoint(v);
+                    debugger_context.register_breakpoint_str(v).unwrap();
                 }
             }
 
             if matches.is_present("break-at-start") {
-                emulator.register_breakpoint("0200");
+                debugger_context.register_breakpoint(INITIAL_MEMORY_POINTER);
             }
 
-            emulator.run_loop(&cartridge);
+            if let Err(e) = start_window_cli(
+                &mut debugger,
+                &mut debugger_context,
+                &mut emulator,
+                &mut emulator_context,
+                &cartridge,
+            ) {
+                eprintln!("execution error: {}", e);
+                process::exit(1);
+            }
         }
     }
 }

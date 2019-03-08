@@ -5,7 +5,7 @@ use sdl2::rect::Rect;
 
 use crate::core::error::CResult;
 use crate::emulator::Emulator;
-use crate::peripherals::memory::{CHUNK_SIZE};
+use crate::peripherals::memory::CHUNK_SIZE;
 use crate::window::draw::{draw_text, DrawContext};
 use crate::window::frame::Frame;
 
@@ -23,11 +23,7 @@ impl MemoryFrame {
     }
 
     /// Render
-    pub fn render(
-        &self,
-        emulator: &Emulator,
-        ctx: &mut DrawContext,
-    ) -> CResult {
+    pub fn render(&self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
         let font = ctx.font_handler.get_or_create_font("default", 6).unwrap();
         let mut output = String::new();
 
@@ -37,7 +33,15 @@ impl MemoryFrame {
         ctx.canvas.fill_rect(self.frame.rect)?;
         ctx.canvas.set_draw_color(old_color);
 
-        for (idx, chunk) in emulator.cpu.borrow().peripherals.memory.get_data().chunks(CHUNK_SIZE).enumerate() {
+        for (idx, chunk) in emulator
+            .cpu
+            .borrow()
+            .peripherals
+            .memory
+            .get_data()
+            .chunks(CHUNK_SIZE)
+            .enumerate()
+        {
             output.push_str(&format!(
                 "{:04X}-{:04X}|",
                 idx * CHUNK_SIZE,
@@ -51,7 +55,10 @@ impl MemoryFrame {
             output.push('\n');
         }
 
-        output.push_str(&format!("PC: {:04X}", emulator.cpu.borrow().peripherals.memory.get_pointer()));
+        output.push_str(&format!(
+            "PC: {:04X}",
+            emulator.cpu.borrow().peripherals.memory.get_pointer()
+        ));
 
         draw_text(
             ctx.canvas,

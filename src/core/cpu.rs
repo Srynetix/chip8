@@ -4,7 +4,6 @@ use std::fmt;
 
 use rand::random;
 
-use crate::debugger::Breakpoints;
 use crate::peripherals::cartridge::Cartridge;
 use crate::peripherals::screen::ScreenMode;
 use crate::peripherals::Peripherals;
@@ -21,8 +20,6 @@ use super::types::{C8Addr, C8Byte};
 pub struct CPU {
     /// Peripherals
     pub peripherals: Peripherals,
-    /// Breakpoints
-    pub breakpoints: Breakpoints,
 
     /// Registers
     pub registers: Registers,
@@ -54,7 +51,6 @@ impl CPU {
     pub fn new() -> Self {
         CPU {
             peripherals: Peripherals::new(),
-            breakpoints: Breakpoints::new(),
 
             registers: Registers::new(),
             stack: Stack::new(),

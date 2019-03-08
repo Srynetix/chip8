@@ -6,7 +6,7 @@ use crate::core::types::C8Addr;
 
 /// Breakpoints
 #[derive(Default)]
-pub struct Breakpoints(Vec<C8Addr>);
+pub struct Breakpoints(pub Vec<C8Addr>);
 
 impl Breakpoints {
     /// Init
@@ -21,7 +21,7 @@ impl Breakpoints {
     /// * `addr` - Address
     ///
     pub fn register(&mut self, addr: C8Addr) {
-        if self.check_breakpoint(addr).is_none() {
+        if self.get_breakpoint(addr).is_none() {
             debug!("Registering breakpoint at address {:04X}", addr);
             self.0.push(addr);
         }
@@ -34,20 +34,25 @@ impl Breakpoints {
     /// * `addr` - Address
     ///
     pub fn unregister(&mut self, addr: C8Addr) {
-        if let Some(idx) = self.check_breakpoint(addr) {
+        if let Some(idx) = self.get_breakpoint(addr) {
             debug!("Unregistering breakpoint at address {:04X}", addr);
             self.0.remove(idx);
         }
     }
 
-    /// Check if breakpoint is already registered.
+    /// Get breakpoint for address.
     ///
     /// # Arguments
     ///
     /// * `addr` - Address
     ///
-    pub fn check_breakpoint(&self, addr: C8Addr) -> Option<usize> {
+    pub fn get_breakpoint(&self, addr: C8Addr) -> Option<usize> {
         self.0.iter().position(|&x| x == addr)
+    }
+
+    /// Check breakpoint at address.
+    pub fn check_breakpoint(&self, addr: C8Addr) -> bool {
+        self.get_breakpoint(addr).is_some()
     }
 
     /// Dump breakpoints in console
@@ -79,14 +84,14 @@ mod tests {
     fn test_breakpoints() {
         let mut bps = Breakpoints::new();
 
-        assert!(bps.check_breakpoint(0x1234).is_none());
+        assert!(!bps.check_breakpoint(0x1234));
 
         bps.register(0x1234);
         bps.register(0x1234);
-        assert!(bps.check_breakpoint(0x1234).is_some());
+        assert!(bps.check_breakpoint(0x1234));
 
         bps.unregister(0x1234);
-        assert!(bps.check_breakpoint(0x1234).is_none());
+        assert!(!bps.check_breakpoint(0x1234));
         bps.unregister(0x1234);
 
         bps.dump_breakpoints();

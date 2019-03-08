@@ -56,7 +56,6 @@ impl Scene for HomeScene {
                 x_pos,
                 y_pos - 16,
             )?;
-
         }
 
         {
