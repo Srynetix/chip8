@@ -3,29 +3,36 @@ chip8
 
 ![screen](assets/screen.gif)
 
-CHIP-8 emulator written in Rust.
+Emulator project for the CHIP-8 virtual console written in Rust.  
+This is for now my main project in Rust, and I try to experiment multiple things.
 
-Uses rust-sdl2 for windowing and rendering.
+Windowing and rendering is done thanks to SDL2 and the rust-sdl2 wrapper.
 
 Features
 --------
 
 - Support almost all CHIP-8 games
+- CLI-driven mode to specifically use one functionality
+- GUI-driven mode using a custom TUI-like frame system
 - Game disassembler
-- Real-time debugger
-- Save-states system
+- Save-state system
+- Custom debugger
+    - Terminal debugger with a GDB-like experience in CLI mode
+    - Graphical debugger in GUI mode
 
 Command-line help
 -----------------
 
-```bash
+```
 USAGE:
-    chip8 [FLAGS] [OPTIONS] <FILENAME>
+    chip8.exe [FLAGS] [OPTIONS] [--] [FILENAME]
 
 FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
-    -v, --verbose    verbose mode
+    -s, --break-at-start    add breakpoint at start
+        --gui               GUI mode
+    -h, --help              Prints help information
+    -V, --version           Prints version information
+    -v, --verbose           verbose mode
 
 OPTIONS:
     -b, --breakpoint <breakpoint>...    add breakpoint at address
