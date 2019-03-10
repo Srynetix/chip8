@@ -6,3 +6,5 @@
 /*.log
 /*.sav
 /*.dll
+
+/sdl
