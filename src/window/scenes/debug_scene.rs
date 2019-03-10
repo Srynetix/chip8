@@ -7,7 +7,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
 use crate::core::error::CResult;
-use crate::debugger::{Command, Debugger, DebuggerContext};
+use crate::debugger::{Command, Debugger, DebuggerContext, DebuggerState};
 use crate::emulator::{Emulator, EmulatorContext};
 use crate::peripherals::cartridge::Cartridge;
 use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
@@ -248,13 +248,17 @@ impl Scene for DebugScene {
     }
 
     fn keyup(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
-    fn update(&mut self, _ctx: &mut SceneContext, pump: &mut EventPump) {
-        self.debugger.step(
+    fn update(&mut self, ctx: &mut SceneContext, pump: &mut EventPump) {
+        let state = self.debugger.step(
             &mut self.emulator,
             &mut self.emulator_context,
             &mut self.debugger_context,
             &self.cartridge,
             pump,
         );
+
+        if let DebuggerState::Quit = state {
+            ctx.set_current_scene("explorer");
+        }
     }
 }
