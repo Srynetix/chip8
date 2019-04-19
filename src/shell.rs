@@ -16,7 +16,12 @@ use log;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Start shell
-pub fn start_shell(args: &[&str]) {
+pub fn start_shell() {
+    return start_shell_using_args(&[])
+}
+
+/// Start shell using args
+pub fn start_shell_using_args(args: &[&str]) {
     let mut app = App::new("chip8")
         .version(VERSION)
         .author("Denis B. <bourge.denis@gmail.com>")
