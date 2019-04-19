@@ -8,7 +8,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 
 use crate::core::error::CResult;
-use crate::debugger::{Debugger, DebuggerContext, DebuggerState};
+use crate::debugger::{Debugger, DebuggerContext, DebuggerState, DebuggerStream};
 use crate::emulator::{Emulator, EmulatorContext};
 use crate::peripherals::cartridge::Cartridge;
 
@@ -110,6 +110,9 @@ pub fn start_window_cli(
     // Go !
     debug_ctx.is_continuing = true;
 
+    // Create stream
+    let mut stream = DebuggerStream::new();
+
     'running: loop {
         // Event handling
         for event in event_pump.poll_iter() {
@@ -144,6 +147,7 @@ pub fn start_window_cli(
             debug_ctx,
             cartridge,
             &mut event_pump,
+            &mut stream,
         );
 
         if let DebuggerState::Quit = state {

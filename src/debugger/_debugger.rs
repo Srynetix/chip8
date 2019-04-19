@@ -17,6 +17,68 @@ use super::context::{DebuggerContext, DebuggerMode};
 
 type CPURef = Rc<RefCell<CPU>>;
 
+/// Debugger stream line
+pub struct DebuggerStreamLine {
+    pub error: bool,
+    pub content: String,
+}
+
+/// Debugger stream
+pub struct DebuggerStream {
+    lines: Vec<DebuggerStreamLine>,
+    use_console: bool,
+}
+
+impl Default for DebuggerStream {
+    fn default() -> Self {
+        Self {
+            lines: vec![],
+            use_console: false,
+        }
+    }
+}
+
+impl DebuggerStream {
+    /// Create new stream
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    /// Use console
+    pub fn set_use_console(&mut self, v: bool) {
+        self.use_console = v;
+    }
+
+    /// Write to stdout
+    pub fn writeln_stdout<T: AsRef<str>>(&mut self, s: T) {
+        if self.use_console {
+            println!("{}", s.as_ref());
+        } else {
+            self.lines.push(DebuggerStreamLine {
+                error: false,
+                content: s.as_ref().to_string(),
+            });
+        }
+    }
+
+    /// Write to stderr
+    pub fn writeln_stderr<T: AsRef<str>>(&mut self, s: T) {
+        if self.use_console {
+            eprintln!("{}", s.as_ref());
+        } else {
+            self.lines.push(DebuggerStreamLine {
+                error: true,
+                content: s.as_ref().to_string(),
+            });
+        }
+    }
+
+    /// Get lines
+    pub fn get_lines(&self) -> &[DebuggerStreamLine] {
+        &self.lines
+    }
+}
+
 /// Debugger
 pub struct Debugger {}
 
@@ -80,6 +142,7 @@ impl Debugger {
         debug_ctx: &mut DebuggerContext,
         cartridge: &Cartridge,
         pump: &mut EventPump,
+        stream: &mut DebuggerStream,
     ) -> DebuggerState {
         // Should quit?
         if debug_ctx.should_quit {
@@ -124,11 +187,11 @@ impl Debugger {
         if let DebuggerMode::Interactive = debug_ctx.mode {
             if debug_ctx.is_paused() {
                 if debug_ctx.has_moved {
-                    self.show_line_context(&emulator.cpu, debug_ctx, 1, 1);
+                    self.show_line_context(&emulator.cpu, debug_ctx, stream, 1, 1);
                     debug_ctx.has_moved = false;
                 }
 
-                self.start_prompt(&emulator.cpu, debug_ctx);
+                self.start_prompt(&emulator.cpu, debug_ctx, stream);
             }
         }
 
@@ -136,21 +199,26 @@ impl Debugger {
     }
 
     /// Start prompt
-    pub fn start_prompt(&self, cpu: &CPURef, ctx: &mut DebuggerContext) {
+    pub fn start_prompt(
+        &self,
+        cpu: &CPURef,
+        ctx: &mut DebuggerContext,
+        stream: &mut DebuggerStream,
+    ) {
         'read: loop {
             let readline = ctx.editor.readline("> ");
 
             match readline {
                 Ok(line) => {
                     ctx.editor.add_history_entry(line.as_ref());
-                    let command = self.read_command(&line);
+                    let command = self.read_command(&line, stream);
 
                     match command {
                         Some(cmd) => {
-                            self.handle_command(cpu, ctx, cmd);
+                            self.handle_command(cpu, ctx, stream, cmd);
                             break 'read;
                         }
-                        None => eprintln!("unknown command: {}", line),
+                        None => stream.writeln_stderr(format!("unknown command: {}", line)),
                     }
                 }
                 Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
@@ -158,7 +226,7 @@ impl Debugger {
                     break 'read;
                 }
                 Err(err) => {
-                    eprintln!("readline error: {}", err);
+                    stream.writeln_stderr(format!("readline error: {}", err));
                 }
             }
         }
@@ -170,7 +238,7 @@ impl Debugger {
     ///
     /// * `cmd` - Read command
     ///
-    pub fn read_command(&self, cmd: &str) -> Option<Command> {
+    pub fn read_command(&self, cmd: &str, stream: &mut DebuggerStream) -> Option<Command> {
         let cmd_split: Vec<&str> = cmd.split(' ').collect();
         let command = cmd_split[0];
 
@@ -181,14 +249,14 @@ impl Debugger {
                 if cmd_split.len() == 2 {
                     Some(Command::Dump(cmd_split[1].to_string()))
                 } else {
-                    println!("usage: dump device");
-                    println!("  devices:");
-                    println!("    - memory");
-                    println!("    - input");
-                    println!("    - stack");
-                    println!("    - registers");
-                    println!("    - timers");
-                    println!("    - video");
+                    stream.writeln_stdout("usage: dump device");
+                    stream.writeln_stdout("  devices:");
+                    stream.writeln_stdout("    - memory");
+                    stream.writeln_stdout("    - input");
+                    stream.writeln_stdout("    - stack");
+                    stream.writeln_stdout("    - registers");
+                    stream.writeln_stdout("    - timers");
+                    stream.writeln_stdout("    - video");
                     None
                 }
             }
@@ -201,7 +269,7 @@ impl Debugger {
                     let sz = cmd_split[1].parse::<u16>().unwrap();
                     Some(Command::List(sz))
                 } else {
-                    println!("usage: list [context_size=2]");
+                    stream.writeln_stdout("usage: list [context_size=2]");
                     None
                 }
             }
@@ -216,11 +284,11 @@ impl Debugger {
                             cmd_split[2].parse::<C8Addr>().unwrap(),
                         ))
                     } else {
-                        println!("error: bad address {}", cmd_split[1]);
+                        stream.writeln_stderr(format!("error: bad address {}", cmd_split[1]));
                         None
                     }
                 } else {
-                    println!("usage: read-mem addr count");
+                    stream.writeln_stdout("usage: read-mem addr count");
                     None
                 }
             }
@@ -229,11 +297,11 @@ impl Debugger {
                     if let Some(addr) = convert_hex_addr(cmd_split[1]) {
                         Some(Command::AddBreakpoint(addr))
                     } else {
-                        println!("error: bad address {}", cmd_split[1]);
+                        stream.writeln_stderr(format!("error: bad address {}", cmd_split[1]));
                         None
                     }
                 } else {
-                    println!("usage: add-bp addr");
+                    stream.writeln_stdout("usage: add-bp addr");
                     None
                 }
             }
@@ -242,11 +310,11 @@ impl Debugger {
                     if let Some(addr) = convert_hex_addr(cmd_split[1]) {
                         Some(Command::RemoveBreakpoint(addr))
                     } else {
-                        println!("error: bad address {}", cmd_split[1]);
+                        stream.writeln_stderr(format!("error: bad address {}", cmd_split[1]));
                         None
                     }
                 } else {
-                    println!("usage: rem-bp addr");
+                    stream.writeln_stdout("usage: rem-bp addr");
                     None
                 }
             }
@@ -257,7 +325,13 @@ impl Debugger {
     }
 
     /// Handle command
-    pub fn handle_command(&self, cpu: &CPURef, ctx: &mut DebuggerContext, command: Command) {
+    pub fn handle_command(
+        &self,
+        cpu: &CPURef,
+        ctx: &mut DebuggerContext,
+        stream: &mut DebuggerStream,
+        command: Command,
+    ) {
         match command {
             Command::Dump(ref device) => match &device[..] {
                 "memory" | "m" => println!("{:?}", cpu.borrow().peripherals.memory),
@@ -283,10 +357,10 @@ impl Debugger {
             }
             Command::Step => ctx.is_stepping = true,
             Command::Continue => ctx.is_continuing = true,
-            Command::Where => self.show_line(cpu, ctx, ctx.address),
-            Command::List(sz) => self.show_line_context(cpu, ctx, sz, sz),
-            Command::LongList => self.show_source(cpu, ctx),
-            Command::Help => self.show_help(),
+            Command::Where => self.show_line(cpu, ctx, stream, ctx.address),
+            Command::List(sz) => self.show_line_context(cpu, ctx, stream, sz, sz),
+            Command::LongList => self.show_source(cpu, ctx, stream),
+            Command::Help => self.show_help(stream),
             Command::AddBreakpoint(addr) => {
                 ctx.register_breakpoint(addr);
                 println!("Breakpoint added to address 0x{:04X}", addr);
@@ -304,20 +378,27 @@ impl Debugger {
     ////////////////
     // PRIVATE
 
-    fn show_line(&self, cpu: &CPURef, ctx: &DebuggerContext, addr: C8Addr) {
+    fn show_line(
+        &self,
+        cpu: &CPURef,
+        ctx: &DebuggerContext,
+        stream: &mut DebuggerStream,
+        addr: C8Addr,
+    ) {
         let opcode = cpu.borrow().peripherals.memory.read_opcode_at_address(addr);
         let opcode_enum = get_opcode_enum(opcode);
         let (asm, txt) = get_opcode_str(&opcode_enum);
 
         let cursor = if ctx.address == addr { "-->" } else { "" };
 
-        println!("{:04X}| {:3} {:20} ; {}", addr, cursor, asm, txt);
+        stream.writeln_stdout(format!("{:04X}| {:3} {:20} ; {}", addr, cursor, asm, txt));
     }
 
     fn show_line_context(
         &self,
         cpu: &CPURef,
         ctx: &DebuggerContext,
+        stream: &mut DebuggerStream,
         prev_size: u16,
         next_size: u16,
     ) {
@@ -328,30 +409,30 @@ impl Debugger {
         let max_limit = base_addr + next_size * 2;
 
         for addr in (min_limit..=max_limit).step_by(2) {
-            self.show_line(cpu, ctx, addr);
+            self.show_line(cpu, ctx, stream, addr);
         }
     }
 
-    fn show_source(&self, cpu: &CPURef, ctx: &DebuggerContext) {
+    fn show_source(&self, cpu: &CPURef, ctx: &DebuggerContext, stream: &mut DebuggerStream) {
         let code_end_pointer = cpu.borrow().peripherals.memory.get_end_pointer();
         for addr in (INITIAL_MEMORY_POINTER..=code_end_pointer).step_by(2) {
-            self.show_line(cpu, ctx, addr);
+            self.show_line(cpu, ctx, stream, addr);
         }
     }
 
-    fn show_help(&self) {
-        println!("Available commands: ");
-        println!("  continue|c      - Continue");
-        println!("  dump|d          - Dump device");
-        println!("  where|w         - Show current line");
-        println!("  list|l          - Show current line with context");
-        println!("  longlist|ll     - Show complete source");
-        println!("  step|s          - Step");
-        println!("  add-bp|b        - Add breakpoint at address");
-        println!("  rem-bp|rb       - Remove breakpoint at address");
-        println!("  list-bp|lb      - List breakpoints");
-        println!("  read-mem|rmem   - Read memory at offset");
-        println!("  quit|q          - Quit program");
-        println!("  help|h          - Show this help");
+    fn show_help(&self, stream: &mut DebuggerStream) {
+        stream.writeln_stdout("Available commands: ");
+        stream.writeln_stdout("  continue|c      - Continue");
+        stream.writeln_stdout("  dump|d          - Dump device");
+        stream.writeln_stdout("  where|w         - Show current line");
+        stream.writeln_stdout("  list|l          - Show current line with context");
+        stream.writeln_stdout("  longlist|ll     - Show complete source");
+        stream.writeln_stdout("  step|s          - Step");
+        stream.writeln_stdout("  add-bp|b        - Add breakpoint at address");
+        stream.writeln_stdout("  rem-bp|rb       - Remove breakpoint at address");
+        stream.writeln_stdout("  list-bp|lb      - List breakpoints");
+        stream.writeln_stdout("  read-mem|rmem   - Read memory at offset");
+        stream.writeln_stdout("  quit|q          - Quit program");
+        stream.writeln_stdout("  help|h          - Show this help");
     }
 }

@@ -2,6 +2,7 @@ chip8
 =====
 
 ![screen](assets/screen.gif)
+![debugger](assets/debugger.gif)
 
 Emulator project for the CHIP-8 virtual console written in Rust.  
 This is for now my main project in Rust, and I try to experiment multiple things.
@@ -17,8 +18,8 @@ Features
 - Game disassembler
 - Save-state system
 - Custom debugger
-    - Terminal debugger with a GDB-like experience in CLI mode
-    - Graphical debugger in GUI mode
+  - Terminal debugger with a GDB-like experience in CLI mode
+  - Graphical debugger in GUI mode
 
 Command-line help
 -----------------

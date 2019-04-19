@@ -7,7 +7,7 @@ use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
 use crate::core::error::CResult;
-use crate::debugger::{Command, Debugger, DebuggerContext, DebuggerState};
+use crate::debugger::{Command, Debugger, DebuggerContext, DebuggerState, DebuggerStream};
 use crate::emulator::{Emulator, EmulatorContext};
 use crate::peripherals::cartridge::Cartridge;
 use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
@@ -54,6 +54,7 @@ pub struct DebugScene {
     memory_frame: MemoryFrame,
     debugger: Debugger,
     debugger_context: DebuggerContext,
+    debugger_stream: DebuggerStream,
     emulator: Emulator,
     emulator_context: EmulatorContext,
     focus: DebugFocus,
@@ -90,6 +91,7 @@ impl Default for DebugScene {
             emulator_context: EmulatorContext::new(),
             debugger: Debugger::new(),
             debugger_context: DebuggerContext::new(),
+            debugger_stream: DebuggerStream::new(),
             game_name: String::from("EMPTY"),
             cartridge: Cartridge::new_empty(),
             focus: DebugFocus::Main,
@@ -136,6 +138,7 @@ impl Scene for DebugScene {
         self.debugger_context = DebuggerContext::new();
         self.debugger_context.set_manual();
         self.debugger_context.set_address(INITIAL_MEMORY_POINTER);
+        self.debugger_stream = DebuggerStream::new();
 
         self.status_frame.set_status(STATUS_TEXT);
     }
@@ -168,7 +171,7 @@ impl Scene for DebugScene {
         self.status_frame.render(ctx)?;
 
         match self.focus {
-            DebugFocus::Shell => self.shell_frame.render(ctx)?,
+            DebugFocus::Shell => self.shell_frame.render(ctx, &self.debugger_stream)?,
             DebugFocus::Memory => self.memory_frame.render(&self.emulator, ctx)?,
             _ => {}
         }
@@ -204,6 +207,7 @@ impl Scene for DebugScene {
                 self.debugger.handle_command(
                     &self.emulator.cpu,
                     &mut self.debugger_context,
+                    &mut self.debugger_stream,
                     Command::Step,
                 );
             }
@@ -212,6 +216,7 @@ impl Scene for DebugScene {
                 self.debugger.handle_command(
                     &self.emulator.cpu,
                     &mut self.debugger_context,
+                    &mut self.debugger_stream,
                     Command::Continue,
                 );
             }
@@ -227,11 +232,14 @@ impl Scene for DebugScene {
             Keycode::Return => {
                 if let DebugFocus::Shell = self.focus {
                     let cmd_str = self.shell_frame.validate();
-                    let cmd = self.debugger.read_command(&cmd_str);
+                    let cmd = self
+                        .debugger
+                        .read_command(&cmd_str, &mut self.debugger_stream);
                     if let Some(cmd) = cmd {
                         self.debugger.handle_command(
                             &self.emulator.cpu,
                             &mut self.debugger_context,
+                            &mut self.debugger_stream,
                             cmd,
                         );
                     }
@@ -255,6 +263,7 @@ impl Scene for DebugScene {
             &mut self.debugger_context,
             &self.cartridge,
             pump,
+            &mut self.debugger_stream,
         );
 
         if let DebuggerState::Quit = state {
