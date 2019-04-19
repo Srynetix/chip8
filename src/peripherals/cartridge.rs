@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 
 use walkdir;
 
+use crate::core::error::CResult;
 use crate::core::opcodes::{extract_opcode_from_array, get_opcode_enum, get_opcode_str};
 use crate::core::types::{C8Addr, C8Byte};
 
@@ -129,14 +130,31 @@ impl Cartridge {
         res
     }
 
-    /// Load cartridge from games directory.
+    /// Load cartridge from path.
     ///
     /// # Arguments
     ///
     /// * `path` - Path to file
     ///
-    pub fn load_from_games_directory(path: &str) -> Result<Cartridge, Box<dyn Error>> {
-        let game_path = Cartridge::get_game_path(path)?;
+    pub fn load_from_path<P: AsRef<Path>>(path: P) -> CResult<Cartridge> {
+        let mut file = File::open(path.as_ref())?;
+
+        let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
+        file.read_to_end(&mut contents)?;
+
+        // Strip path
+        let game_name = Self::get_game_name(path.as_ref());
+        Cartridge::load_from_string(&game_name, path.as_ref(), &contents)
+    }
+
+    /// Load cartridge from games directory.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Game name
+    ///
+    pub fn load_from_games_directory(name: &str) -> CResult<Cartridge> {
+        let game_path = Cartridge::get_game_path(name)?;
         let mut file = File::open(&game_path)?;
 
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
@@ -153,14 +171,14 @@ impl Cartridge {
     ///
     /// * `bytes` - Bytes contents
     ///
-    pub fn load_from_string(
+    pub fn load_from_string<P: AsRef<Path>>(
         title: &str,
-        path: &str,
+        path: P,
         bytes: &[C8Byte],
     ) -> Result<Cartridge, Box<dyn Error>> {
         let title = title.to_string();
         let data = bytes.to_vec();
-        let path = path.to_string();
+        let path = path.as_ref().to_str().unwrap().to_string();
 
         Ok(Cartridge { title, data, path })
     }

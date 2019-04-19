@@ -29,7 +29,7 @@ pub fn start_shell_using_args(args: &[&str]) {
         .arg(
             Arg::with_name("file")
                 .value_name("FILENAME")
-                .help("cartridge name (not the path)")
+                .help("cartridge path")
                 .takes_value(true),
         )
         .arg(
@@ -102,7 +102,7 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
             process::exit(1);
         }
     } else {
-        let cartridge_filename = match matches.value_of("file") {
+        let cartridge_path = match matches.value_of("file") {
             Some(f) => f,
             None => {
                 eprintln!("error: missing file argument. show help with --help.");
@@ -110,7 +110,7 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
             }
         };
 
-        let cartridge_handle = Cartridge::load_from_games_directory(cartridge_filename);
+        let cartridge_handle = Cartridge::load_from_path(cartridge_path);
         if let Err(error) = cartridge_handle {
             eprintln!("{}", error);
             process::exit(1);
