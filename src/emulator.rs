@@ -125,16 +125,16 @@ impl Emulator {
         };
 
         // Handle input lock
-        if self.cpu.peripherals.input.data.lock.is_locked() {
-            if self.cpu.peripherals.input.data.lock.is_key_set() {
-                let reg = self.cpu.peripherals.input.data.lock.register;
-                let key = self.cpu.peripherals.input.data.lock.key;
+        if self.cpu.peripherals.input.is_locked() {
+            if self.cpu.peripherals.input.is_lock_key_set() {
+                let reg = self.cpu.peripherals.input.get_lock_register();
+                let key = self.cpu.peripherals.input.get_lock_key();
 
                 // Set register
                 self.cpu.registers.set_register(reg, key);
 
                 // Unlock
-                self.cpu.peripherals.input.data.lock.unlock();
+                self.cpu.peripherals.input.unlock();
             } else {
                 // Wait for key
                 return EmulationState::WaitForInput;

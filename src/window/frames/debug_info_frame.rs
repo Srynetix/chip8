@@ -86,7 +86,7 @@ impl DebugInfoFrame {
 
             output.push_str(&format!(
                 "WAIT={}\n",
-                if emulator.cpu.peripherals.input.data.lock.is_locked() {
+                if emulator.cpu.peripherals.input.is_locked() {
                     1
                 } else {
                     0

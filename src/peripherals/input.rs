@@ -20,15 +20,31 @@ pub const INPUT_STATE_COUNT: usize = 16;
 /// Input empty key
 pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
 
-/// Input state data
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct InputStateData {
-    data: Vec<C8Byte>,
-    last_pressed_key: C8Byte,
-    input_pressed: bool,
+lazy_static! {
+    static ref KEY_BINDINGS: HashMap<C8Byte, Keycode> = {
+        let mut initial_binding = HashMap::new();
+        initial_binding.insert(0x1, Keycode::Num1);
+        initial_binding.insert(0x2, Keycode::Num2);
+        initial_binding.insert(0x3, Keycode::Num3);
+        initial_binding.insert(0xC, Keycode::Num4);
 
-    /// Lock
-    pub lock: InputLock,
+        initial_binding.insert(0x4, Keycode::A);
+        initial_binding.insert(0x5, Keycode::Z);
+        initial_binding.insert(0x6, Keycode::E);
+        initial_binding.insert(0xD, Keycode::R);
+
+        initial_binding.insert(0x7, Keycode::Q);
+        initial_binding.insert(0x8, Keycode::S);
+        initial_binding.insert(0x9, Keycode::D);
+        initial_binding.insert(0xE, Keycode::F);
+
+        initial_binding.insert(0xA, Keycode::W);
+        initial_binding.insert(0x0, Keycode::X);
+        initial_binding.insert(0xB, Keycode::C);
+        initial_binding.insert(0xF, Keycode::V);
+
+        initial_binding
+    };
 }
 
 /// Input lock
@@ -51,6 +67,13 @@ impl InputLock {
     /// Is locked
     pub fn is_locked(&self) -> bool {
         self.active
+    }
+
+    /// Reset
+    pub fn reset(&mut self) {
+        self.active = false;
+        self.register = INPUT_EMPTY_KEY;
+        self.key = INPUT_EMPTY_KEY;
     }
 
     /// Lock
@@ -85,49 +108,31 @@ impl InputLock {
     }
 }
 
-/// Input state struct
+/// Input
+#[derive(Clone, Serialize, Deserialize)]
 pub struct InputState {
-    /// State data
-    pub data: InputStateData,
-    key_binding: HashMap<C8Byte, Keycode>,
+    /// Key data
+    data: Vec<C8Byte>,
+    /// Last pressed key
+    last_pressed_key: C8Byte,
+    /// Input is pressed?
+    input_pressed: bool,
+    /// Lock
+    lock: InputLock,
 }
 
 impl Default for InputState {
     fn default() -> Self {
         let vec = vec![0; INPUT_STATE_COUNT];
 
-        let mut initial_binding = HashMap::new();
-        initial_binding.insert(0x1, Keycode::Num1);
-        initial_binding.insert(0x2, Keycode::Num2);
-        initial_binding.insert(0x3, Keycode::Num3);
-        initial_binding.insert(0xC, Keycode::Num4);
-
-        initial_binding.insert(0x4, Keycode::A);
-        initial_binding.insert(0x5, Keycode::Z);
-        initial_binding.insert(0x6, Keycode::E);
-        initial_binding.insert(0xD, Keycode::R);
-
-        initial_binding.insert(0x7, Keycode::Q);
-        initial_binding.insert(0x8, Keycode::S);
-        initial_binding.insert(0x9, Keycode::D);
-        initial_binding.insert(0xE, Keycode::F);
-
-        initial_binding.insert(0xA, Keycode::W);
-        initial_binding.insert(0x0, Keycode::X);
-        initial_binding.insert(0xB, Keycode::C);
-        initial_binding.insert(0xF, Keycode::V);
-
         Self {
-            key_binding: initial_binding,
-            data: InputStateData {
-                data: vec,
-                last_pressed_key: INPUT_EMPTY_KEY,
-                input_pressed: false,
-                lock: InputLock {
-                    active: false,
-                    register: 255,
-                    key: 255,
-                },
+            data: vec,
+            last_pressed_key: INPUT_EMPTY_KEY,
+            input_pressed: false,
+            lock: InputLock {
+                active: false,
+                register: INPUT_EMPTY_KEY,
+                key: INPUT_EMPTY_KEY,
             },
         }
     }
@@ -144,7 +149,7 @@ impl InputState {
         // Keyboard state
         for key in 0..INPUT_STATE_COUNT {
             let key8 = key as C8Byte;
-            let kb = Scancode::from_keycode(self.key_binding[&key8]).unwrap();
+            let kb = Scancode::from_keycode(KEY_BINDINGS[&key8]).unwrap();
 
             if event_pump.keyboard_state().is_scancode_pressed(kb) {
                 self.press(key8);
@@ -156,8 +161,8 @@ impl InputState {
 
     /// Wait for input
     pub fn wait_for_input(&mut self, register: C8RegIdx) {
-        self.data.lock.active = true;
-        self.data.lock.register = register;
+        self.lock.active = true;
+        self.lock.register = register;
     }
 
     /// Press input
@@ -171,14 +176,39 @@ impl InputState {
             panic!("Key `{}` does not exist.", key);
         }
 
-        self.data.data[key as usize] = 1;
-        self.data.last_pressed_key = key;
-        self.data.input_pressed = true;
+        self.data[key as usize] = 1;
+        self.last_pressed_key = key;
+        self.input_pressed = true;
 
         // Handle lock
-        if self.data.lock.is_locked() && !self.data.lock.is_key_set() {
-            self.data.lock.set_key(key);
+        if self.lock.is_locked() && !self.lock.is_key_set() {
+            self.lock.set_key(key);
         }
+    }
+
+    /// Unlock
+    pub fn unlock(&mut self) -> bool {
+        self.lock.unlock()
+    }
+
+    /// Is locked
+    pub fn is_locked(&self) -> bool {
+        self.lock.is_locked()
+    }
+
+    /// Is lock key set
+    pub fn is_lock_key_set(&self) -> bool {
+        self.lock.is_key_set()
+    }
+
+    /// Get lock key
+    pub fn get_lock_key(&self) -> C8Byte {
+        self.lock.key
+    }
+
+    /// Get lock register
+    pub fn get_lock_register(&self) -> C8RegIdx {
+        self.lock.register
     }
 
     /// Release input
@@ -192,9 +222,9 @@ impl InputState {
             panic!("Key `{}` does not exist.", key);
         }
 
-        self.data.data[key as usize] = 0;
-        self.data.last_pressed_key = INPUT_EMPTY_KEY;
-        self.data.input_pressed = false;
+        self.data[key as usize] = 0;
+        self.last_pressed_key = INPUT_EMPTY_KEY;
+        self.input_pressed = false;
     }
 
     /// Get input
@@ -208,17 +238,17 @@ impl InputState {
             panic!("Key `{}` does not exist.", key);
         }
 
-        self.data.data[key as usize]
+        self.data[key as usize]
     }
 
     /// Get input data
     pub fn get_data(&self) -> &[C8Byte] {
-        &self.data.data
+        &self.data
     }
 
     /// Get last pressed key
     pub fn get_last_pressed_key(&self) -> C8Byte {
-        self.data.last_pressed_key
+        self.last_pressed_key
     }
 
     /// Load from save
@@ -227,24 +257,28 @@ impl InputState {
     ///
     /// * `data` - Input state data
     ///
-    pub fn load_from_save(&mut self, data: InputStateData) {
-        self.data = data;
+    pub fn load_from_save(&mut self, data: InputState) {
+        self.data = data.data;
+        self.last_pressed_key = data.last_pressed_key;
+        self.input_pressed = data.input_pressed;
+        self.lock = data.lock;
     }
 
     /// Reset
     pub fn reset(&mut self) {
-        self.data.data = vec![0; INPUT_STATE_COUNT];
-        self.data.last_pressed_key = INPUT_EMPTY_KEY;
-        self.data.input_pressed = false;
+        self.data = vec![0; INPUT_STATE_COUNT];
+        self.last_pressed_key = INPUT_EMPTY_KEY;
+        self.input_pressed = false;
+        self.lock.reset();
     }
 }
 
 impl fmt::Debug for InputState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for (idx, v) in self.data.data.iter().enumerate() {
+        for (idx, v) in self.data.iter().enumerate() {
             writeln!(f, "    K{:X}: {}", idx, v)?;
         }
 
-        writeln!(f, "    LK: {}", self.data.last_pressed_key)
+        writeln!(f, "    LK: {}", self.last_pressed_key)
     }
 }

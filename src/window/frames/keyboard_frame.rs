@@ -67,7 +67,7 @@ impl KeyboardFrame {
         let wait_w = (KEY_SIZE + KEY_MARGIN * 2) * 2;
         let wait_h = KEY_SIZE + KEY_MARGIN * 2;
 
-        let locked = emulator.cpu.peripherals.input.data.lock.is_locked();
+        let locked = emulator.cpu.peripherals.input.is_locked();
         let color = if locked { white_color } else { grey_color };
 
         let wait_sz = font.size_of("WAIT").unwrap();

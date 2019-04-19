@@ -97,7 +97,7 @@ impl CPU {
     ///
     pub fn load_savestate(&mut self, state: SaveState) {
         self.instruction_count = state.instruction_count;
-        self.peripherals.input.load_from_save(state.input_data);
+        self.peripherals.input.load_from_save(state.input);
         self.peripherals.memory.load_from_save(state.memory);
         self.peripherals.screen.load_from_save(state.screen_data);
         self.registers.load_from_save(state.registers);

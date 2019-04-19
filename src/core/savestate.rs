@@ -8,7 +8,7 @@ use std::path::Path;
 
 use bincode::{deserialize, serialize};
 
-use crate::peripherals::input::InputStateData;
+use crate::peripherals::input::InputState;
 use crate::peripherals::memory::Memory;
 use crate::peripherals::screen::ScreenData;
 
@@ -36,8 +36,8 @@ impl fmt::Display for MissingSaveState {
 /// CHIP-8 save state
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SaveState {
-    /// Input state data
-    pub input_data: InputStateData,
+    /// Input state
+    pub input: InputState,
     /// Memory
     pub memory: Memory,
     /// Registers
@@ -63,7 +63,7 @@ impl SaveState {
     ///
     pub fn save_from_cpu(cpu: &CPU) -> SaveState {
         SaveState {
-            input_data: cpu.peripherals.input.data.clone(),
+            input: cpu.peripherals.input.clone(),
             memory: cpu.peripherals.memory.clone(),
             registers: cpu.registers.clone(),
             screen_data: cpu.peripherals.screen.data.clone(),
