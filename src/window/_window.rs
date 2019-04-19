@@ -132,12 +132,7 @@ pub fn start_window_cli(
 
         // Render
         canvas.clear();
-        emulator
-            .cpu
-            .borrow_mut()
-            .peripherals
-            .screen
-            .render(0, 0, &mut canvas)?;
+        emulator.cpu.peripherals.screen.render(0, 0, &mut canvas)?;
         canvas.present();
 
         // Update

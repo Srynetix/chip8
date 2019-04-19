@@ -35,7 +35,6 @@ impl MemoryFrame {
 
         for (idx, chunk) in emulator
             .cpu
-            .borrow()
             .peripherals
             .memory
             .get_data()
@@ -57,7 +56,7 @@ impl MemoryFrame {
 
         output.push_str(&format!(
             "PC: {:04X}",
-            emulator.cpu.borrow().peripherals.memory.get_pointer()
+            emulator.cpu.peripherals.memory.get_pointer()
         ));
 
         draw_text(

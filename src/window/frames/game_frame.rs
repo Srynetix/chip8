@@ -19,8 +19,8 @@ impl GameFrame {
     }
 
     /// Render
-    pub fn render(&mut self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
-        emulator.cpu.borrow_mut().peripherals.screen.render(
+    pub fn render(&mut self, emulator: &mut Emulator, ctx: &mut DrawContext) -> CResult {
+        emulator.cpu.peripherals.screen.render(
             self.frame.rect.x() as u32,
             self.frame.rect.y() as u32,
             ctx.canvas,

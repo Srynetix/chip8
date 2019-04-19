@@ -83,7 +83,7 @@ impl Scene for GameScene {
 
         self.title_frame.render(ctx)?;
         self.status_frame.render(ctx)?;
-        self.game_frame.render(&self.emulator, ctx)?;
+        self.game_frame.render(&mut self.emulator, ctx)?;
         self.keyboard_frame.render(&self.emulator, ctx)?;
 
         Ok(())
@@ -91,12 +91,7 @@ impl Scene for GameScene {
 
     fn update(&mut self, _ctx: &mut SceneContext, pump: &mut EventPump) {
         // Process input
-        self.emulator
-            .cpu
-            .borrow_mut()
-            .peripherals
-            .input
-            .process_input(pump);
+        self.emulator.cpu.peripherals.input.process_input(pump);
 
         // Step emulation
         self.emulator

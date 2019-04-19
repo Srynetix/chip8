@@ -67,14 +67,7 @@ impl KeyboardFrame {
         let wait_w = (KEY_SIZE + KEY_MARGIN * 2) * 2;
         let wait_h = KEY_SIZE + KEY_MARGIN * 2;
 
-        let locked = emulator
-            .cpu
-            .borrow()
-            .peripherals
-            .input
-            .data
-            .lock
-            .is_locked();
+        let locked = emulator.cpu.peripherals.input.data.lock.is_locked();
         let color = if locked { white_color } else { grey_color };
 
         let wait_sz = font.size_of("WAIT").unwrap();
@@ -109,15 +102,7 @@ impl KeyboardFrame {
         let grey_color = Color::RGB(127, 127, 127);
         let white_color = Color::RGB(255, 255, 255);
 
-        for (idx, v) in emulator
-            .cpu
-            .borrow()
-            .peripherals
-            .input
-            .get_data()
-            .iter()
-            .enumerate()
-        {
+        for (idx, v) in emulator.cpu.peripherals.input.get_data().iter().enumerate() {
             let color = match v {
                 0 => grey_color,
                 _ => white_color,

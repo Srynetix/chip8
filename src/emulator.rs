@@ -1,9 +1,7 @@
 //! CHIP-8 emulator
 
-use std::cell::RefCell;
 use std::fs::{File, OpenOptions};
 use std::io::Write;
-use std::rc::Rc;
 
 use time::{self, PreciseTime};
 
@@ -20,7 +18,7 @@ const CPU_FRAME_LIMIT: i64 = 2;
 #[derive(Default)]
 pub struct Emulator {
     /// CPU handle
-    pub cpu: Rc<RefCell<CPU>>,
+    pub cpu: CPU,
 }
 
 /// Emulation state
@@ -65,9 +63,7 @@ impl EmulatorContext {
 impl Emulator {
     /// Create new CHIP-8 emulator
     pub fn new() -> Self {
-        let cpu = Rc::new(RefCell::new(CPU::new()));
-
-        Emulator { cpu }
+        Emulator { cpu: CPU::new() }
     }
 
     /// Set CPU tracefile.
@@ -76,19 +72,19 @@ impl Emulator {
     ///
     /// * `tracefile` - Tracefile
     ///
-    pub fn set_tracefile(&self, tracefile: &str) {
-        self.cpu.borrow_mut().tracefile(tracefile);
+    pub fn set_tracefile(&mut self, tracefile: &str) {
+        self.cpu.tracefile(tracefile);
     }
 
     /// Load game
-    pub fn load_game(&self, cartridge: &Cartridge) {
-        self.cpu.borrow_mut().load_font_in_memory();
-        self.cpu.borrow_mut().load_cartridge_data(cartridge);
+    pub fn load_game(&mut self, cartridge: &Cartridge) {
+        self.cpu.load_font_in_memory();
+        self.cpu.load_cartridge_data(cartridge);
     }
 
     /// Save state
     pub fn save_state(&self, name: &str) {
-        let savestate = SaveState::save_from_cpu(&self.cpu.borrow());
+        let savestate = SaveState::save_from_cpu(&self.cpu);
         savestate.write_to_file(&format!("{}.sav", name));
     }
 
@@ -99,7 +95,7 @@ impl Emulator {
         match savestate {
             None => Err(Box::new(MissingSaveState(filename.clone()))),
             Some(ss) => {
-                self.cpu.borrow_mut().load_savestate(ss);
+                self.cpu.load_savestate(ss);
                 Ok(())
             }
         }
@@ -108,11 +104,11 @@ impl Emulator {
     /// Reset
     pub fn reset(&mut self, cartridge: &Cartridge, ctx: &mut EmulatorContext) {
         // Reset CPU
-        self.cpu.borrow_mut().reset();
+        self.cpu.reset();
 
         // Reload data
-        self.cpu.borrow_mut().load_font_in_memory();
-        self.cpu.borrow_mut().load_cartridge_data(cartridge);
+        self.cpu.load_font_in_memory();
+        self.cpu.load_cartridge_data(cartridge);
 
         // Reset vars
         ctx.timer_frametime = time::PreciseTime::now();
@@ -121,24 +117,24 @@ impl Emulator {
     }
 
     /// Step emulation
-    pub fn step(&self, _cartridge: &Cartridge, ctx: &mut EmulatorContext) -> EmulationState {
-        let cpu_framelimit = if self.cpu.borrow().schip_mode {
+    pub fn step(&mut self, _cartridge: &Cartridge, ctx: &mut EmulatorContext) -> EmulationState {
+        let cpu_framelimit = if self.cpu.schip_mode {
             CPU_FRAME_LIMIT / 2
         } else {
             CPU_FRAME_LIMIT
         };
 
         // Handle input lock
-        if self.cpu.borrow().peripherals.input.data.lock.is_locked() {
-            if self.cpu.borrow().peripherals.input.data.lock.is_key_set() {
-                let reg = self.cpu.borrow().peripherals.input.data.lock.register;
-                let key = self.cpu.borrow().peripherals.input.data.lock.key;
+        if self.cpu.peripherals.input.data.lock.is_locked() {
+            if self.cpu.peripherals.input.data.lock.is_key_set() {
+                let reg = self.cpu.peripherals.input.data.lock.register;
+                let key = self.cpu.peripherals.input.data.lock.key;
 
                 // Set register
-                self.cpu.borrow_mut().registers.set_register(reg, key);
+                self.cpu.registers.set_register(reg, key);
 
                 // Unlock
-                self.cpu.borrow_mut().peripherals.input.data.lock.unlock();
+                self.cpu.peripherals.input.data.lock.unlock();
             } else {
                 // Wait for key
                 return EmulationState::WaitForInput;
@@ -152,12 +148,12 @@ impl Emulator {
             >= cpu_framelimit
         {
             // Read next instruction
-            let opcode = self.cpu.borrow().peripherals.memory.read_opcode();
+            let opcode = self.cpu.peripherals.memory.read_opcode();
             trace_exec!(
                 ctx.tracefile_handle,
                 "[{:08X}] {:04X} - Reading opcode 0x{:04X}...",
-                self.cpu.borrow().instruction_count,
-                self.cpu.borrow().peripherals.memory.get_pointer(),
+                self.cpu.instruction_count,
+                self.cpu.peripherals.memory.get_pointer(),
                 opcode
             );
 
@@ -167,11 +163,11 @@ impl Emulator {
             trace_exec!(ctx.tracefile_handle, "  - {:20} ; {}", assembly, verbose);
 
             // Execute instruction
-            if self.cpu.borrow_mut().execute_instruction(&opcode_enum) {
+            if self.cpu.execute_instruction(&opcode_enum) {
                 return EmulationState::Quit;
             }
 
-            self.cpu.borrow_mut().instruction_count += 1;
+            self.cpu.instruction_count += 1;
 
             ctx.cpu_frametime = time::PreciseTime::now();
         }
@@ -183,7 +179,7 @@ impl Emulator {
             >= TIMER_FRAME_LIMIT
         {
             // Handle timers
-            self.cpu.borrow_mut().decrement_timers();
+            self.cpu.decrement_timers();
             ctx.timer_frametime = time::PreciseTime::now();
         }
 
@@ -193,14 +189,14 @@ impl Emulator {
     }
 
     /// Run loop
-    pub fn run_loop(&self, cartridge: &Cartridge) {
+    pub fn run_loop(&mut self, cartridge: &Cartridge) {
         let mut ctx = EmulatorContext::new();
 
         // Load game
         self.load_game(cartridge);
 
         // Get tracefile
-        ctx.tracefile_handle = match self.cpu.borrow().tracefile {
+        ctx.tracefile_handle = match self.cpu.tracefile {
             Some(ref path) => Some(
                 OpenOptions::new()
                     .write(true)

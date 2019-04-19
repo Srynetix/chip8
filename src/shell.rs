@@ -17,7 +17,7 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Start shell
 pub fn start_shell() {
-    return start_shell_using_args(&[])
+    start_shell_using_args(&[]);
 }
 
 /// Start shell using args

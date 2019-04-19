@@ -1,8 +1,5 @@
 //! CHIP-8 debugger
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use rustyline::error::ReadlineError;
 use sdl2::EventPump;
 
@@ -14,8 +11,6 @@ use crate::peripherals::cartridge::Cartridge;
 use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
 
 use super::context::{DebuggerContext, DebuggerMode};
-
-type CPURef = Rc<RefCell<CPU>>;
 
 /// Debugger stream line
 pub struct DebuggerStreamLine {
@@ -151,7 +146,7 @@ impl Debugger {
 
         // Check for breakpoint
         if debug_ctx.is_continuing && !debug_ctx.breakpoint_hit {
-            let pointer = emulator.cpu.borrow().peripherals.memory.get_pointer();
+            let pointer = emulator.cpu.peripherals.memory.get_pointer();
             if debug_ctx.breakpoints.check_breakpoint(pointer) {
                 debug_ctx.breakpoint_hit = true;
                 debug_ctx.has_moved = true;
@@ -161,18 +156,13 @@ impl Debugger {
 
         // Step
         if debug_ctx.is_stepping || debug_ctx.is_continuing {
-            emulator
-                .cpu
-                .borrow_mut()
-                .peripherals
-                .input
-                .process_input(pump);
+            emulator.cpu.peripherals.input.process_input(pump);
             emulator.step(cartridge, emulator_ctx);
 
             // Just moved
             debug_ctx.has_moved = true;
             // Change debugger address
-            debug_ctx.set_address(emulator.cpu.borrow().peripherals.memory.get_pointer());
+            debug_ctx.set_address(emulator.cpu.peripherals.memory.get_pointer());
 
             if debug_ctx.is_stepping {
                 debug_ctx.is_stepping = false;
@@ -199,12 +189,7 @@ impl Debugger {
     }
 
     /// Start prompt
-    pub fn start_prompt(
-        &self,
-        cpu: &CPURef,
-        ctx: &mut DebuggerContext,
-        stream: &mut DebuggerStream,
-    ) {
+    pub fn start_prompt(&self, cpu: &CPU, ctx: &mut DebuggerContext, stream: &mut DebuggerStream) {
         'read: loop {
             let readline = ctx.editor.readline("> ");
 
@@ -327,32 +312,29 @@ impl Debugger {
     /// Handle command
     pub fn handle_command(
         &self,
-        cpu: &CPURef,
+        cpu: &CPU,
         ctx: &mut DebuggerContext,
         stream: &mut DebuggerStream,
         command: Command,
     ) {
         match command {
             Command::Dump(ref device) => match &device[..] {
-                "memory" | "m" => println!("{:?}", cpu.borrow().peripherals.memory),
-                "video" | "v" => cpu.borrow().peripherals.screen.dump_screen(),
-                "input" | "i" => println!("{:?}", cpu.borrow().peripherals.input),
-                "registers" | "r" => println!("{:?}", cpu.borrow().registers),
-                "stack" | "s" => println!("{:?}", cpu.borrow().stack),
+                "memory" | "m" => println!("{:?}", cpu.peripherals.memory),
+                "video" | "v" => cpu.peripherals.screen.dump_screen(),
+                "input" | "i" => println!("{:?}", cpu.peripherals.input),
+                "registers" | "r" => println!("{:?}", cpu.registers),
+                "stack" | "s" => println!("{:?}", cpu.stack),
                 "timers" | "t" => {
-                    println!("{:?}", cpu.borrow().delay_timer);
-                    println!("{:?}", cpu.borrow().sound_timer);
+                    println!("{:?}", cpu.delay_timer);
+                    println!("{:?}", cpu.sound_timer);
                 }
-                _ => cpu.borrow().show_debug(),
+                _ => cpu.show_debug(),
             },
             Command::ReadMemory(addr, count) => {
                 println!("Reading memory at {:04X} on {} byte(s).", addr, count);
                 println!(
                     "{:?}",
-                    cpu.borrow()
-                        .peripherals
-                        .memory
-                        .read_data_at_offset(addr, count)
+                    cpu.peripherals.memory.read_data_at_offset(addr, count)
                 );
             }
             Command::Step => ctx.is_stepping = true,
@@ -380,12 +362,12 @@ impl Debugger {
 
     fn show_line(
         &self,
-        cpu: &CPURef,
+        cpu: &CPU,
         ctx: &DebuggerContext,
         stream: &mut DebuggerStream,
         addr: C8Addr,
     ) {
-        let opcode = cpu.borrow().peripherals.memory.read_opcode_at_address(addr);
+        let opcode = cpu.peripherals.memory.read_opcode_at_address(addr);
         let opcode_enum = get_opcode_enum(opcode);
         let (asm, txt) = get_opcode_str(&opcode_enum);
 
@@ -396,7 +378,7 @@ impl Debugger {
 
     fn show_line_context(
         &self,
-        cpu: &CPURef,
+        cpu: &CPU,
         ctx: &DebuggerContext,
         stream: &mut DebuggerStream,
         prev_size: u16,
@@ -413,8 +395,8 @@ impl Debugger {
         }
     }
 
-    fn show_source(&self, cpu: &CPURef, ctx: &DebuggerContext, stream: &mut DebuggerStream) {
-        let code_end_pointer = cpu.borrow().peripherals.memory.get_end_pointer();
+    fn show_source(&self, cpu: &CPU, ctx: &DebuggerContext, stream: &mut DebuggerStream) {
+        let code_end_pointer = cpu.peripherals.memory.get_end_pointer();
         for addr in (INITIAL_MEMORY_POINTER..=code_end_pointer).step_by(2) {
             self.show_line(cpu, ctx, stream, addr);
         }

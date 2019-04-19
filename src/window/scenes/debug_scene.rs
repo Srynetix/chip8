@@ -164,7 +164,7 @@ impl Scene for DebugScene {
         clear_screen(ctx.canvas);
 
         self.title_frame.render(ctx)?;
-        self.game_frame.render(&self.emulator, ctx)?;
+        self.game_frame.render(&mut self.emulator, ctx)?;
         self.debug_info_frame
             .render(&self.emulator, &self.debugger_context, ctx)?;
         self.code_frame.render(&self.debugger_context, ctx)?;

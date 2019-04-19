@@ -34,14 +34,7 @@ impl DebugInfoFrame {
         {
             output.push_str("REGISTERS:");
 
-            for (idx, rgx) in emulator
-                .cpu
-                .borrow()
-                .registers
-                .get_registers()
-                .iter()
-                .enumerate()
-            {
+            for (idx, rgx) in emulator.cpu.registers.get_registers().iter().enumerate() {
                 if idx % 5 == 0 {
                     output.push_str("\n");
                 }
@@ -51,14 +44,14 @@ impl DebugInfoFrame {
 
             output.push_str(&format!(
                 "I={:04X}\n",
-                emulator.cpu.borrow().registers.get_i_register()
+                emulator.cpu.registers.get_i_register()
             ));
         }
 
         {
             output.push_str("\nSTACK:");
 
-            for (idx, d) in emulator.cpu.borrow().stack.get_data().iter().enumerate() {
+            for (idx, d) in emulator.cpu.stack.get_data().iter().enumerate() {
                 if idx % 7 == 0 {
                     output.push_str("\n");
                 }
@@ -66,36 +59,19 @@ impl DebugInfoFrame {
                 output.push_str(&format!("{:04X} ", d));
             }
 
-            output.push_str(&format!(
-                "\nPTR={:04X}\n",
-                emulator.cpu.borrow().stack.get_pointer()
-            ));
+            output.push_str(&format!("\nPTR={:04X}\n", emulator.cpu.stack.get_pointer()));
         }
 
         {
             output.push_str("\nTIMERS:\n");
-            output.push_str(&format!(
-                "DELAY={}\n",
-                emulator.cpu.borrow().delay_timer.get_value()
-            ));
-            output.push_str(&format!(
-                "SOUND={}\n",
-                emulator.cpu.borrow().sound_timer.get_value()
-            ));
+            output.push_str(&format!("DELAY={}\n", emulator.cpu.delay_timer.get_value()));
+            output.push_str(&format!("SOUND={}\n", emulator.cpu.sound_timer.get_value()));
         }
 
         {
             output.push_str("\nINPUT:");
 
-            for (idx, v) in emulator
-                .cpu
-                .borrow()
-                .peripherals
-                .input
-                .get_data()
-                .iter()
-                .enumerate()
-            {
+            for (idx, v) in emulator.cpu.peripherals.input.get_data().iter().enumerate() {
                 if idx % 5 == 0 {
                     output.push_str("\n");
                 }
@@ -105,25 +81,12 @@ impl DebugInfoFrame {
 
             output.push_str(&format!(
                 "LK={:02X} ",
-                emulator
-                    .cpu
-                    .borrow()
-                    .peripherals
-                    .input
-                    .get_last_pressed_key()
+                emulator.cpu.peripherals.input.get_last_pressed_key()
             ));
 
             output.push_str(&format!(
                 "WAIT={}\n",
-                if emulator
-                    .cpu
-                    .borrow()
-                    .peripherals
-                    .input
-                    .data
-                    .lock
-                    .is_locked()
-                {
+                if emulator.cpu.peripherals.input.data.lock.is_locked() {
                     1
                 } else {
                     0
