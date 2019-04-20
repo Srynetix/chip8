@@ -133,6 +133,9 @@ pub fn start_window_cli(
     canvas.clear();
     canvas.present();
 
+    // Prepare tracefile.
+    emulator_ctx.prepare_tracefile(&emulator.cpu.tracefile);
+
     // Go.
     debug_ctx.is_continuing = true;
 

@@ -73,6 +73,10 @@ impl Scene for GameScene {
         self.emulator = Emulator::new();
         self.emulator_context = EmulatorContext::new();
         self.emulator.load_game(&self.cartridge);
+
+        // Prepare tracefile.
+        self.emulator_context
+            .prepare_tracefile(&self.emulator.cpu.tracefile);
     }
 
     fn destroy(&mut self, _ctx: &mut SceneContext) {}

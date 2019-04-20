@@ -63,6 +63,25 @@ impl EmulatorContext {
     pub fn new() -> Self {
         Default::default()
     }
+
+    /// Prepare tracefile
+    ///
+    /// # Arguments
+    ///
+    /// * `tracefile` - Tracefile
+    ///
+    pub fn prepare_tracefile(&mut self, tracefile: &Option<String>) {
+        self.tracefile_handle = match tracefile {
+            Some(ref path) => Some(
+                OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(path)
+                    .unwrap(),
+            ),
+            None => None,
+        };
+    }
 }
 
 impl Emulator {
@@ -195,7 +214,7 @@ impl Emulator {
             let opcode = self.cpu.peripherals.memory.read_opcode();
             trace_exec!(
                 ctx.tracefile_handle,
-                "[{:08X}] {:04X} - Reading opcode 0x{:04X}...",
+                "[{:08X}] {:04X} - reading opcode 0x{:04X}...",
                 self.cpu.instruction_count,
                 self.cpu.peripherals.memory.get_pointer(),
                 opcode
@@ -230,39 +249,5 @@ impl Emulator {
         ctx.frametime = time::PreciseTime::now();
 
         EmulationState::Normal
-    }
-
-    /// Run loop.
-    ///
-    /// # Arguments
-    ///
-    /// * cartridge - Cartridge.
-    ///
-    pub fn run_loop(&mut self, cartridge: &Cartridge) {
-        let mut ctx = EmulatorContext::new();
-
-        // Load game.
-        self.load_game(cartridge);
-
-        // Get tracefile.
-        ctx.tracefile_handle = match self.cpu.tracefile {
-            Some(ref path) => Some(
-                OpenOptions::new()
-                    .write(true)
-                    .create(true)
-                    .open(path)
-                    .unwrap(),
-            ),
-            None => None,
-        };
-
-        loop {
-            match self.step(&mut ctx) {
-                EmulationState::Quit => break,
-                EmulationState::Reset => continue,
-                EmulationState::Normal => {}
-                EmulationState::WaitForInput => {}
-            }
-        }
     }
 }
