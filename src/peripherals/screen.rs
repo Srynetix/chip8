@@ -233,7 +233,7 @@ impl fmt::Debug for Screen {
         let coef = self.get_screen_size_coef();
         writeln!(
             f,
-            "    -> Size: {} x {}",
+            "    -> size: {} x {}",
             VIDEO_MEMORY_WIDTH * coef,
             VIDEO_MEMORY_HEIGHT * coef
         )?;

@@ -22,7 +22,7 @@ impl Breakpoints {
     ///
     pub fn register(&mut self, addr: C8Addr) {
         if self.get_breakpoint(addr).is_none() {
-            debug!("Registering breakpoint at address {:04X}", addr);
+            debug!("registering breakpoint at address {:04X}", addr);
             self.0.push(addr);
         }
     }
@@ -35,7 +35,7 @@ impl Breakpoints {
     ///
     pub fn unregister(&mut self, addr: C8Addr) {
         if let Some(idx) = self.get_breakpoint(addr) {
-            debug!("Unregistering breakpoint at address {:04X}", addr);
+            debug!("unregistering breakpoint at address {:04X}", addr);
             self.0.remove(idx);
         }
     }
@@ -63,9 +63,9 @@ impl Breakpoints {
 
 impl fmt::Debug for Breakpoints {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "Breakpoints:")?;
+        writeln!(f, "breakpoints:")?;
         if self.0.is_empty() {
-            writeln!(f, "  None")?;
+            writeln!(f, "  none")?;
         } else {
             for i in &self.0 {
                 writeln!(f, "  - {:04X}", i)?;

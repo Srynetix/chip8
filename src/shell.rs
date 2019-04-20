@@ -87,14 +87,14 @@ pub fn start_shell_using_args(args: &[&str]) {
 /// Parse arguments
 pub fn parse_args(matches: &ArgMatches<'_>) {
     let level = if matches.is_present("verbose") {
-        debug!("D> Using verbose mode.");
+        debug!("using verbose mode");
         log::LevelFilter::Debug
     } else {
         log::LevelFilter::Info
     };
 
     init_logger(level)
-        .unwrap_or_else(|_| panic!("Failed to initialize logger with level: {:?}", level));
+        .unwrap_or_else(|_| panic!("failed to initialize logger with level: {:?}", level));
 
     if matches.is_present("gui") {
         if let Err(e) = start_window_gui() {
@@ -105,7 +105,7 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
         let cartridge_path = match matches.value_of("file") {
             Some(f) => f,
             None => {
-                eprintln!("error: missing file argument. show help with --help.");
+                eprintln!("error: missing file argument. show help with --help");
                 process::exit(1);
             }
         };

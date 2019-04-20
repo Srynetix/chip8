@@ -138,18 +138,18 @@ pub fn start_window_cli(
                         Keycode::F5 => {
                             // Reset
                             emulator.reset(cartridge, emulator_ctx);
-                            println!("Reset.");
+                            println!("reset");
                         }
                         Keycode::F6 => {
                             // Save state
                             emulator.save_state(cartridge.get_title());
-                            println!("State saved.");
+                            println!("state saved");
                         }
                         Keycode::F7 => {
                             // Load state
                             match emulator.load_state(cartridge.get_title()) {
-                                Ok(()) => println!("State loaded."),
-                                Err(e) => eprintln!("Error: {}", e),
+                                Ok(()) => println!("state loaded"),
+                                Err(e) => eprintln!("error: {}", e),
                             }
                         }
                         _ => {}

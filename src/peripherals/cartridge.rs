@@ -41,13 +41,13 @@ pub struct MissingCartridgeError(String);
 
 impl Error for MissingCartridgeError {
     fn description(&self) -> &str {
-        "Missing cartridge"
+        "missing cartridge"
     }
 }
 
 impl fmt::Display for MissingCartridgeError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Game cartridge is not found: {}", self.0)
+        write!(f, "game cartridge is not found: {}", self.0)
     }
 }
 
@@ -77,7 +77,7 @@ impl Cartridge {
 
         for ext in &AVAILABLE_EXTENSIONS {
             game_path.set_extension(ext);
-            debug!("Searching for game {:?}...", game_path);
+            debug!("searching for game {:?}...", game_path);
 
             if game_path.exists() {
                 return Ok(String::from(game_path.to_str().unwrap()));
@@ -243,10 +243,10 @@ impl Cartridge {
     ///
     pub fn write_disassembly_to_file(&self, output_file: &str) {
         if output_file == "-" {
-            println!("> Disassembly:");
+            println!("disassembly:");
             self.write_disassembly_to_stream(&mut io::stdout());
         } else {
-            println!("> Disassembly dumped to file {}.", output_file);
+            println!("disassembly dumped to file {}", output_file);
             let mut file_handle = OpenOptions::new()
                 .create(true)
                 .write(true)
@@ -297,11 +297,11 @@ mod tests {
 
         assert_eq!(
             disasm_lines[0],
-            "0200| (00E0)  CLS                  ; Clearing screen"
+            "0200| (00E0)  CLS                  ; clearing screen"
         );
         assert_eq!(
             disasm_lines[1],
-            "0202| (6300)  LD V3, 00            ; Set V3 = 00"
+            "0202| (6300)  LD V3, 00            ; set V3 = 00"
         );
     }
 

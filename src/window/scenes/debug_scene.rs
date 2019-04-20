@@ -249,7 +249,7 @@ impl Scene for DebugScene {
                 let filename = format!("{}.dump", self.cartridge.get_title());
                 self.cartridge.write_disassembly_to_file(&filename);
 
-                println!("Cartridge disassembled to {}.", filename);
+                println!("cartridge disassembled to {}.", filename);
             }
             _ => {}
         }

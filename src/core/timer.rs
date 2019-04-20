@@ -21,10 +21,6 @@ impl Timer {
     pub fn decrement(&mut self) -> &Self {
         if self.count > 0 {
             self.count -= 1;
-
-            if self.count == 0 {
-                debug!("- Timer `{}` finished.", self.title)
-            }
         }
 
         self

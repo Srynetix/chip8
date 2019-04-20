@@ -436,16 +436,16 @@ impl CPU {
 
             // S-CHIP
             OpCode::SCRD(_b) => {
-                println!("Executing SCRD");
+                println!("executing SCRD");
             }
             OpCode::SCRR => {
-                println!("Executing SCRR");
+                println!("executing SCRR");
             }
             OpCode::SCRL => {
-                println!("Executing SCRL");
+                println!("executing SCRL");
             }
             OpCode::EXIT => {
-                println!("Executing EXIT");
+                println!("executing EXIT");
             }
             OpCode::LOW => {
                 self.peripherals
@@ -458,16 +458,16 @@ impl CPU {
                     .reload_screen_for_mode(ScreenMode::Extended);
             }
             OpCode::DRWX(_reg1, _reg2) => {
-                println!("Executing DRWX");
+                println!("executing DRWX");
             }
             OpCode::LDXSprite(_reg) => {
-                println!("Executing LDXSprite");
+                println!("executing LDXSprite");
             }
             OpCode::LDXS(_reg) => {
-                println!("Executing LDXS");
+                println!("executing LDXS");
             }
             OpCode::LDXR(_reg) => {
-                println!("Executing LDXR");
+                println!("executing LDXR");
             }
 
             OpCode::EMPTY => {

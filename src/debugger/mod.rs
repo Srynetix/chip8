@@ -278,7 +278,7 @@ impl Debugger {
                 _ => cpu.show_debug(),
             },
             Command::ReadMemory(addr, count) => {
-                println!("Reading memory at {:04X} on {} byte(s).", addr, count);
+                println!("reading memory at {:04X} on {} byte(s)", addr, count);
                 println!(
                     "{:?}",
                     cpu.peripherals.memory.read_data_at_offset(addr, count)
@@ -292,11 +292,11 @@ impl Debugger {
             Command::Help => self.show_help(stream),
             Command::AddBreakpoint(addr) => {
                 ctx.register_breakpoint(addr);
-                println!("Breakpoint added to address 0x{:04X}", addr);
+                println!("breakpoint added to address 0x{:04X}", addr);
             }
             Command::RemoveBreakpoint(addr) => {
                 ctx.unregister_breakpoint(addr);
-                println!("Breakpoint removed from address 0x{:04X}", addr);
+                println!("breakpoint removed from address 0x{:04X}", addr);
             }
             Command::ListBreakpoints => ctx.breakpoints.dump_breakpoints(),
             Command::Quit => ctx.should_quit = true,
@@ -350,18 +350,18 @@ impl Debugger {
     }
 
     fn show_help(&self, stream: &mut DebuggerStream) {
-        stream.writeln_stdout("Available commands: ");
-        stream.writeln_stdout("  continue|c      - Continue");
-        stream.writeln_stdout("  dump|d          - Dump device");
-        stream.writeln_stdout("  where|w         - Show current line");
-        stream.writeln_stdout("  list|l          - Show current line with context");
-        stream.writeln_stdout("  longlist|ll     - Show complete source");
-        stream.writeln_stdout("  step|s          - Step");
-        stream.writeln_stdout("  add-bp|b        - Add breakpoint at address");
-        stream.writeln_stdout("  rem-bp|rb       - Remove breakpoint at address");
-        stream.writeln_stdout("  list-bp|lb      - List breakpoints");
-        stream.writeln_stdout("  read-mem|rmem   - Read memory at offset");
-        stream.writeln_stdout("  quit|q          - Quit program");
-        stream.writeln_stdout("  help|h          - Show this help");
+        stream.writeln_stdout("available commands: ");
+        stream.writeln_stdout("  continue|c      - continue");
+        stream.writeln_stdout("  dump|d          - dump device");
+        stream.writeln_stdout("  where|w         - show current line");
+        stream.writeln_stdout("  list|l          - show current line with context");
+        stream.writeln_stdout("  longlist|ll     - show complete source");
+        stream.writeln_stdout("  step|s          - step");
+        stream.writeln_stdout("  add-bp|b        - add breakpoint at address");
+        stream.writeln_stdout("  rem-bp|rb       - remove breakpoint at address");
+        stream.writeln_stdout("  list-bp|lb      - list breakpoints");
+        stream.writeln_stdout("  read-mem|rmem   - read memory at offset");
+        stream.writeln_stdout("  quit|q          - quit program");
+        stream.writeln_stdout("  help|h          - show this help");
     }
 }

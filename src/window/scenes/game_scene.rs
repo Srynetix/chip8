@@ -106,15 +106,15 @@ impl Scene for GameScene {
             Keycode::F5 => {
                 self.emulator
                     .reset(&self.cartridge, &mut self.emulator_context);
-                println!("Reset !");
+                println!("reset");
             }
             Keycode::F6 => {
                 self.emulator.save_state(&self.game_name);
-                println!("State saved !");
+                println!("state saved");
             }
             Keycode::F7 => match self.emulator.load_state(&self.game_name) {
-                Ok(()) => println!("State loaded !"),
-                Err(e) => eprintln!("Error: {}", e),
+                Ok(()) => println!("state loaded"),
+                Err(e) => eprintln!("error: {}", e),
             },
             _ => {}
         }
