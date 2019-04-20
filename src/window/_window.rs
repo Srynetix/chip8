@@ -120,7 +120,9 @@ pub fn start_window_cli(
                 Event::Quit { .. } => {
                     break 'running;
                 }
-                Event::KeyDown { keycode: Some(x), .. } => {
+                Event::KeyDown {
+                    keycode: Some(x), ..
+                } => {
                     match x {
                         Keycode::Escape => {
                             break 'running;
