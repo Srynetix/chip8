@@ -35,6 +35,13 @@ impl Timer {
     pub fn decrement(&mut self) -> &Self {
         if self.count > 0 {
             self.count -= 1;
+
+            // End
+            if self.count == 0 {
+                if self.title == "Sound" {
+                    println!("** BEEP **");
+                }
+            }
         }
 
         self
