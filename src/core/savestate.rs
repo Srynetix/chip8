@@ -36,6 +36,8 @@ impl fmt::Display for MissingSaveState {
 /// CHIP-8 save state
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SaveState {
+    /// Version
+    pub version: String,
     /// Input state
     pub input: InputState,
     /// Memory
@@ -63,6 +65,7 @@ impl SaveState {
     ///
     pub fn save_from_cpu(cpu: &CPU) -> SaveState {
         SaveState {
+            version: env!("CARGO_PKG_VERSION").to_owned(),
             input: cpu.peripherals.input.clone(),
             memory: cpu.peripherals.memory.clone(),
             registers: cpu.registers.clone(),
