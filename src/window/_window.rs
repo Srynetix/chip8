@@ -120,11 +120,30 @@ pub fn start_window_cli(
                 Event::Quit { .. } => {
                     break 'running;
                 }
-                Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => {
-                    break 'running;
+                Event::KeyDown { keycode: Some(x), .. } => {
+                    match x {
+                        Keycode::Escape => {
+                            break 'running;
+                        }
+                        Keycode::F5 => {
+                            // Reset
+                            emulator.reset(cartridge, emulator_ctx);
+                            println!("Reset.");
+                        }
+                        Keycode::F6 => {
+                            // Save state
+                            emulator.save_state(cartridge.get_title());
+                            println!("State saved.");
+                        }
+                        Keycode::F7 => {
+                            // Load state
+                            match emulator.load_state(cartridge.get_title()) {
+                                Ok(()) => println!("State loaded."),
+                                Err(e) => eprintln!("Error: {}", e),
+                            }
+                        }
+                        _ => {}
+                    }
                 }
                 _ => {}
             }
