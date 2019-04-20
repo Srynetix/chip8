@@ -1,19 +1,23 @@
-//! CHIP-8 core types
+//! Core types.
 
-/// `C8Byte`: CHIP-8 byte type
+/// CHIP-8 byte type.
 pub type C8Byte = u8;
 
-/// `C8Addr`: CHIP-8 address type
+/// CHIP-8 address type.
 pub type C8Addr = u16;
 
-/// `C8RegIdx`: CHIP-8 register index
+/// CHIP-8 register index.
 pub type C8RegIdx = u8;
 
-/// Convert hex addr
+/// Convert hexadecimal address.
 ///
 /// # Arguments
 ///
-/// * `s` - Input string
+/// * `s` - Input string.
+///
+/// # Returns
+///
+/// * Address option.
 ///
 pub fn convert_hex_addr(s: &str) -> Option<C8Addr> {
     if s.len() >= 2 && &s[2..] == "0x" {

@@ -1,4 +1,4 @@
-//! Explorer scene
+//! Explorer scene.
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -21,7 +21,7 @@ const STATUS_TEXT: &str = "\
                            ESCAPE - Quit\
                            ";
 
-/// Explorer scene
+/// Explorer scene.
 pub struct ExplorerScene {
     list_frame: ListFrame,
     status_frame: StatusFrame,
@@ -51,7 +51,7 @@ impl Default for ExplorerScene {
 }
 
 impl ExplorerScene {
-    /// Create new scene
+    /// Create new scene.
     pub fn new() -> Self {
         Default::default()
     }

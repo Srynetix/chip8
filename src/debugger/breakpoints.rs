@@ -1,24 +1,29 @@
-//! CHIP-8 breakpoints
+//! CHIP-8 breakpoints.
 
 use std::fmt;
 
 use crate::core::types::C8Addr;
 
-/// Breakpoints
+/// Breakpoints.
 #[derive(Default)]
 pub struct Breakpoints(pub Vec<C8Addr>);
 
 impl Breakpoints {
-    /// Init
+    /// Create breakpoints.
+    ///
+    /// # Returns
+    ///
+    /// * Breakpoints instance.
+    ///
     pub fn new() -> Self {
         Breakpoints(Vec::new())
     }
 
-    /// Register
+    /// Register breakpoint.
     ///
     /// # Arguments
     ///
-    /// * `addr` - Address
+    /// * `addr` - Address.
     ///
     pub fn register(&mut self, addr: C8Addr) {
         if self.get_breakpoint(addr).is_none() {
@@ -27,11 +32,11 @@ impl Breakpoints {
         }
     }
 
-    /// Unregister
+    /// Unregister breakpoint.
     ///
     /// # Arguments
     ///
-    /// * `addr` - Address
+    /// * `addr` - Address.
     ///
     pub fn unregister(&mut self, addr: C8Addr) {
         if let Some(idx) = self.get_breakpoint(addr) {
@@ -44,18 +49,32 @@ impl Breakpoints {
     ///
     /// # Arguments
     ///
-    /// * `addr` - Address
+    /// * `addr` - Address.
+    ///
+    /// # Returns
+    ///
+    /// * Breakpoint option.
     ///
     pub fn get_breakpoint(&self, addr: C8Addr) -> Option<usize> {
         self.0.iter().position(|&x| x == addr)
     }
 
     /// Check breakpoint at address.
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - Address.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if breakpoint exists.
+    /// * `false` if not.
+    ///
     pub fn check_breakpoint(&self, addr: C8Addr) -> bool {
         self.get_breakpoint(addr).is_some()
     }
 
-    /// Dump breakpoints in console
+    /// Dump breakpoints in console.
     pub fn dump_breakpoints(&self) {
         println!("{:?}", &self);
     }

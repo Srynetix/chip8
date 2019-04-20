@@ -1,4 +1,4 @@
-//! CHIP-8 emulator
+//! CHIP-8 emulator.
 
 use chip8;
 

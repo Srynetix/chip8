@@ -1,4 +1,4 @@
-//! Window module
+//! Window module.
 
 pub mod draw;
 pub mod font;
@@ -28,9 +28,14 @@ use self::scenes::explorer_scene::ExplorerScene;
 use self::scenes::game_scene::GameScene;
 use self::scenes::home_scene::HomeScene;
 
-/// Start window GUI
+/// Start window GUI.
+///
+/// # Returns
+///
+/// * Result.
+///
 pub fn start_window_gui() -> CResult {
-    // Initialize SDL
+    // Initialize SDL.
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
@@ -46,7 +51,7 @@ pub fn start_window_gui() -> CResult {
     let texture_creator = canvas.texture_creator();
     let mut font_handler = FontHandler::new(&ttf_context);
 
-    // Load a font
+    // Load a font.
     let mut assets_dir = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap()).to_path_buf();
     assets_dir.push("assets");
     assets_dir.push("fonts");
@@ -71,7 +76,7 @@ pub fn start_window_gui() -> CResult {
     let mut scene_ctx = SceneContext::new();
     let mut scene_manager = SceneManager::new();
 
-    // Load scenes
+    // Load scenes.
     let home_scene = Box::new(HomeScene::new());
     let debug_scene = Box::new(DebugScene::new());
     let explorer_scene = Box::new(ExplorerScene::new());
@@ -82,7 +87,7 @@ pub fn start_window_gui() -> CResult {
     scene_manager.register_scene("explorer", explorer_scene);
     scene_manager.register_scene("game", game_scene);
 
-    // Starting scene: home
+    // Starting scene: home.
     scene_ctx.set_current_scene("home");
 
     scene_manager.run_loop(&mut scene_ctx, &mut draw_context, &mut event_pump);
@@ -90,7 +95,20 @@ pub fn start_window_gui() -> CResult {
     Ok(())
 }
 
-/// Start window CLI
+/// Start window CLI.
+///
+/// # Arguments
+///
+/// * `debugger` - Debugger.
+/// * `debug_ctx` - Debugger context.
+/// * `emulator` - Emulator.
+/// * `emulator_ctx` - Emulator context.
+/// * `cartridge` - Cartridge.
+///
+/// # Returns
+///
+/// * Result.
+///
 pub fn start_window_cli(
     debugger: &mut Debugger,
     debug_ctx: &mut DebuggerContext,
@@ -98,7 +116,7 @@ pub fn start_window_cli(
     emulator_ctx: &mut EmulatorContext,
     cartridge: &Cartridge,
 ) -> CResult {
-    // Initialize SDL
+    // Initialize SDL.
     let sdl_context = sdl2::init()?;
     let video_subsys = sdl_context.video()?;
     let mut event_pump = sdl_context.event_pump()?;
@@ -115,14 +133,14 @@ pub fn start_window_cli(
     canvas.clear();
     canvas.present();
 
-    // Go !
+    // Go.
     debug_ctx.is_continuing = true;
 
-    // Create stream
+    // Create stream.
     let mut stream = DebuggerStream::new();
 
     'running: loop {
-        // Event handling
+        // Event handling.
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => {
@@ -136,17 +154,17 @@ pub fn start_window_cli(
                             break 'running;
                         }
                         Keycode::F5 => {
-                            // Reset
+                            // Reset.
                             emulator.reset(cartridge, emulator_ctx);
                             println!("reset");
                         }
                         Keycode::F6 => {
-                            // Save state
+                            // Save state.
                             emulator.save_state(cartridge.get_title());
                             println!("state saved");
                         }
                         Keycode::F7 => {
-                            // Load state
+                            // Load state.
                             match emulator.load_state(cartridge.get_title()) {
                                 Ok(()) => println!("state loaded"),
                                 Err(e) => eprintln!("error: {}", e),
@@ -159,17 +177,16 @@ pub fn start_window_cli(
             }
         }
 
-        // Render
+        // Render.
         canvas.clear();
         emulator.cpu.peripherals.screen.render(0, 0, &mut canvas)?;
         canvas.present();
 
-        // Update
+        // Update.
         let state = debugger.step(
             emulator,
             emulator_ctx,
             debug_ctx,
-            cartridge,
             &mut event_pump,
             &mut stream,
         );

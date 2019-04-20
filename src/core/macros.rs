@@ -1,12 +1,12 @@
-//! CHIP-8 macros
+//! Macros.
 
-/// Trace execution
+/// Trace execution.
 ///
 /// # Arguments
 ///
-/// - `tracefile` - Tracefile handle
-/// - `format` - String format
-/// - `args` - Optional format args
+/// - `tracefile` - Tracefile handle.
+/// - `format` - String format.
+/// - `args` - Optional format args.
 ///
 #[macro_export]
 macro_rules! trace_exec {
@@ -17,7 +17,19 @@ macro_rules! trace_exec {
     }
 }
 
-/// Rectf
+/// Create rect.
+///
+/// # Arguments
+///
+/// - `x` - X value.
+/// - `y` - Y value.
+/// - `w` - W value.
+/// - `h` - H value.
+///
+/// # Returns
+///
+/// * Rect.
+///
 #[macro_export]
 macro_rules! rectf(
     ($x:expr, $y:expr, $w:expr, $h:expr) => (

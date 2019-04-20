@@ -1,4 +1,4 @@
-//! CHIP-8 emulator
+//! CHIP-8 emulator.
 
 use std::fs::{File, OpenOptions};
 use std::io::Write;
@@ -14,27 +14,27 @@ use super::peripherals::cartridge::Cartridge;
 const TIMER_FRAME_LIMIT: i64 = 16;
 const CPU_FRAME_LIMIT: i64 = 2;
 
-/// CHIP-8 emulator
+/// CHIP-8 emulator.
 #[derive(Default)]
 pub struct Emulator {
-    /// CPU handle
+    /// CPU handle.
     pub cpu: CPU,
 }
 
-/// Emulation state
+/// Emulation state.
 #[derive(Debug)]
 pub enum EmulationState {
-    /// Quit
+    /// Quit.
     Quit,
-    /// Reset
+    /// Reset.
     Reset,
-    /// Normal
+    /// Normal.
     Normal,
-    /// Wait for input
+    /// Wait for input.
     WaitForInput,
 }
 
-/// Emulator context
+/// Emulator context.
 pub struct EmulatorContext {
     tracefile_handle: Option<File>,
     timer_frametime: PreciseTime,
@@ -54,14 +54,24 @@ impl Default for EmulatorContext {
 }
 
 impl EmulatorContext {
-    /// Create new emulator context
+    /// Create new emulator context.
+    ///
+    /// # Returns
+    ///
+    /// * Emulator context.
+    ///
     pub fn new() -> Self {
         Default::default()
     }
 }
 
 impl Emulator {
-    /// Create new CHIP-8 emulator
+    /// Create new CHIP-8 emulator.
+    ///
+    /// # Returns
+    ///
+    /// * Emulator instance.
+    ///
     pub fn new() -> Self {
         Emulator { cpu: CPU::new() }
     }
@@ -76,19 +86,38 @@ impl Emulator {
         self.cpu.tracefile(tracefile);
     }
 
-    /// Load game
+    /// Load game.
+    ///
+    /// # Arguments
+    ///
+    /// * `cartridge` - Cartridge.
+    ///
     pub fn load_game(&mut self, cartridge: &Cartridge) {
         self.cpu.load_font_in_memory();
         self.cpu.load_cartridge_data(cartridge);
     }
 
-    /// Save state
+    /// Save state.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Game name.
+    ///
     pub fn save_state(&self, name: &str) {
         let savestate = SaveState::save_from_cpu(&self.cpu);
         savestate.write_to_file(&format!("{}.sav", name));
     }
 
-    /// Load state
+    /// Load state.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Game name.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn load_state(&mut self, name: &str) -> CResult {
         let filename = format!("{}.sav", name);
         let savestate = SaveState::read_from_file(&filename);
@@ -101,42 +130,57 @@ impl Emulator {
         }
     }
 
-    /// Reset
+    /// Reset.
+    ///
+    /// # Arguments
+    ///
+    /// * `cartridge` - Cartridge.
+    /// * `ctx` - Emulator context.
+    ///
     pub fn reset(&mut self, cartridge: &Cartridge, ctx: &mut EmulatorContext) {
-        // Reset CPU
+        // Reset CPU.
         self.cpu.reset();
 
-        // Reload data
+        // Reload data.
         self.cpu.load_font_in_memory();
         self.cpu.load_cartridge_data(cartridge);
 
-        // Reset vars
+        // Reset vars.
         ctx.timer_frametime = time::PreciseTime::now();
         ctx.cpu_frametime = time::PreciseTime::now();
         ctx.frametime = time::PreciseTime::now();
     }
 
-    /// Step emulation
-    pub fn step(&mut self, _cartridge: &Cartridge, ctx: &mut EmulatorContext) -> EmulationState {
+    /// Step emulation.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Emulator context.
+    ///
+    /// # Returns
+    ///
+    /// * Emulation state.
+    ///
+    pub fn step(&mut self, ctx: &mut EmulatorContext) -> EmulationState {
         let cpu_framelimit = if self.cpu.schip_mode {
             CPU_FRAME_LIMIT / 2
         } else {
             CPU_FRAME_LIMIT
         };
 
-        // Handle input lock
+        // Handle input lock.
         if self.cpu.peripherals.input.is_locked() {
             if self.cpu.peripherals.input.is_lock_key_set() {
                 let reg = self.cpu.peripherals.input.get_lock_register();
                 let key = self.cpu.peripherals.input.get_lock_key();
 
-                // Set register
+                // Set register.
                 self.cpu.registers.set_register(reg, key);
 
-                // Unlock
+                // Unlock.
                 self.cpu.peripherals.input.unlock();
             } else {
-                // Wait for key
+                // Wait for key.
                 return EmulationState::WaitForInput;
             }
         }
@@ -147,7 +191,7 @@ impl Emulator {
             .num_milliseconds()
             >= cpu_framelimit
         {
-            // Read next instruction
+            // Read next instruction.
             let opcode = self.cpu.peripherals.memory.read_opcode();
             trace_exec!(
                 ctx.tracefile_handle,
@@ -157,12 +201,12 @@ impl Emulator {
                 opcode
             );
 
-            // Trace
+            // Trace.
             let opcode_enum = opcodes::get_opcode_enum(opcode);
             let (assembly, verbose) = opcodes::get_opcode_str(&opcode_enum);
             trace_exec!(ctx.tracefile_handle, "  - {:20} ; {}", assembly, verbose);
 
-            // Execute instruction
+            // Execute instruction.
             if self.cpu.execute_instruction(&opcode_enum) {
                 return EmulationState::Quit;
             }
@@ -178,7 +222,7 @@ impl Emulator {
             .num_milliseconds()
             >= TIMER_FRAME_LIMIT
         {
-            // Handle timers
+            // Handle timers.
             self.cpu.decrement_timers();
             ctx.timer_frametime = time::PreciseTime::now();
         }
@@ -188,14 +232,19 @@ impl Emulator {
         EmulationState::Normal
     }
 
-    /// Run loop
+    /// Run loop.
+    ///
+    /// # Arguments
+    ///
+    /// * cartridge - Cartridge.
+    ///
     pub fn run_loop(&mut self, cartridge: &Cartridge) {
         let mut ctx = EmulatorContext::new();
 
-        // Load game
+        // Load game.
         self.load_game(cartridge);
 
-        // Get tracefile
+        // Get tracefile.
         ctx.tracefile_handle = match self.cpu.tracefile {
             Some(ref path) => Some(
                 OpenOptions::new()
@@ -208,7 +257,7 @@ impl Emulator {
         };
 
         loop {
-            match self.step(cartridge, &mut ctx) {
+            match self.step(&mut ctx) {
                 EmulationState::Quit => break,
                 EmulationState::Reset => continue,
                 EmulationState::Normal => {}

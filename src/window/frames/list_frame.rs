@@ -1,4 +1,4 @@
-//! List frame
+//! List frame.
 
 use std::cmp;
 
@@ -11,21 +11,31 @@ use crate::window::frame::Frame;
 
 const LINES_MARGIN: usize = 3;
 
-/// List frame
+/// List frame.
 pub struct ListFrame {
     frame: Frame,
 }
 
-/// List frame data
+/// List frame data.
 pub struct ListFrameData<'a> {
-    /// Cursor
+    /// Cursor.
     pub cursor: i32,
-    /// Data
+    /// Data.
     pub data: &'a [String],
 }
 
 impl ListFrame {
-    /// Create new list frame
+    /// Create new list frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `rect` - Rect.
+    /// * `title` - Title.
+    ///
+    /// # Returns
+    ///
+    /// * List frame instance.
+    ///
     pub fn new(rect: Rect, title: &str) -> Self {
         Self {
             frame: Frame::new(rect, title),
@@ -56,7 +66,17 @@ impl ListFrame {
         )
     }
 
-    /// Render
+    /// Render.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Draw context.
+    /// * `data` - List frame data.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&self, ctx: &mut DrawContext, data: &ListFrameData) -> CResult {
         let font = ctx.font_handler.get_font("default", 8).unwrap();
         let char_height = font.height() + 4;

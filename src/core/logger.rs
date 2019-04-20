@@ -1,19 +1,24 @@
-//! CHIP-8 logger
+//! Logger.
+
 use std::io;
 
 use chrono;
 use fern;
 use log;
 
-/// Initialize logger
+/// Initialize logger.
 ///
 /// # Arguments
 ///
-/// - `level` - Log level
+/// * `level` - Log level.
+///
+/// # Returns
+///
+/// * Logger result.
 ///
 pub fn init_logger(level: log::LevelFilter) -> Result<(), log::SetLoggerError> {
     fern::Dispatch::new()
-        // Perform allocation-free log formatting
+        // Perform allocation-free log formatting.
         .format(|out, message, record| {
             out.finish(format_args!(
                 "{}[{}][{}] {}",
@@ -23,10 +28,10 @@ pub fn init_logger(level: log::LevelFilter) -> Result<(), log::SetLoggerError> {
                 message
             ))
         })
-        // Add blanket level filter -
+        // Add blanket level filter.
         .level(level)
-        // Output to stdout
+        // Output to stdout.
         .chain(io::stdout())
-        // Apply globally
+        // Apply globally.
         .apply()
 }

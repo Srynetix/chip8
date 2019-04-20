@@ -1,9 +1,9 @@
-//! Debugger errors
+//! Debugger errors.
 
 use std::error::Error;
 use std::fmt;
 
-/// Breakpoint error
+/// Breakpoint error.
 #[derive(Debug)]
 pub struct BadBreakpoint(pub String);
 

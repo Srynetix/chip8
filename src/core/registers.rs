@@ -1,13 +1,13 @@
-//! CHIP-8 CPU Registers
+//! CPU registers.
 
 use std::fmt;
 
 use super::types::{C8Addr, C8Byte, C8RegIdx};
 
-/// CHIP-8 register count
+/// Register count.
 pub const REGISTER_COUNT: usize = 16;
 
-/// CHIP-8 CPU Registers
+/// CPU registers.
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Registers {
     data: Vec<C8Byte>,
@@ -15,7 +15,7 @@ pub struct Registers {
 }
 
 impl Registers {
-    /// Create CPU Registers
+    /// Create CPU registers.
     pub fn new() -> Self {
         Registers {
             data: vec![0; REGISTER_COUNT],
@@ -23,11 +23,15 @@ impl Registers {
         }
     }
 
-    /// Get register value
+    /// Get register value.
     ///
     /// # Arguments
     ///
-    /// * `reg` - Register name
+    /// * `reg` - Register name.
+    ///
+    /// # Returns
+    ///
+    /// * Register value.
     ///
     pub fn get_register(&self, reg: C8RegIdx) -> C8Byte {
         let reg = reg as usize;
@@ -39,22 +43,32 @@ impl Registers {
         self.data[reg]
     }
 
-    /// Get I register
+    /// Get I register.
+    ///
+    /// # Returns
+    ///
+    /// * I register value.
+    ///
     pub fn get_i_register(&self) -> C8Addr {
         self.i
     }
 
-    /// Get registers
+    /// Get register values.
+    ///
+    /// # Returns
+    ///
+    /// * Register values.
+    ///
     pub fn get_registers(&self) -> &[C8Byte] {
         &self.data
     }
 
-    /// Set register value
+    /// Set register value.
     ///
     /// # Arguments
     ///
-    /// * `reg` - Register name
-    /// * `value` - Byte value
+    /// * `reg` - Register name.
+    /// * `value` - Byte value.
     ///
     pub fn set_register(&mut self, reg: C8RegIdx, value: C8Byte) {
         let reg = reg as usize;
@@ -66,37 +80,37 @@ impl Registers {
         self.data[reg] = value;
     }
 
-    /// Set carry register
+    /// Set carry register.
     ///
     /// # Arguments
     ///
-    /// * `value` - Byte value
+    /// * `value` - Byte value.
     ///
     pub fn set_carry_register(&mut self, value: C8Byte) {
         self.data[15] = value;
     }
 
-    /// Set I register
+    /// Set I register.
     ///
     /// # Arguments
     ///
-    /// * `value` - Address
+    /// * `value` - Address.
     ///
     pub fn set_i_register(&mut self, value: C8Addr) {
         self.i = value;
     }
 
-    /// Reset registers
+    /// Reset registers.
     pub fn reset(&mut self) {
         self.data = vec![0; REGISTER_COUNT];
         self.i = 0;
     }
 
-    /// Load from save
+    /// Load from save.
     ///
     /// # Arguments
     ///
-    /// * `registers` - Registers
+    /// * `registers` - Registers.
     ///
     pub fn load_from_save(&mut self, registers: Registers) {
         self.data = registers.data;

@@ -1,20 +1,29 @@
-//! Status frame
+//! Status frame.
 
 use crate::core::error::CResult;
 use crate::window::draw::{draw_text, DrawContext, Rect, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::window::frame::Frame;
 
-/// Status height
+/// Status height.
 pub const STATUS_HEIGHT: u32 = 64;
 
-/// Status frame
+/// Status frame.
 pub struct StatusFrame {
     frame: Frame,
     status: String,
 }
 
 impl StatusFrame {
-    /// Create new frame
+    /// Create new frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `rect` - Rect.
+    ///
+    /// # Returns
+    ///
+    /// * Status frame instance.
+    ///
     pub fn new(rect: Rect) -> Self {
         Self {
             frame: Frame::new(rect, "STATUS"),
@@ -22,7 +31,12 @@ impl StatusFrame {
         }
     }
 
-    /// Create new default frame
+    /// Create new default frame.
+    ///
+    /// # Returns
+    ///
+    /// * Default status frame instance.
+    ///
     pub fn new_default() -> Self {
         Self {
             frame: Frame::new(
@@ -38,12 +52,26 @@ impl StatusFrame {
         }
     }
 
-    /// Set status message
+    /// Set status message.
+    ///
+    /// # Arguments
+    ///
+    /// * `status` - Status text
+    ///
     pub fn set_status(&mut self, status: &str) {
         self.status = String::from(status);
     }
 
-    /// Render frame
+    /// Render frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Draw context.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&self, ctx: &mut DrawContext) -> CResult {
         let font = ctx.font_handler.get_or_create_font("default", 10).unwrap();
 

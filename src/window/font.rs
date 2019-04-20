@@ -1,4 +1,4 @@
-//! Window fonts
+//! Window fonts.
 
 use std::collections::HashMap;
 use std::error::Error;
@@ -9,7 +9,9 @@ use sdl2::ttf::Sdl2TtfContext;
 
 pub use sdl2::ttf::Font;
 
-/// Missing font error
+use crate::core::error::CResult;
+
+/// Missing font error.
 #[derive(Debug)]
 pub struct MissingFontError(String);
 
@@ -25,7 +27,7 @@ impl fmt::Display for MissingFontError {
     }
 }
 
-/// Font handler
+/// Font handler.
 pub struct FontHandler<'ttf, 'a> {
     ttf_context: &'ttf Sdl2TtfContext,
     font_paths: HashMap<String, PathBuf>,
@@ -33,7 +35,16 @@ pub struct FontHandler<'ttf, 'a> {
 }
 
 impl<'ttf, 'a> FontHandler<'ttf, 'a> {
-    /// Create font handler
+    /// Create font handler.
+    ///
+    /// # Arguments
+    ///
+    /// * `ttf_context` - TTF context.
+    ///
+    /// # Returns
+    ///
+    /// * Font handler instance.
+    ///
     pub fn new(ttf_context: &'ttf Sdl2TtfContext) -> Self {
         Self {
             ttf_context,
@@ -46,18 +57,30 @@ impl<'ttf, 'a> FontHandler<'ttf, 'a> {
         format!("{}:{}", name, font_size)
     }
 
-    /// Register font path    
+    /// Register font path.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path.
+    /// * `name` - Name.
+    ///
     pub fn register_font_path(&mut self, path: &Path, name: &str) {
         self.font_paths
             .insert(String::from(name), PathBuf::from(path));
     }
 
-    /// Create font
-    pub fn create_font(
-        &mut self,
-        name: &str,
-        font_size: u16,
-    ) -> Result<&Font<'ttf, 'a>, Box<dyn Error>> {
+    /// Create font.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name.
+    /// * `font_size` - Font size.
+    ///
+    /// # Returns
+    ///
+    /// * Font result.
+    ///
+    pub fn create_font(&mut self, name: &str, font_size: u16) -> CResult<&Font<'ttf, 'a>> {
         if !self.font_paths.contains_key(name) {
             Err(Box::new(MissingFontError(name.to_string())))
         } else {
@@ -70,18 +93,34 @@ impl<'ttf, 'a> FontHandler<'ttf, 'a> {
         }
     }
 
-    /// Get font
+    /// Get font.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name.
+    /// * `font_size` - Font size.
+    ///
+    /// # Returns
+    ///
+    /// * Font option.
+    ///
     pub fn get_font(&self, name: &str, font_size: u16) -> Option<&Font<'ttf, 'a>> {
         let font_name = self.create_font_name(name, font_size);
         self.font_data.get(&font_name)
     }
 
-    /// Get or create font
-    pub fn get_or_create_font(
-        &mut self,
-        name: &str,
-        font_size: u16,
-    ) -> Result<&Font<'ttf, 'a>, Box<dyn Error>> {
+    /// Get or create font.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Name.
+    /// * `font_size` - Font size.
+    ///
+    /// # Returns
+    ///
+    /// * Font result.
+    ///
+    pub fn get_or_create_font(&mut self, name: &str, font_size: u16) -> CResult<&Font<'ttf, 'a>> {
         if !self.font_paths.contains_key(name) {
             Err(Box::new(MissingFontError(name.to_string())))
         } else {

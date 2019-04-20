@@ -1,4 +1,4 @@
-//! Memory frame
+//! Memory frame.
 
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -9,25 +9,44 @@ use crate::peripherals::memory::CHUNK_SIZE;
 use crate::window::draw::{draw_text, DrawContext};
 use crate::window::frame::Frame;
 
-/// Memory frame
+/// Memory frame.
 pub struct MemoryFrame {
     frame: Frame,
 }
 
 impl MemoryFrame {
-    /// Create new frame
+    /// Create new frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `rect` - Rect.
+    ///
+    /// # Returns
+    ///
+    /// * Memory frame instance.
+    ///
     pub fn new(rect: Rect) -> Self {
         Self {
             frame: Frame::new(rect, "MMRY"),
         }
     }
 
-    /// Render
+    /// Render.
+    ///
+    /// # Arguments
+    ///
+    /// * `emulator` - Emulator.
+    /// * `ctx` - Draw context.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
         let font = ctx.font_handler.get_or_create_font("default", 6).unwrap();
         let mut output = String::new();
 
-        // Draw background
+        // Draw background.
         let old_color = ctx.canvas.draw_color();
         ctx.canvas.set_draw_color(Color::RGB(0, 0, 0));
         ctx.canvas.fill_rect(self.frame.rect)?;

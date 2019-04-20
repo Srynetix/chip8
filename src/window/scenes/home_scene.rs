@@ -1,4 +1,4 @@
-//! Home scene
+//! Home scene.
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -11,7 +11,7 @@ use crate::window::draw::{
 use crate::window::scene::Scene;
 use crate::window::scenemanager::SceneContext;
 
-/// Home scene
+/// Home scene.
 pub struct HomeScene {}
 
 impl Default for HomeScene {
@@ -21,7 +21,7 @@ impl Default for HomeScene {
 }
 
 impl HomeScene {
-    /// Create new scene
+    /// Create new scene.
     pub fn new() -> Self {
         Default::default()
     }
@@ -35,7 +35,7 @@ impl Scene for HomeScene {
         clear_screen(ctx.canvas);
 
         {
-            // Draw logo
+            // Draw logo.
             let font = ctx.font_handler.get_or_create_font("default", 64)?;
             let txt = "CHIP-8";
             let sz = font.size_of(txt).unwrap();
@@ -59,7 +59,7 @@ impl Scene for HomeScene {
         }
 
         {
-            // Draw subtext
+            // Draw subtext.
             let font = ctx.font_handler.get_or_create_font("default", 32)?;
             let txt = "emulator";
             let sz = font.size_of(txt).unwrap();
@@ -78,7 +78,7 @@ impl Scene for HomeScene {
         }
 
         {
-            // Draw instructions
+            // Draw instructions.
             let font = ctx.font_handler.get_or_create_font("default", 32)?;
             let txt1 = "F2 - LOAD GAME";
             let txt2 = "ESCAPE - QUIT";

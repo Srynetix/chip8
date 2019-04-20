@@ -1,4 +1,4 @@
-//! CHIP-8 input system
+//! Input system.
 //!
 //! Keys:
 //!     1 2 3 C
@@ -15,9 +15,9 @@ use sdl2::EventPump;
 
 use crate::core::types::{C8Byte, C8RegIdx};
 
-/// Input state count
+/// Input state count.
 pub const INPUT_STATE_COUNT: usize = 16;
-/// Input empty key
+/// Input empty key.
 pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
 
 lazy_static! {
@@ -47,36 +47,55 @@ lazy_static! {
     };
 }
 
-/// Input lock
+/// Input lock.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InputLock {
-    /// Active
-    pub active: bool,
-    /// Register
-    pub register: C8RegIdx,
-    /// Key
-    pub key: C8Byte,
+    active: bool,
+    register: C8RegIdx,
+    key: C8Byte,
 }
 
 impl InputLock {
-    /// Check if key is set
+    /// Check if key is set.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if a key is set.
+    /// * `false` if not.
+    ///
     pub fn is_key_set(&self) -> bool {
         self.key != INPUT_EMPTY_KEY
     }
 
-    /// Is locked
+    /// Check if locked.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if locked.
+    /// * `false` if not.
+    ///
     pub fn is_locked(&self) -> bool {
         self.active
     }
 
-    /// Reset
+    /// Reset.
     pub fn reset(&mut self) {
         self.active = false;
         self.register = INPUT_EMPTY_KEY;
         self.key = INPUT_EMPTY_KEY;
     }
 
-    /// Lock
+    /// Enable lock.
+    ///
+    /// # Arguments
+    ///
+    /// * `register` - Register.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if lock has been successfully enabled.
+    /// * `false` if lock was already enabled.
+    ///
     pub fn lock(&mut self, register: C8RegIdx) -> bool {
         if self.active {
             false
@@ -89,7 +108,13 @@ impl InputLock {
         }
     }
 
-    /// Unlock
+    /// Disable lock.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if lock has been successfully disabled.
+    /// * `false` if lock was already disabled.
+    ///
     pub fn unlock(&mut self) -> bool {
         if !self.active {
             false
@@ -102,22 +127,27 @@ impl InputLock {
         }
     }
 
-    /// Set key
+    /// Set key.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - Key.
+    ///
     pub fn set_key(&mut self, key: C8Byte) {
         self.key = key;
     }
 }
 
-/// Input
+/// Input state.
 #[derive(Clone, Serialize, Deserialize)]
 pub struct InputState {
-    /// Key data
+    /// Key data.
     data: Vec<C8Byte>,
-    /// Last pressed key
+    /// Last pressed key.
     last_pressed_key: C8Byte,
     /// Input is pressed?
     input_pressed: bool,
-    /// Lock
+    /// Lock.
     lock: InputLock,
 }
 
@@ -139,12 +169,22 @@ impl Default for InputState {
 }
 
 impl InputState {
-    /// Create new input state
+    /// Create new input state.
+    ///
+    /// # Returns
+    ///
+    /// * Input state instance.
+    ///
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Process input
+    /// Process input.
+    ///
+    /// # Arguments
+    ///
+    /// * `event_pump` - Event pump.
+    ///
     pub fn process_input(&mut self, event_pump: &mut EventPump) {
         // Keyboard state
         for key in 0..INPUT_STATE_COUNT {
@@ -159,17 +199,22 @@ impl InputState {
         }
     }
 
-    /// Wait for input
+    /// Wait for input.
+    ///
+    /// # Arguments
+    ///
+    /// * `register` - Register.
+    ///
     pub fn wait_for_input(&mut self, register: C8RegIdx) {
         self.lock.active = true;
         self.lock.register = register;
     }
 
-    /// Press input
+    /// Press input.
     ///
     /// # Arguments
     ///
-    /// * `key` - Input key
+    /// * `key` - Input key.
     ///
     pub fn press(&mut self, key: C8RegIdx) {
         if key as usize >= INPUT_STATE_COUNT {
@@ -186,32 +231,60 @@ impl InputState {
         }
     }
 
-    /// Unlock
+    /// Unlock.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if successfully unlocked.
+    /// * `false` if not.
+    ///
     pub fn unlock(&mut self) -> bool {
         self.lock.unlock()
     }
 
-    /// Is locked
+    /// Is locked.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if locked.
+    /// * `false` if not.
+    ///
     pub fn is_locked(&self) -> bool {
         self.lock.is_locked()
     }
 
-    /// Is lock key set
+    /// Is lock key set.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if lock key set.
+    /// * `false` if not.
+    ///
     pub fn is_lock_key_set(&self) -> bool {
         self.lock.is_key_set()
     }
 
-    /// Get lock key
+    /// Get lock key.
+    ///
+    /// # Returns
+    ///
+    /// * Lock key value.
+    ///
     pub fn get_lock_key(&self) -> C8Byte {
         self.lock.key
     }
 
-    /// Get lock register
+    /// Get lock register.
+    ///
+    /// # Returns
+    ///
+    /// * Lock register.
+    ///
     pub fn get_lock_register(&self) -> C8RegIdx {
         self.lock.register
     }
 
-    /// Release input
+    /// Release input.
     ///
     /// # Arguments
     ///
@@ -227,11 +300,15 @@ impl InputState {
         self.input_pressed = false;
     }
 
-    /// Get input
+    /// Get input.
     ///
     /// # Arguments
     ///
-    /// * `key` - Input key
+    /// * `key` - Input key.
+    ///
+    /// # Returns
+    ///
+    /// * Input value.
     ///
     pub fn get(&self, key: C8RegIdx) -> C8Byte {
         if key as usize >= INPUT_STATE_COUNT {
@@ -241,21 +318,31 @@ impl InputState {
         self.data[key as usize]
     }
 
-    /// Get input data
+    /// Get input data.
+    ///
+    /// # Returns
+    ///
+    /// * Input data.
+    ///
     pub fn get_data(&self) -> &[C8Byte] {
         &self.data
     }
 
-    /// Get last pressed key
+    /// Get last pressed key.
+    ///
+    /// # Returns
+    ///
+    /// * Last pressed key.
+    ///
     pub fn get_last_pressed_key(&self) -> C8Byte {
         self.last_pressed_key
     }
 
-    /// Load from save
+    /// Load from save.
     ///
     /// # Arguments
     ///
-    /// * `data` - Input state data
+    /// * `data` - Input state data.
     ///
     pub fn load_from_save(&mut self, data: InputState) {
         self.data = data.data;
@@ -264,7 +351,7 @@ impl InputState {
         self.lock = data.lock;
     }
 
-    /// Reset
+    /// Reset.
     pub fn reset(&mut self) {
         self.data = vec![0; INPUT_STATE_COUNT];
         self.last_pressed_key = INPUT_EMPTY_KEY;

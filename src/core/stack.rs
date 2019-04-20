@@ -1,13 +1,13 @@
-//! CHIP-8 CPU stack
+//! CPU stack.
 
 use std::fmt;
 
 use super::types::{C8Addr, C8Byte};
 
-/// CHIP-8 CPU stack depth
+/// CPU stack depth.
 const STACK_DEPTH: usize = 16;
 
-/// CHIP-8 CPU stack struct
+/// CPU stack struct.
 #[derive(Clone, Serialize, Deserialize, Default)]
 pub struct Stack {
     data: Vec<C8Addr>,
@@ -15,7 +15,12 @@ pub struct Stack {
 }
 
 impl Stack {
-    /// Create new stack
+    /// Create new stack.
+    ///
+    /// # Returns
+    ///
+    /// * Stack instance.
+    ///
     pub fn new() -> Self {
         Stack {
             data: vec![0; STACK_DEPTH],
@@ -23,11 +28,11 @@ impl Stack {
         }
     }
 
-    /// Store address in stack
+    /// Store address in stack.
     ///
     /// # Arguments
     ///
-    /// * `addr` - Address to store
+    /// * `addr` - Address to store.
     ///
     pub fn push(&mut self, addr: C8Addr) {
         if self.pointer as usize >= STACK_DEPTH {
@@ -38,17 +43,32 @@ impl Stack {
         self.pointer += 1
     }
 
-    /// Get data
+    /// Get data.
+    ///
+    /// # Returns
+    ///
+    /// * Data.
+    ///
     pub fn get_data(&self) -> &[C8Addr] {
         &self.data
     }
 
-    /// Get pointer
+    /// Get pointer.
+    ///
+    /// # Returns
+    ///
+    /// * Pointer.
+    ///
     pub fn get_pointer(&self) -> C8Byte {
         self.pointer
     }
 
-    /// Pop address from stack
+    /// Pop address from stack.
+    ///
+    /// # Returns
+    ///
+    /// * Last stack address.
+    ///
     pub fn pop(&mut self) -> C8Addr {
         if self.pointer == 0 {
             panic!("CPU stack is empty !");
@@ -58,22 +78,28 @@ impl Stack {
         self.data[self.pointer as usize]
     }
 
-    /// Check if empty
+    /// Check if empty.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if empty.
+    /// * `false` if not.
+    ///
     pub fn empty(&self) -> bool {
         self.pointer == 0
     }
 
-    /// Reset stack
+    /// Reset stack.
     pub fn reset(&mut self) {
         self.data = vec![0; STACK_DEPTH];
         self.pointer = 0;
     }
 
-    /// Load from save
+    /// Load from save.
     ///
     /// # Arguments
     ///
-    /// * `stack` - Stack
+    /// * `stack` - Stack.
     ///
     pub fn load_from_save(&mut self, stack: Stack) {
         self.data = stack.data;

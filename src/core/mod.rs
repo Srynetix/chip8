@@ -1,4 +1,4 @@
-//! Core module
+//! Core module.
 
 pub mod cpu;
 pub mod error;

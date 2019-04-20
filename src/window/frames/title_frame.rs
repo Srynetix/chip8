@@ -1,22 +1,32 @@
-//! Title frame
+//! Title frame.
 
 use crate::core::error::CResult;
 use crate::window::draw::{draw_text, DrawContext, Rect, WINDOW_WIDTH};
 use crate::window::frame::Frame;
 
-/// Title height
+/// Title height.
 pub const TITLE_HEIGHT: u32 = 64;
 
 const PADDING: u32 = 24;
 
-/// Title frame
+/// Title frame.
 pub struct TitleFrame {
     frame: Frame,
     title: String,
 }
 
 impl TitleFrame {
-    /// Create new frame
+    /// Create new frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `rect` - Rect.
+    /// * `title` - Title.
+    ///
+    /// # Returns
+    ///
+    /// * Title frame instance.
+    ///
     pub fn new(rect: Rect, title: &str) -> Self {
         Self {
             frame: Frame::new(rect, "TITLE"),
@@ -24,7 +34,16 @@ impl TitleFrame {
         }
     }
 
-    /// Create new default frame
+    /// Create new default frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `title` - Title.
+    ///
+    /// # Returns
+    ///
+    /// * Default title frame instance.
+    ///
     pub fn new_default(title: &str) -> Self {
         Self {
             frame: Frame::new(rectf!(0, 0, WINDOW_WIDTH, TITLE_HEIGHT), "TITLE"),
@@ -32,12 +51,26 @@ impl TitleFrame {
         }
     }
 
-    /// Set title
+    /// Set title.
+    ///
+    /// # Arguments
+    ///
+    /// * `title` - Title.
+    ///
     pub fn set_title(&mut self, title: &str) {
         self.title = String::from(title);
     }
 
-    /// Render frame
+    /// Render frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Draw context
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&self, ctx: &mut DrawContext) -> CResult {
         let font = ctx.font_handler.get_or_create_font("default", 24).unwrap();
         let font_height = font.height();

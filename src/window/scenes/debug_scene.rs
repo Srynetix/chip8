@@ -1,4 +1,4 @@
-//! Debug scene
+//! Debug scene.
 
 use std::path::Path;
 
@@ -31,17 +31,17 @@ const STATUS_TEXT: &str = "\
                            ESCAPE - Quit\
                            ";
 
-/// Debug focus
+/// Debug focus.
 pub enum DebugFocus {
-    /// Main focus
+    /// Main focus.
     Main,
-    /// Shell focus
+    /// Shell focus.
     Shell,
-    /// Memory focus
+    /// Memory focus.
     Memory,
 }
 
-/// Debug scene
+/// Debug scene.
 pub struct DebugScene {
     game_name: String,
     cartridge: Cartridge,
@@ -100,7 +100,7 @@ impl Default for DebugScene {
 }
 
 impl DebugScene {
-    /// Create new scene
+    /// Create new scene.
     pub fn new() -> Self {
         Default::default()
     }
@@ -203,7 +203,7 @@ impl Scene for DebugScene {
                 };
             }
             Keycode::F4 => {
-                // Step
+                // Step.
                 self.debugger.handle_command(
                     &self.emulator.cpu,
                     &mut self.debugger_context,
@@ -212,7 +212,7 @@ impl Scene for DebugScene {
                 );
             }
             Keycode::F5 => {
-                // Continue
+                // Continue.
                 self.debugger.handle_command(
                     &self.emulator.cpu,
                     &mut self.debugger_context,
@@ -221,7 +221,7 @@ impl Scene for DebugScene {
                 );
             }
             Keycode::F6 => {
-                // Pause
+                // Pause.
                 self.debugger_context.is_continuing = false;
             }
             Keycode::Backspace => {
@@ -261,7 +261,6 @@ impl Scene for DebugScene {
             &mut self.emulator,
             &mut self.emulator_context,
             &mut self.debugger_context,
-            &self.cartridge,
             pump,
             &mut self.debugger_stream,
         );

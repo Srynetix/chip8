@@ -1,4 +1,4 @@
-//! Scenes
+//! Scenes.
 
 pub mod debug_scene;
 pub mod explorer_scene;

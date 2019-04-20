@@ -1,4 +1,4 @@
-//! Keyboard frame
+//! Keyboard frame.
 
 use std::collections::HashMap;
 
@@ -13,9 +13,9 @@ use crate::window::frame::Frame;
 const KEY_SIZE: u32 = 32;
 const KEY_MARGIN: u32 = 8;
 
-/// Keyboard width
+/// Keyboard width.
 pub const KEYBOARD_WIDTH: u32 = (KEY_SIZE + KEY_MARGIN * 2) * 4;
-/// Keyboard height
+/// Keyboard height.
 pub const KEYBOARD_HEIGHT: u32 = (KEY_SIZE + KEY_MARGIN * 2) * 5;
 
 lazy_static! {
@@ -43,13 +43,23 @@ lazy_static! {
     };
 }
 
-/// Keyboard frame
+/// Keyboard frame.
 pub struct KeyboardFrame {
     frame: Frame,
 }
 
 impl KeyboardFrame {
-    /// Create new frame
+    /// Create new frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - X coordinate.
+    /// * `y` - Y coordinate.
+    ///
+    /// # Returns
+    ///
+    /// * Keyboard frame instance.
+    ///
     pub fn new(x: u32, y: u32) -> Self {
         Self {
             frame: Frame::new(rectf!(x, y, KEYBOARD_WIDTH, KEYBOARD_HEIGHT), "KEYBOARD"),
@@ -141,15 +151,25 @@ impl KeyboardFrame {
         Ok(())
     }
 
-    /// Render
+    /// Render.
+    ///
+    /// # Arguments.
+    ///
+    /// * `emulator` - Emulator.
+    /// * `ctx` - Draw context.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&mut self, emulator: &Emulator, ctx: &mut DrawContext) -> CResult {
-        // Render keyboard
+        // Render keyboard.
         self.render_keyboard(emulator, ctx)?;
 
-        // Render wait indicator
+        // Render wait indicator.
         self.render_wait_indicator(emulator, ctx)?;
 
-        // Render !
+        // Render.
         self.frame.render(ctx)
     }
 }

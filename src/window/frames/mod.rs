@@ -1,4 +1,4 @@
-//! Frames
+//! Frames.
 
 pub mod code_frame;
 pub mod debug_info_frame;

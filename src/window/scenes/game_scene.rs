@@ -1,4 +1,4 @@
-//! Game scene
+//! Game scene.
 
 use std::path::Path;
 
@@ -17,7 +17,7 @@ use crate::window::frames::title_frame::TitleFrame;
 use crate::window::scene::Scene;
 use crate::window::scenemanager::SceneContext;
 
-/// Game scene
+/// Game scene.
 pub struct GameScene {
     game_name: String,
     cartridge: Cartridge,
@@ -52,7 +52,7 @@ impl Default for GameScene {
 }
 
 impl GameScene {
-    /// Create new scene
+    /// Create new scene.
     pub fn new() -> Self {
         Default::default()
     }
@@ -90,12 +90,11 @@ impl Scene for GameScene {
     }
 
     fn update(&mut self, _ctx: &mut SceneContext, pump: &mut EventPump) {
-        // Process input
+        // Process input.
         self.emulator.cpu.peripherals.input.process_input(pump);
 
-        // Step emulation
-        self.emulator
-            .step(&self.cartridge, &mut self.emulator_context);
+        // Step emulation.
+        self.emulator.step(&mut self.emulator_context);
     }
 
     fn keydown(&mut self, ctx: &mut SceneContext, kc: Keycode) {

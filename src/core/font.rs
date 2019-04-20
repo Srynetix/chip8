@@ -1,17 +1,18 @@
-//! CHIP-8 system font
+//! System font.
 
 use super::types::{C8Addr, C8Byte};
 
-/// CHIP-8 system font struct
+/// System font struct.
 pub struct Font(Vec<C8Byte>);
 
-/// Font data address in memory
+/// Font data address in memory.
 pub const FONT_DATA_ADDR: C8Addr = 0;
-/// Font char width
+/// Font char width.
 pub const FONT_CHAR_WIDTH: usize = 8;
-/// Font char height
+/// Font char height.
 pub const FONT_CHAR_HEIGHT: usize = 5;
 
+/// System font data.
 static SYSTEM_FONT_DATA: &'static [C8Byte] = &[
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -32,12 +33,22 @@ static SYSTEM_FONT_DATA: &'static [C8Byte] = &[
 ];
 
 impl Font {
-    /// Create new system font
+    /// Create new system font.
+    ///
+    /// # Returns
+    ///
+    /// * Font instance.
+    ///
     pub fn new_system_font() -> Self {
         Font(SYSTEM_FONT_DATA.to_vec())
     }
 
-    /// Get font data
+    /// Get font data.
+    ///
+    /// # Returns
+    ///
+    /// * Font data.
+    ///
     pub fn get_data(&self) -> &[C8Byte] {
         &self.0
     }

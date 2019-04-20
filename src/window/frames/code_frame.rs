@@ -1,4 +1,4 @@
-//! Code frame
+//! Code frame.
 
 use std::cmp;
 
@@ -13,14 +13,19 @@ use crate::window::draw::{draw_text, draw_text_ex, DrawContext};
 use crate::window::font::Font;
 use crate::window::frame::Frame;
 
-/// Code frame
+/// Code frame.
 pub struct CodeFrame {
     frame: Frame,
     buffer: Vec<String>,
 }
 
 impl CodeFrame {
-    /// Create new frame
+    /// Create new frame.
+    ///
+    /// # Returns
+    ///
+    /// * Code frame instance.
+    ///
     pub fn new(rect: Rect) -> Self {
         Self {
             frame: Frame::new(rect, "ASSEMBLY"),
@@ -28,12 +33,21 @@ impl CodeFrame {
         }
     }
 
-    /// Reset
+    /// Reset.
     pub fn reset(&mut self) {
         self.buffer = vec![];
     }
 
-    /// Get max lines
+    /// Get max lines.
+    ///
+    /// # Arguments
+    ///
+    /// * `font` - Font.
+    ///
+    /// # Returns
+    ///
+    /// * Max lines.
+    ///s
     pub fn get_max_lines(&self, font: &Font) -> usize {
         let char_height = (font.height() + 4) as usize;
         let rect_height = self.frame.rect.height() as usize;
@@ -41,12 +55,27 @@ impl CodeFrame {
         (rect_height / char_height)
     }
 
-    /// Add text
+    /// Add text.
+    ///
+    /// # Arguments
+    ///
+    /// * `text` - Text.
+    ///
     pub fn add_text(&mut self, text: &str) {
         self.buffer.push(String::from(text))
     }
 
-    /// Render frame
+    /// Render frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `debug_ctx` - Debug context.
+    /// * `ctx` - Draw context.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&self, debug_ctx: &DebuggerContext, ctx: &mut DrawContext) -> CResult {
         let font = ctx.font_handler.get_font("default", 8).unwrap();
         let mut cursor_y = self.frame.rect.y() + 4;
@@ -93,7 +122,7 @@ impl CodeFrame {
                 )?;
             }
 
-            // Breakpoint
+            // Breakpoint.
             if self.has_breakpoint_at_cursor(count as i32, debug_ctx) {
                 draw_text(
                     ctx.canvas,

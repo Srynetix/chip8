@@ -1,4 +1,4 @@
-//! CHIP-8 CPU
+//! CPU.
 
 use std::fmt;
 
@@ -16,38 +16,45 @@ use super::stack::Stack;
 use super::timer::Timer;
 use super::types::{C8Addr, C8Byte};
 
-/// CHIP-8 CPU struct
+/// CHIP-8 CPU.
 pub struct CPU {
-    /// Peripherals
+    /// Peripherals.
     pub peripherals: Peripherals,
 
-    /// Registers
+    /// Registers.
     pub registers: Registers,
-    /// Stack
+    /// Stack.
     pub stack: Stack,
 
-    /// Syncronization timer
+    /// Syncronization timer.
     pub delay_timer: Timer,
-    /// Sound timer
+    /// Sound timer.
     pub sound_timer: Timer,
 
-    /// Font
+    /// Default font.
     pub font: Font,
-    /// Instruction count
+    /// Instruction count.
     pub instruction_count: usize,
 
-    /// Tracefile
+    /// Tracefile.
     pub tracefile: Option<String>,
 
-    /// Save state
+    /// Save state.
     pub savestate: Option<SaveState>,
 
-    /// SCHIP mode
+    /// SCHIP mode.
     pub schip_mode: bool,
 }
 
 impl CPU {
-    /// Create CHIP-8 CPU
+    /// Create CHIP-8 CPU.
+    ///
+    /// Initialize with default parameters.
+    ///
+    /// # Returns
+    ///
+    /// * CPU instance.
+    ///
     pub fn new() -> Self {
         CPU {
             peripherals: Peripherals::new(),
@@ -67,33 +74,33 @@ impl CPU {
         }
     }
 
-    /// Set tracefile
+    /// Set tracefile.
+    ///
+    /// Enable tracefile during game execution.
     ///
     /// # Arguments
     ///
-    /// * `tracefile` - Tracefile output
+    /// * `tracefile` - Tracefile output.
     ///
     pub fn tracefile(&mut self, tracefile: &str) {
         self.tracefile = Some(tracefile.to_string());
     }
 
-    /// Show debug data
-    pub fn show_debug(&self) {
-        println!("{:?}", self);
-    }
-
-    /// Load font in memory
+    /// Load font in memory.
+    ///
+    /// Load default font in memory.
+    ///
     pub fn load_font_in_memory(&mut self) {
         self.peripherals
             .memory
             .write_data_at_offset(FONT_DATA_ADDR, self.font.get_data());
     }
 
-    /// Load savestate
+    /// Load savestate.
     ///
     /// # Arguments
     ///
-    /// * `state` - Save state
+    /// * `state` - Save state.
     ///
     pub fn load_savestate(&mut self, state: SaveState) {
         self.instruction_count = state.instruction_count;
@@ -106,11 +113,11 @@ impl CPU {
         self.sound_timer.load_from_save(state.sound_timer);
     }
 
-    /// Read cartridge data
+    /// Load cartridge data.
     ///
     /// # Arguments
     ///
-    /// * `cartridge` - Cartridge
+    /// * `cartridge` - Cartridge.
     ///
     pub fn load_cartridge_data(&mut self, cartridge: &Cartridge) {
         self.peripherals.memory.reset_pointer();
@@ -119,47 +126,49 @@ impl CPU {
             .write_data_at_pointer(cartridge.get_data());
     }
 
-    /// Decrement timers
+    /// Decrement timers.
     pub fn decrement_timers(&mut self) {
         self.delay_timer.decrement();
         self.sound_timer.decrement();
     }
 
-    /// Reset CPU
+    /// Reset CPU.
     pub fn reset(&mut self) {
-        // Reset peripherals
-        self.peripherals.memory.reset();
-        self.peripherals.input.reset();
-        self.peripherals.screen.reset();
+        // Reset peripherals.
+        self.peripherals.reset();
 
-        // Reset components
+        // Reset components.
         self.registers.reset();
         self.stack.reset();
         self.delay_timer.reset(0);
         self.sound_timer.reset(0);
     }
 
-    /// Execute instruction
+    /// Execute instruction.
     ///
     /// # Arguments
     ///
-    /// * `opcode` - Execute instruction
+    /// * `opcode` - Instruction to execute.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if CPU should exit.
+    /// * `false` if not.
     ///
     pub fn execute_instruction(&mut self, opcode: &OpCode) -> bool {
         let mut advance_pointer = true;
 
         match *opcode {
             OpCode::SYS(_addr) => {
-                // Do nothing
+                // Do nothing.
             }
             OpCode::CLS => {
-                // Clear screen
+                // Clear screen.
                 self.peripherals.screen.clear_screen();
             }
             OpCode::RET => {
-                // Get last stored address
+                // Get last stored address.
                 if self.stack.empty() {
-                    println!("END !");
                     return true;
                 }
 
@@ -167,18 +176,18 @@ impl CPU {
                 self.peripherals.memory.set_pointer(addr);
             }
             OpCode::JP(addr) => {
-                // Set pointer to address
+                // Set pointer to address.
                 self.peripherals.memory.set_pointer(addr);
                 advance_pointer = false;
             }
             OpCode::CALL(addr) => {
-                // Store current address and set pointer
+                // Store current address and set pointer.
                 self.stack.push(self.peripherals.memory.get_pointer());
                 self.peripherals.memory.set_pointer(addr);
                 advance_pointer = false;
             }
             OpCode::SEByte(reg, byte) => {
-                // Compare register with byte and then advance pointer
+                // Compare register with byte and then advance pointer.
                 let r = self.registers.get_register(reg);
 
                 if r == byte {
@@ -186,7 +195,7 @@ impl CPU {
                 }
             }
             OpCode::SNEByte(reg, byte) => {
-                // Compare register with byte and then advance pointer
+                // Compare register with byte and then advance pointer.
                 let r = self.registers.get_register(reg);
 
                 if r != byte {
@@ -194,7 +203,7 @@ impl CPU {
                 }
             }
             OpCode::SE(reg1, reg2) => {
-                // Compare register values
+                // Compare register values.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
 
@@ -203,45 +212,45 @@ impl CPU {
                 }
             }
             OpCode::LDByte(reg, byte) => {
-                // Puts byte in register
+                // Puts byte in register.
                 self.registers.set_register(reg, byte);
             }
             OpCode::ADDByte(reg, byte) => {
-                // Add byte in register
+                // Add byte in register.
                 let r = self.registers.get_register(reg);
                 let res = r.wrapping_add(byte);
 
                 self.registers.set_register(reg, res);
             }
             OpCode::LD(reg1, reg2) => {
-                // Load register value in another
+                // Load register value in another.
                 let r = self.registers.get_register(reg2);
 
                 self.registers.set_register(reg1, r);
             }
             OpCode::OR(reg1, reg2) => {
-                // OR between two registers
+                // OR between two registers.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
 
                 self.registers.set_register(reg1, r1 | r2);
             }
             OpCode::AND(reg1, reg2) => {
-                // AND between two registers
+                // AND between two registers.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
 
                 self.registers.set_register(reg1, r1 & r2)
             }
             OpCode::XOR(reg1, reg2) => {
-                // XOR between two registers
+                // XOR between two registers.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
 
                 self.registers.set_register(reg1, r1 ^ r2);
             }
             OpCode::ADD(reg1, reg2) => {
-                // ADD between two registers
+                // ADD between two registers.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
                 let (res, overflow) = r1.overflowing_add(r2);
@@ -255,7 +264,7 @@ impl CPU {
                 self.registers.set_register(reg1, res);
             }
             OpCode::SUB(reg1, reg2) => {
-                // SUB between two registers
+                // SUB between two registers.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
                 let res = r1.wrapping_sub(r2);
@@ -269,7 +278,7 @@ impl CPU {
                 self.registers.set_register(reg1, res);
             }
             OpCode::SHR(reg, _) => {
-                // Shift right registry
+                // Shift right registry.
                 let r = self.registers.get_register(reg);
 
                 if r & 1 == 1 {
@@ -281,7 +290,7 @@ impl CPU {
                 self.registers.set_register(reg, r >> 1);
             }
             OpCode::SUBN(reg1, reg2) => {
-                // SUBN between two registers
+                // SUBN between two registers.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
                 let res = r2.wrapping_sub(r1);
@@ -295,7 +304,7 @@ impl CPU {
                 self.registers.set_register(reg1, res);
             }
             OpCode::SHL(reg, _) => {
-                // Shift left registry
+                // Shift left registry.
                 let r = self.registers.get_register(reg);
                 let msb = 1 << 7;
 
@@ -308,7 +317,7 @@ impl CPU {
                 self.registers.set_register(reg, r << 1);
             }
             OpCode::SNE(reg1, reg2) => {
-                // Skip if registers are not equal
+                // Skip if registers are not equal.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
 
@@ -317,11 +326,11 @@ impl CPU {
                 }
             }
             OpCode::LDI(addr) => {
-                // Set I to addr
+                // Set I to addr.
                 self.registers.set_i_register(addr);
             }
             OpCode::JP0(addr) => {
-                // Set pointer to address + V0
+                // Set pointer to address + V0.
                 let v0 = self.registers.get_register(0);
                 self.peripherals
                     .memory
@@ -329,12 +338,12 @@ impl CPU {
                 advance_pointer = false;
             }
             OpCode::RND(reg, byte) => {
-                // Set random value AND byte in register
+                // Set random value AND byte in register.
                 let rand_value = random::<C8Byte>() & byte;
                 self.registers.set_register(reg, rand_value);
             }
             OpCode::DRW(reg1, reg2, byte) => {
-                // Draw sprite
+                // Draw sprite.
                 let r1 = self.registers.get_register(reg1);
                 let r2 = self.registers.get_register(reg2);
                 let ri = self.registers.get_i_register();
@@ -347,7 +356,7 @@ impl CPU {
                 self.registers.set_carry_register(collision as C8Byte);
             }
             OpCode::SKP(reg) => {
-                // Skip next instruction if key is pressed
+                // Skip next instruction if key is pressed.
                 let r = self.registers.get_register(reg);
                 let is = self.peripherals.input.get(r);
 
@@ -356,7 +365,7 @@ impl CPU {
                 }
             }
             OpCode::SKNP(reg) => {
-                // Skip next instruction if key is not pressed
+                // Skip next instruction if key is not pressed.
                 let r = self.registers.get_register(reg);
                 let is = self.peripherals.input.get(r);
 
@@ -365,40 +374,41 @@ impl CPU {
                 }
             }
             OpCode::LDGetDelayTimer(reg) => {
-                // Get delay timer and set register
+                // Get delay timer and set register.
                 let dt = self.delay_timer.get_value();
 
                 self.registers.set_register(reg, dt);
             }
             OpCode::LDGetKey(reg) => {
+                // Wait for input.
                 self.peripherals.input.wait_for_input(reg);
             }
             OpCode::LDSetDelayTimer(reg) => {
-                // Set delay timer value from registry
+                // Set delay timer value from registry.
                 let r = self.registers.get_register(reg);
                 self.delay_timer.reset(r);
             }
             OpCode::LDSetSoundTimer(reg) => {
-                // Set sound timer value from registry
+                // Set sound timer value from registry.
                 let r = self.registers.get_register(reg);
                 self.sound_timer.reset(r);
             }
             OpCode::ADDI(reg) => {
-                // Add register value to I
+                // Add register value to I.
                 let i = self.registers.get_i_register();
                 let r = self.registers.get_register(reg);
 
                 self.registers.set_i_register(i + C8Addr::from(r));
             }
             OpCode::LDSprite(reg) => {
-                // Set I = location of sprite for reg
+                // Set I = location of sprite for reg.
                 let r = C8Addr::from(self.registers.get_register(reg));
                 let sprite_addr = FONT_DATA_ADDR + (FONT_CHAR_HEIGHT as C8Addr * r);
 
                 self.registers.set_i_register(sprite_addr);
             }
             OpCode::LDBCD(reg) => {
-                // Store BCD repr of reg in I, I+1, I+2
+                // Store BCD repr of reg in I, I+1, I+2.
                 let r = self.registers.get_register(reg);
                 let i = self.registers.get_i_register();
 
@@ -411,7 +421,7 @@ impl CPU {
                     .write_data_at_offset(i, &[n3, n2, n1]);
             }
             OpCode::LDS(reg) => {
-                // Store registers V0 through reg in memory starting at I
+                // Store registers V0 through reg in memory starting at I.
                 let ri = self.registers.get_i_register();
 
                 for ridx in 0..=reg {
@@ -422,7 +432,7 @@ impl CPU {
                 }
             }
             OpCode::LDR(reg) => {
-                // Read registers V0 through reg from memory starting at I
+                // Read registers V0 through reg from memory starting at I.
                 let ri = self.registers.get_i_register();
 
                 for ridx in 0..=reg {
@@ -434,7 +444,7 @@ impl CPU {
                 }
             }
 
-            // S-CHIP
+            // S-CHIP.
             OpCode::SCRD(_b) => {
                 println!("executing SCRD");
             }
@@ -471,10 +481,10 @@ impl CPU {
             }
 
             OpCode::EMPTY => {
-                // Unknown
+                // Empty code.
             }
             OpCode::DATA(_) => {
-                // Unknown
+                // Unknown code.
             }
         };
 

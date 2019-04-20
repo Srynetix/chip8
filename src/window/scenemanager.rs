@@ -1,4 +1,4 @@
-//! Scene manager
+//! Scene manager.
 
 use std::collections::HashMap;
 
@@ -8,14 +8,14 @@ use sdl2::EventPump;
 use super::draw::DrawContext;
 use super::scene::Scene;
 
-/// Scene context
+/// Scene context.
 #[derive(Debug)]
 pub struct SceneContext {
-    /// Current scene name
+    /// Current scene name.
     pub current_scene_name: Option<String>,
-    /// Running
+    /// Running.
     pub running: bool,
-    /// Cache data
+    /// Cache data.
     pub cache_data: HashMap<String, String>,
 }
 
@@ -30,37 +30,62 @@ impl Default for SceneContext {
 }
 
 impl SceneContext {
-    /// New context
+    /// Create new context.
+    ///
+    /// # Returns
+    ///
+    /// * Scene context instance.
+    ///
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Quit
+    /// Quit.
     pub fn quit(&mut self) {
         self.running = false;
     }
 
-    /// Set current scene
+    /// Set current scene.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Current scene name.
+    ///
     pub fn set_current_scene(&mut self, name: &str) {
         self.current_scene_name = Some(String::from(name));
     }
 
-    /// Set cache data
+    /// Set cache data.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - Key name.
+    /// * `value` - Value.
+    ///
     pub fn set_cache_data(&mut self, key: &str, value: String) {
         self.cache_data.insert(String::from(key), value);
     }
 
-    /// Get cache data
+    /// Get cache data.
+    ///
+    /// # Arguments
+    ///
+    /// * `key` - Key name.
+    ///
+    /// # Returns
+    ///
+    /// * Cache data.
+    ///
     pub fn get_cache_data(&self, key: &str) -> Option<String> {
         self.cache_data.get(key).cloned()
     }
 }
 
-/// Scene manager
+/// Scene manager.
 pub struct SceneManager {
-    /// Last loaded scene
+    /// Last loaded scene.
     pub last_loaded_scene: Option<String>,
-    /// Scenes
+    /// Scenes.
     pub scenes: HashMap<String, Box<Scene>>,
 }
 
@@ -74,12 +99,26 @@ impl Default for SceneManager {
 }
 
 impl SceneManager {
-    /// Create new scene manager
+    /// Create new scene manager.
+    ///
+    /// # Returns
+    ///
+    /// * Scene manager instance.
+    ///
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Get scene
+    /// Get scene.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Scene name.
+    ///
+    /// # Returns
+    ///
+    /// * Scene option.
+    ///
     pub fn get_scene(&mut self, name: &str) -> Option<&mut Scene> {
         if let Some(scene) = self.scenes.get_mut(name) {
             Some(&mut **scene)
@@ -88,12 +127,27 @@ impl SceneManager {
         }
     }
 
-    /// Register scene
+    /// Register scene.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Scene name.
+    /// * `scene` - Scene box.
+    ///
     pub fn register_scene(&mut self, name: &str, scene: Box<Scene>) {
         self.scenes.insert(String::from(name), scene);
     }
 
-    /// Get current scene
+    /// Get current scene.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Scene context.
+    ///
+    /// # Returns
+    ///
+    /// * Scene option.
+    ///
     pub fn get_current_scene(&mut self, ctx: &mut SceneContext) -> Option<&mut Scene> {
         let name = ctx.current_scene_name.as_ref().cloned();
 
@@ -105,7 +159,17 @@ impl SceneManager {
         }
     }
 
-    /// Has scene changed
+    /// Has scene changed.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Scene context.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if scene changed.
+    /// * `false` if not.
+    ///
     pub fn has_scene_changed(&self, ctx: &mut SceneContext) -> bool {
         match (&ctx.current_scene_name, &self.last_loaded_scene) {
             (Some(current), Some(last)) => {
@@ -122,31 +186,37 @@ impl SceneManager {
         true
     }
 
-    /// Handle scene transition
     fn handle_scene_transition(&mut self, ctx: &mut SceneContext) {
-        // Check if scene changed
+        // Check if scene changed.
         let changed = self.has_scene_changed(ctx);
         let last_loaded_scene = self.last_loaded_scene.as_ref().cloned();
 
         if changed {
-            // Destroy previous scene
+            // Destroy previous scene.
             if let Some(scene) = last_loaded_scene {
                 let scene = self.get_scene(&scene).expect("missing scene");
                 scene.destroy(ctx);
             }
 
-            // Load new scene
+            // Load new scene.
             if let Some(scene) = &ctx.current_scene_name {
                 let scene = self.get_scene(&scene).expect("missing scene");
                 scene.init(ctx);
 
-                // Set as last loaded
+                // Set as last loaded.
                 self.last_loaded_scene = ctx.current_scene_name.as_ref().cloned();
             }
         }
     }
 
-    /// Run loop
+    /// Run loop.
+    ///
+    /// # Arguments
+    ///
+    /// * `scene_context` - Scene context.
+    /// * `draw_context` - Draw context.
+    /// * `event_pump` - Event pump.
+    ///
     pub fn run_loop(
         &mut self,
         scene_context: &mut SceneContext,

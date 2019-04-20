@@ -1,4 +1,4 @@
-//! CHIP-8 shell
+//! CHIP-8 shell.
 
 use std::env;
 use std::process;
@@ -15,12 +15,17 @@ use log;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Start shell
+/// Start shell.
 pub fn start_shell() {
     start_shell_using_args(&[]);
 }
 
-/// Start shell using args
+/// Start shell using args.
+///
+/// # Arguments
+///
+/// * `args` - Arguments.
+///
 pub fn start_shell_using_args(args: &[&str]) {
     let mut app = App::new("chip8")
         .version(VERSION)
@@ -84,7 +89,12 @@ pub fn start_shell_using_args(args: &[&str]) {
     }
 }
 
-/// Parse arguments
+/// Parse arguments.
+///
+/// # Arguments
+///
+/// * `matches` - Matches.
+///
 pub fn parse_args(matches: &ArgMatches<'_>) {
     let level = if matches.is_present("verbose") {
         debug!("using verbose mode");
@@ -116,7 +126,7 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
             process::exit(1);
         }
 
-        // Extract cartridge
+        // Extract cartridge.
         let cartridge = cartridge_handle.unwrap();
 
         if matches.is_present("disassemble") {

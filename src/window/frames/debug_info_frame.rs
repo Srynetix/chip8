@@ -1,4 +1,4 @@
-//! Debug info frame
+//! Debug info frame.
 
 use sdl2::rect::Rect;
 
@@ -8,20 +8,40 @@ use crate::emulator::Emulator;
 use crate::window::draw::{draw_text, DrawContext};
 use crate::window::frame::Frame;
 
-/// Debug info frame
+/// Debug info frame.
 pub struct DebugInfoFrame {
     frame: Frame,
 }
 
 impl DebugInfoFrame {
-    /// Create new frame
+    /// Create new frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `rect` - Rect
+    ///
+    /// # Returns
+    ///
+    /// * Debug info frame instance.
+    ///
     pub fn new(rect: Rect) -> Self {
         Self {
             frame: Frame::new(rect, "DEBUG"),
         }
     }
 
-    /// Render
+    /// Render.
+    ///
+    /// # Arguments
+    ///
+    /// * `emulator` - Emulator.
+    /// * `debug_ctx` - Debug context.
+    /// * `ctx` - Draw context.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(
         &self,
         emulator: &Emulator,

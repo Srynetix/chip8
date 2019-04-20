@@ -1,7 +1,4 @@
-//! CHIP-8 video memory
-//!
-//! 1: On
-//! 0: Off
+//! CHIP-8 video memory.
 
 use std::fmt;
 
@@ -13,26 +10,26 @@ use crate::core::error::CResult;
 use crate::core::font::FONT_CHAR_WIDTH;
 use crate::core::types::C8Byte;
 
-/// Video memory width
+/// Video memory width.
 pub const VIDEO_MEMORY_WIDTH: usize = 64;
-/// Video memory height
+/// Video memory height.
 pub const VIDEO_MEMORY_HEIGHT: usize = 32;
-/// Renderer scale
+/// Renderer scale.
 pub const RENDERER_SCALE: usize = 10;
 
 const PIXEL_FADE_COEFFICIENT: f32 = 0.8;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
 
-/// Screen mode
+/// Screen mode.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ScreenMode {
-    /// Standard screen
+    /// Standard screen.
     Standard,
-    /// Extended screen
+    /// Extended screen.
     Extended,
 }
 
-/// CHIP-8 screen data
+/// Screen data.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScreenData {
     data: Vec<C8Byte>,
@@ -40,9 +37,9 @@ pub struct ScreenData {
     mode: ScreenMode,
 }
 
-/// CHIP-8 screen memory struct
+/// Screen memory struct.
 pub struct Screen {
-    /// Screen data
+    /// Screen data.
     pub data: ScreenData,
 }
 
@@ -62,16 +59,21 @@ impl Default for Screen {
 }
 
 impl Screen {
-    /// Create new screen
+    /// Create new screen.
+    ///
+    /// # Returns
+    ///
+    /// * Screen instance.
+    ///
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Reload screen for mode
+    /// Reload screen for mode.
     ///
     /// # Arguments
     ///
-    /// * `mode` - Screen mode
+    /// * `mode` - Screen mode.
     ///
     pub fn reload_screen_for_mode(&mut self, mode: ScreenMode) {
         self.data.mode = mode;
@@ -81,7 +83,12 @@ impl Screen {
         self.data.alpha = vec![0; VIDEO_MEMORY_SIZE * coef * coef];
     }
 
-    /// Get screen size coef
+    /// Get screen size coef.
+    ///
+    /// # Returns
+    ///
+    /// * Screen size coef.
+    ///
     fn get_screen_size_coef(&self) -> usize {
         match self.data.mode {
             ScreenMode::Standard => 1,
@@ -89,13 +96,18 @@ impl Screen {
         }
     }
 
-    /// Draw sprite
+    /// Draw sprite.
     ///
     /// # Arguments
     ///
-    /// * `r1` - X position
-    /// * `r2` - Y position
-    /// * `sprite` - Sprite to draw
+    /// * `r1` - X position.
+    /// * `r2` - Y position.
+    /// * `sprite` - Sprite to draw.
+    ///
+    /// # Returns
+    ///
+    /// `true` if collision.
+    /// `false` if not.
     ///
     pub fn draw_sprite(&mut self, r1: C8Byte, r2: C8Byte, sprite: &[C8Byte]) -> bool {
         let coef = self.get_screen_size_coef();
@@ -123,14 +135,14 @@ impl Screen {
         collision
     }
 
-    /// Clear screen
+    /// Clear screen.
     pub fn clear_screen(&mut self) {
         for x in 0..self.data.data.len() {
             self.data.data[x] = 0
         }
     }
 
-    /// Fade pixels
+    /// Fade pixels.
     pub fn fade_pixels(&mut self) {
         for x in 0..self.data.data.len() {
             if self.data.data[x] == 0 && self.data.alpha[x] > 0 {
@@ -139,15 +151,19 @@ impl Screen {
         }
     }
 
-    /// Toggle pixel position
-    /// Return true if collision
+    /// Toggle pixel position.
     ///
     /// # Arguments
     ///
-    /// * `pos` - Position
+    /// * `pos` - Position.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if collision.
+    /// * `false` if not.
     ///
     pub fn toggle_pixel(&mut self, pos: usize) -> bool {
-        // For now, only handle 0 and 1
+        // For now, only handle 0 and 1.
         let mut flip = false;
         let pixel = self.data.data[pos];
 
@@ -163,7 +179,18 @@ impl Screen {
         flip
     }
 
-    /// Render screen
+    /// Render screen.
+    ///
+    /// # Arguments
+    ///
+    /// * `origin_x` - X origin.
+    /// * `origin_y` - Y origin.
+    /// * `renderer` - Renderer.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&mut self, origin_x: u32, origin_y: u32, renderer: &mut WindowCanvas) -> CResult {
         // Render to surface
         for (pos, px) in self.data.data.iter().enumerate() {
@@ -188,38 +215,40 @@ impl Screen {
         Ok(())
     }
 
-    /// Toggle pixel w/ X/Y coordinates
-    /// Return true if collision
+    /// Toggle pixel w/ X/Y coordinates.
     ///
     /// # Arguments
     ///
-    /// * `x` - X coordinate
-    /// * `y` - Y coordinate
+    /// * `x` - X coordinate.
+    /// * `y` - Y coordinate.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if collision.
+    /// * `false` if not.
     ///
     pub fn toggle_pixel_xy(&mut self, x: usize, y: usize) -> bool {
         let coef = self.get_screen_size_coef();
         self.toggle_pixel(x + y * (VIDEO_MEMORY_WIDTH * coef))
     }
 
-    /// Dump screen
+    /// Dump screen.
     pub fn dump_screen(&self) {
         println!("{:?}", &self);
     }
 
-    /// Reset screen
-    ///
-    /// With a little flash !
+    /// Reset screen.
     pub fn reset(&mut self) {
         self.data.data = vec![0; VIDEO_MEMORY_SIZE];
         self.data.alpha = vec![255; VIDEO_MEMORY_SIZE];
         self.data.mode = ScreenMode::Standard;
     }
 
-    /// Load from save
+    /// Load from save.
     ///
     /// # Arguments
     ///
-    /// * `screen_data` - Screen data
+    /// * `screen_data` - Screen data.
     ///
     pub fn load_from_save(&mut self, screen_data: ScreenData) {
         self.data.data = screen_data.data;

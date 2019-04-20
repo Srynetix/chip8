@@ -1,4 +1,4 @@
-//! Draw utils
+//! Draw utils.
 
 use sdl2::pixels::Color;
 use sdl2::render::{TextureCreator, TextureQuery, WindowCanvas};
@@ -12,34 +12,49 @@ use crate::core::error::CResult;
 
 use super::font::FontHandler;
 
-/// Screen width
+/// Screen width.
 pub const SCREEN_WIDTH: u32 = 640;
-/// Screen height
+/// Screen height.
 pub const SCREEN_HEIGHT: u32 = 320;
-/// Window width
+/// Window width.
 pub const WINDOW_WIDTH: u32 = 960;
-/// Window height
+/// Window height.
 pub const WINDOW_HEIGHT: u32 = 720;
 
-/// Draw context
+/// Draw context.
 pub struct DrawContext<'ttf, 'a, 'b> {
-    /// Font handler
+    /// Font handler.
     pub font_handler: &'b mut FontHandler<'ttf, 'a>,
-    /// Canvas
+    /// Canvas.
     pub canvas: &'b mut WindowCanvas,
-    /// Texture creator
+    /// Texture creator.
     pub texture_creator: &'b TextureCreator<WindowContext>,
-    /// Video subsystem
+    /// Video subsystem.
     pub video_subsystem: &'b VideoSubsystem,
 }
 
-/// Clear screen
+/// Clear screen.
+///
+/// # Arguments
+///
+/// * `canvas` - Canvas.
+///
 pub fn clear_screen(canvas: &mut sdl2::render::WindowCanvas) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 }
 
-/// Draw frame
+/// Draw frame.
+///
+/// # Arguments
+///
+/// * `canvas` - Canvas.
+/// * `rect` - Rect.
+///
+/// # Returns
+///
+/// * Result.
+///
 pub fn draw_frame(canvas: &mut sdl2::render::WindowCanvas, rect: Rect) -> CResult {
     canvas.set_draw_color(Color::RGB(255, 255, 255));
     canvas.draw_rect(rect)?;
@@ -47,7 +62,21 @@ pub fn draw_frame(canvas: &mut sdl2::render::WindowCanvas, rect: Rect) -> CResul
     Ok(())
 }
 
-/// Draw text
+/// Draw text.
+///
+/// # Arguments
+///
+/// * `canvas` - Canvas.
+/// * `texture_creator` - Texture creator.
+/// * `font` - Font.
+/// * `text` - Text.
+/// * `x` - X coordinate.
+/// * `y` - Y coordinate.
+///
+/// # Returns
+///
+/// * Result.
+///
 pub fn draw_text(
     canvas: &mut sdl2::render::WindowCanvas,
     texture_creator: &sdl2::render::TextureCreator<sdl2::video::WindowContext>,
@@ -67,7 +96,21 @@ pub fn draw_text(
     )
 }
 
-/// Draw text ex
+/// Draw text ex.
+///
+/// # Arguments
+///
+/// * `canvas` - Canvas.
+/// * `texture_creator` - Texture creator.
+/// * `font` - Font.
+/// * `text` - Text.
+/// * `x` - X coordinate.
+/// * `y` - Y coordinate.
+///
+/// # Returns
+///
+/// * Result.
+///
 pub fn draw_text_ex(
     canvas: &mut sdl2::render::WindowCanvas,
     texture_creator: &sdl2::render::TextureCreator<sdl2::video::WindowContext>,

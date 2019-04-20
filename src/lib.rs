@@ -1,4 +1,4 @@
-//! CHIP-8 core module
+//! CHIP-8.
 
 #![warn(missing_docs)]
 

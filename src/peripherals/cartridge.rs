@@ -1,4 +1,4 @@
-//! CHIP-8 cartridge
+//! Cartridge.
 
 use std::env;
 use std::error::Error;
@@ -17,25 +17,25 @@ use crate::core::types::{C8Addr, C8Byte};
 
 use super::memory::INITIAL_MEMORY_POINTER;
 
-/// Cartridge max size
+/// Cartridge max size.
 const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
 const EMPTY_GAME_NAME: &str = "<EMPTY>";
 
-/// Available extensions
+/// Available extensions.
 ///
 /// - No extension ("")
 /// - CH8 extension (.ch8/.CH8)
 ///
 const AVAILABLE_EXTENSIONS: [&str; 5] = ["", "ch8", "CH8", "c8k", "C8K"];
 
-/// CHIP-8 cartridge type
+/// Cartridge type.
 pub struct Cartridge {
     title: String,
     path: String,
     data: Vec<C8Byte>,
 }
 
-/// Missing Cartridge error
+/// Missing cartridge error.
 #[derive(Debug)]
 pub struct MissingCartridgeError(String);
 
@@ -52,7 +52,12 @@ impl fmt::Display for MissingCartridgeError {
 }
 
 impl Cartridge {
-    /// New empty cartridge
+    /// New empty cartridge.
+    ///
+    /// # Returns
+    ///
+    /// * Cartridge instance.
+    ///
     pub fn new_empty() -> Self {
         Self {
             title: String::from(EMPTY_GAME_NAME),
@@ -64,14 +69,18 @@ impl Cartridge {
     /// Get game path.
     ///
     /// Automatically add extension if not in name.
-    /// Supported extensions are: "", "ch8", "CH8"
+    /// Supported extensions are: "", "ch8", "CH8".
     ///
     /// # Arguments
     ///
-    /// * `name` - Game name
+    /// * `name` - Game name.
     ///
-    fn get_game_path(name: &str) -> Result<String, Box<dyn Error>> {
-        // Concat games directory to path
+    /// # Returns
+    ///
+    /// * Game path result.
+    ///
+    fn get_game_path(name: &str) -> CResult<String> {
+        // Concat games directory to path.
         let mut game_path = Cartridge::get_games_directory();
         game_path.push(name);
 
@@ -87,7 +96,16 @@ impl Cartridge {
         Err(Box::new(MissingCartridgeError(name.to_string())))
     }
 
-    /// Get game name from path
+    /// Get game name from path.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Game path.
+    ///
+    /// # Returns
+    ///
+    /// * Game name.
+    ///
     pub fn get_game_name(path: &Path) -> String {
         match path.file_stem() {
             Some(stem) => stem.to_string_lossy().to_uppercase().replace("_", " "),
@@ -95,9 +113,19 @@ impl Cartridge {
         }
     }
 
-    /// Check game extension
+    /// Check game extension.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if game extension is correct.
+    /// * `false` if game extension is incorrect.
+    ///
     fn check_game_extension(path: &Path) -> bool {
-        // Handle empty path
+        // Handle empty path.
         if path.to_string_lossy().is_empty() {
             return false;
         }
@@ -112,6 +140,11 @@ impl Cartridge {
     }
 
     /// List games from directory.
+    ///
+    /// # Returns
+    ///
+    /// * Game names.
+    ///
     pub fn list_from_games_directory() -> Vec<String> {
         let mut res = vec![];
         let game_dir = Self::get_games_directory();
@@ -120,7 +153,7 @@ impl Cartridge {
             .into_iter()
             .filter_map(|e| e.ok())
         {
-            // Remove game_dir from entry
+            // Remove game_dir from entry.
             let fname = entry.path().strip_prefix(&game_dir).unwrap();
             if Self::check_game_extension(&fname) {
                 res.push(fname.to_string_lossy().into_owned());
@@ -134,7 +167,11 @@ impl Cartridge {
     ///
     /// # Arguments
     ///
-    /// * `path` - Path to file
+    /// * `path` - Path to file.
+    ///
+    /// # Returns
+    ///
+    /// * Cartridge result.
     ///
     pub fn load_from_path<P: AsRef<Path>>(path: P) -> CResult<Cartridge> {
         let mut file = File::open(path.as_ref())?;
@@ -142,7 +179,7 @@ impl Cartridge {
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
         file.read_to_end(&mut contents)?;
 
-        // Strip path
+        // Strip path.
         let game_name = Self::get_game_name(path.as_ref());
         Cartridge::load_from_string(&game_name, path.as_ref(), &contents)
     }
@@ -151,7 +188,11 @@ impl Cartridge {
     ///
     /// # Arguments
     ///
-    /// * `name` - Game name
+    /// * `name` - Game name.
+    ///
+    /// # Returns
+    ///
+    /// * Cartridge result.
     ///
     pub fn load_from_games_directory(name: &str) -> CResult<Cartridge> {
         let game_path = Cartridge::get_game_path(name)?;
@@ -160,7 +201,7 @@ impl Cartridge {
         let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
         file.read_to_end(&mut contents)?;
 
-        // Strip path
+        // Strip path.
         let game_name = Self::get_game_name(Path::new(&game_path));
         Cartridge::load_from_string(&game_name, &game_path, &contents)
     }
@@ -169,13 +210,19 @@ impl Cartridge {
     ///
     /// # Arguments
     ///
-    /// * `bytes` - Bytes contents
+    /// * `title` - Title.
+    /// * `path` - Path.
+    /// * `bytes` - Bytes contents.
+    ///
+    /// # Returns
+    ///
+    /// * Cartridge result.
     ///
     pub fn load_from_string<P: AsRef<Path>>(
         title: &str,
         path: P,
         bytes: &[C8Byte],
-    ) -> Result<Cartridge, Box<dyn Error>> {
+    ) -> CResult<Cartridge> {
         let title = title.to_string();
         let data = bytes.to_vec();
         let path = path.as_ref().to_str().unwrap().to_string();
@@ -184,6 +231,11 @@ impl Cartridge {
     }
 
     /// Get games directory.
+    ///
+    /// # Arguments
+    ///
+    /// * Games directory.
+    ///
     fn get_games_directory() -> PathBuf {
         let cargo_path = match env::var("CARGO_MANIFEST_DIR") {
             Ok(path) => path,
@@ -194,23 +246,40 @@ impl Cartridge {
     }
 
     /// Get cartridge title.
+    ///
+    /// # Returns
+    ///
+    /// * Title.
+    ///
     pub fn get_title(&self) -> &str {
         &self.title
     }
 
     /// Get cartridge path.
+    ///
+    /// # Returns
+    ///
+    /// * Path.
+    ///
     pub fn get_path(&self) -> &str {
         &self.path
     }
 
     /// Get internal data.
+    ///
+    /// # Returns
+    ///
+    /// * Data.
+    ///
     pub fn get_data(&self) -> &[C8Byte] {
         &self.data
     }
 
     /// Disassemble cartridge.
     ///
-    /// Returns a tuple (code, assembly, verbose).
+    /// # Returns
+    ///
+    /// * Returns a tuple (code, assembly, verbose).
     ///
     pub fn disassemble(&self) -> (Vec<C8Addr>, Vec<String>, Vec<String>) {
         let mut code_output = Vec::with_capacity(CARTRIDGE_MAX_SIZE / 2);
@@ -239,7 +308,7 @@ impl Cartridge {
     ///
     /// # Arguments
     ///
-    /// * `output_file` - Output stream
+    /// * `output_file` - Output stream.
     ///
     pub fn write_disassembly_to_file(&self, output_file: &str) {
         if output_file == "-" {
@@ -261,7 +330,7 @@ impl Cartridge {
     ///
     /// # Arguments
     ///
-    /// * `output_stream` - Output stream
+    /// * `output_stream` - Output stream.
     ///
     pub fn write_disassembly_to_stream<W: Write>(&self, output_stream: &mut W) {
         let (code, assembly, verbose) = self.disassemble();

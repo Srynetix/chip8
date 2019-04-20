@@ -1,4 +1,4 @@
-//! CHIP-8 save state
+//! Save state.
 
 use std::error::Error;
 use std::fmt;
@@ -17,7 +17,7 @@ use super::registers::Registers;
 use super::stack::Stack;
 use super::timer::Timer;
 
-/// Missing save state
+/// Missing save state.
 #[derive(Debug)]
 pub struct MissingSaveState(pub String);
 
@@ -33,35 +33,39 @@ impl fmt::Display for MissingSaveState {
     }
 }
 
-/// CHIP-8 save state
+/// Save state.
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SaveState {
-    /// Version
+    /// Version.
     pub version: String,
-    /// Input state
+    /// Input state.
     pub input: InputState,
-    /// Memory
+    /// Memory.
     pub memory: Memory,
-    /// Registers
+    /// Registers.
     pub registers: Registers,
-    /// Screen data
+    /// Screen data.
     pub screen_data: ScreenData,
-    /// Stack
+    /// Stack.
     pub stack: Stack,
-    /// Delay timer
+    /// Delay timer.
     pub delay_timer: Timer,
-    /// Sound timer
+    /// Sound timer.
     pub sound_timer: Timer,
-    /// Instruction count
+    /// Instruction count.
     pub instruction_count: usize,
 }
 
 impl SaveState {
-    /// Create save state from CPU
+    /// Create save state from CPU.
     ///
     /// # Arguments
     ///
-    /// * `cpu` - CPU
+    /// * `cpu` - CPU.
+    ///
+    /// # Returns
+    ///
+    /// * Save state instance.
     ///
     pub fn save_from_cpu(cpu: &CPU) -> SaveState {
         SaveState {
@@ -81,7 +85,7 @@ impl SaveState {
     ///
     /// # Arguments
     ///
-    /// * `path` - Path to file
+    /// * `path` - Path to file.
     ///
     pub fn write_to_file(&self, path: &str) {
         let state_bin = serialize(&self).unwrap();
@@ -94,7 +98,11 @@ impl SaveState {
     ///
     /// # Arguments
     ///
-    /// * `path` - Path to file
+    /// * `path` - Path to file.
+    ///
+    /// # Returns
+    ///
+    /// * Save state option.
     ///
     pub fn read_from_file(path: &str) -> Option<SaveState> {
         let path_p = Path::new(path);

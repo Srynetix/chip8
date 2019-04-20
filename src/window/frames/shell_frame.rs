@@ -1,4 +1,4 @@
-//! Shell frame
+//! Shell frame.
 
 use std::cmp;
 
@@ -12,7 +12,7 @@ use crate::window::draw::{draw_text, DrawContext};
 use crate::window::font::Font;
 use crate::window::frame::Frame;
 
-/// Shell frame
+/// Shell frame.
 pub struct ShellFrame {
     frame: Frame,
     cmd_buffer: String,
@@ -22,7 +22,16 @@ pub struct ShellFrame {
 }
 
 impl ShellFrame {
-    /// Create new frame
+    /// Create new frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `rect` - Rect.
+    ///
+    /// # Returns
+    ///
+    /// * Shell frame instance.
+    ///
     pub fn new(rect: Rect) -> Self {
         Self {
             frame: Frame::new(rect, "SHELL"),
@@ -33,29 +42,44 @@ impl ShellFrame {
         }
     }
 
-    /// Reset frame
+    /// Reset frame.
     pub fn reset(&mut self) {
         self.cmd_buffer.clear();
         self.active = false;
         self.cursor_shown = false;
     }
 
-    /// Set frame active
+    /// Set frame active.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - Value.
+    ///
     pub fn set_active(&mut self, value: bool) {
         self.active = value;
     }
 
-    /// Add char to command
+    /// Add char to command.
+    ///
+    /// # Arguments
+    ///
+    /// `ch` - Character.
+    ///
     pub fn add_char(&mut self, ch: char) {
         self.cmd_buffer.push(ch);
     }
 
-    /// Remove char from command
+    /// Remove char from command.
     pub fn remove_char(&mut self) {
         self.cmd_buffer.pop();
     }
 
-    /// Validate command
+    /// Validate command.
+    ///
+    /// # Returns
+    ///
+    /// * Command.
+    ///
     pub fn validate(&mut self) -> String {
         let cmd = self.cmd_buffer.clone();
         self.cmd_buffer.clear();
@@ -63,7 +87,16 @@ impl ShellFrame {
         cmd
     }
 
-    /// Get max lines
+    /// Get max lines.
+    ///
+    /// # Arguments
+    ///
+    /// * `font` - Font
+    ///
+    /// # Returns
+    ///
+    /// * Max lines.
+    ///
     pub fn get_max_lines(&self, font: &Font) -> usize {
         let char_height = (font.height() + 4) as usize;
         let rect_height = self.frame.rect.height() as usize;
@@ -71,16 +104,26 @@ impl ShellFrame {
         (rect_height / char_height)
     }
 
-    /// Render buffer
+    /// Render buffer.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Draw context
+    /// * `stream` - Debugger stream
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render_buffer(&mut self, ctx: &mut DrawContext, stream: &DebuggerStream) -> CResult {
         let font = ctx.font_handler.get_or_create_font("default", 8).unwrap();
         let mut cursor_y = self.frame.rect.y() + 4;
         let char_height = font.height() + 4;
 
-        // Get max lines
+        // Get max lines.
         let max_lines = self.get_max_lines(font);
 
-        // Get buffer lines
+        // Get buffer lines.
         let lines = stream.get_lines();
         let total_lines = lines.len();
         let base_cursor = total_lines as usize;
@@ -104,23 +147,33 @@ impl ShellFrame {
         Ok(())
     }
 
-    /// Render frame
+    /// Render frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Draw context.
+    /// * `stream` - Debugger stream.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&mut self, ctx: &mut DrawContext, stream: &DebuggerStream) -> CResult {
         {
-            // Draw background
+            // Draw background.
             let old_color = ctx.canvas.draw_color();
             ctx.canvas.set_draw_color(Color::RGB(0, 0, 0));
             ctx.canvas.fill_rect(self.frame.rect)?;
             ctx.canvas.set_draw_color(old_color);
         }
 
-        // Draw stream content
         {
+            // Draw stream content.
             self.render_buffer(ctx, stream)?;
         }
 
-        // Draw line buffer
         {
+            // Draw line buffer.
             let font = ctx.font_handler.get_or_create_font("default", 8).unwrap();
             let txt = format!("> {}", self.cmd_buffer);
             let sz = font.size_of(&txt)?;

@@ -1,4 +1,4 @@
-//! Peripherals
+//! Peripherals.
 
 pub mod cartridge;
 pub mod input;
@@ -9,24 +9,36 @@ use self::input::InputState;
 use self::memory::Memory;
 use self::screen::Screen;
 
-/// Peripherals
+/// Peripherals.
 pub struct Peripherals {
-    /// Input
+    /// Input.
     pub input: InputState,
-    /// Memory
+    /// Memory.
     pub memory: Memory,
-    /// Screen
+    /// Screen.
     pub screen: Screen,
 }
 
 impl Peripherals {
-    /// Create peripherals
+    /// Create new peripherals.
+    ///
+    /// # Returns
+    ///
+    /// * Peripherals instance.
+    ///
     pub fn new() -> Self {
         Peripherals {
             input: InputState::new(),
             memory: Memory::new(),
             screen: Screen::new(),
         }
+    }
+
+    /// Reset peripherals.
+    pub fn reset(&mut self) {
+        self.memory.reset();
+        self.input.reset();
+        self.screen.reset();
     }
 }
 

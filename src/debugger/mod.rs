@@ -1,4 +1,4 @@
-//! Debugger module
+//! Debugger module.
 
 mod breakpoints;
 mod context;
@@ -12,7 +12,6 @@ use crate::core::cpu::CPU;
 use crate::core::opcodes::{get_opcode_enum, get_opcode_str};
 use crate::core::types::{convert_hex_addr, C8Addr};
 use crate::emulator::{Emulator, EmulatorContext};
-use crate::peripherals::cartridge::Cartridge;
 use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
 
 use context::DebuggerMode;
@@ -21,46 +20,46 @@ pub use breakpoints::Breakpoints;
 pub use context::DebuggerContext;
 pub use stream::DebuggerStream;
 
-/// Debugger
+/// Debugger.
 pub struct Debugger {}
 
-/// Debugger state
+/// Debugger state.
 #[derive(Debug)]
 pub enum DebuggerState {
-    /// Quit
+    /// Quit.
     Quit,
-    /// Normal
+    /// Normal.
     Normal,
 }
 
-/// Debugger command
+/// Debugger command.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Command {
-    /// Quit
+    /// Quit.
     Quit,
-    /// Continue
+    /// Continue.
     Continue,
-    /// Show current line
+    /// Show current line.
     Where,
-    /// Current line with context
+    /// Current line with context.
     List(u16),
-    /// Complete source
+    /// Complete source.
     LongList,
-    /// Dump CPU
+    /// Dump CPU.
     Dump(String),
-    /// Read memory at offset
+    /// Read memory at offset.
     ReadMemory(C8Addr, C8Addr),
-    /// Step instruction
+    /// Step instruction.
     Step,
-    /// Add breakpoint
+    /// Add breakpoint.
     AddBreakpoint(C8Addr),
-    /// Remove breakpoint
+    /// Remove breakpoint.
     RemoveBreakpoint(C8Addr),
-    /// List breakpoints
+    /// List breakpoints.
     ListBreakpoints,
-    /// Show help
+    /// Show help.
     Help,
-    /// Empty
+    /// Empty.
     Empty,
 }
 
@@ -71,18 +70,36 @@ impl Default for Debugger {
 }
 
 impl Debugger {
-    /// Create new debugger
+    /// Create new debugger.
+    ///
+    /// # Returns
+    ///
+    /// * Debugger instance.
+    ///
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Step
+    /// Step debugger.
+    ///
+    /// # Arguments
+    ///
+    /// * `emulator` - Emulator instance.
+    /// * `emulator_ctx` - Emulator context.
+    /// * `debug_ctx` - Debugger context.
+    /// * `cartridge` - Cartridge.
+    /// * `pump` - Event pump.
+    /// * `stream` - Debugger stream.
+    ///
+    /// # Returns
+    ///
+    /// * Debugger state.
+    ///
     pub fn step(
         &self,
         emulator: &mut Emulator,
         emulator_ctx: &mut EmulatorContext,
         debug_ctx: &mut DebuggerContext,
-        cartridge: &Cartridge,
         pump: &mut EventPump,
         stream: &mut DebuggerStream,
     ) -> DebuggerState {
@@ -91,7 +108,7 @@ impl Debugger {
             return DebuggerState::Quit;
         }
 
-        // Check for breakpoint
+        // Check for breakpoint.
         if debug_ctx.is_continuing && !debug_ctx.breakpoint_hit {
             let pointer = emulator.cpu.peripherals.memory.get_pointer();
             if debug_ctx.breakpoints.check_breakpoint(pointer) {
@@ -101,14 +118,14 @@ impl Debugger {
             }
         }
 
-        // Step
+        // Step.
         if debug_ctx.is_stepping || debug_ctx.is_continuing {
             emulator.cpu.peripherals.input.process_input(pump);
-            emulator.step(cartridge, emulator_ctx);
+            emulator.step(emulator_ctx);
 
-            // Just moved
+            // Just moved.
             debug_ctx.has_moved = true;
-            // Change debugger address
+            // Change debugger address.
             debug_ctx.set_address(emulator.cpu.peripherals.memory.get_pointer());
 
             if debug_ctx.is_stepping {
@@ -120,7 +137,7 @@ impl Debugger {
             }
         }
 
-        // Interactive mode
+        // Interactive mode.
         if let DebuggerMode::Interactive = debug_ctx.mode {
             if debug_ctx.is_paused() {
                 if debug_ctx.has_moved {
@@ -135,7 +152,14 @@ impl Debugger {
         DebuggerState::Normal
     }
 
-    /// Start prompt
+    /// Start prompt.
+    ///
+    /// # Arguments
+    ///
+    /// * `cpu` - CPU instance.
+    /// * `ctx` - Debugger context.
+    /// * `stream` - Debugger stream.
+    ///
     pub fn start_prompt(&self, cpu: &CPU, ctx: &mut DebuggerContext, stream: &mut DebuggerStream) {
         'read: loop {
             let readline = ctx.editor.readline("> ");
@@ -164,11 +188,16 @@ impl Debugger {
         }
     }
 
-    /// Read command
+    /// Read command.
     ///
     /// # Arguments
     ///
-    /// * `cmd` - Read command
+    /// * `cmd` - Read command.
+    /// * `stream` - Debugger stream.
+    ///
+    /// # Returns
+    ///
+    /// * Command option.
     ///
     pub fn read_command(&self, cmd: &str, stream: &mut DebuggerStream) -> Option<Command> {
         let cmd_split: Vec<&str> = cmd.split(' ').collect();
@@ -256,7 +285,15 @@ impl Debugger {
         }
     }
 
-    /// Handle command
+    /// Handle command.
+    ///
+    /// # Arguments
+    ///
+    /// * `cpu` - CPU instance.
+    /// * `ctx` - Debugger context.
+    /// * `stream` - Debugger stream.
+    /// * `command` - Command.
+    ///
     pub fn handle_command(
         &self,
         cpu: &CPU,
@@ -275,7 +312,7 @@ impl Debugger {
                     println!("{:?}", cpu.delay_timer);
                     println!("{:?}", cpu.sound_timer);
                 }
-                _ => cpu.show_debug(),
+                _ => println!("{:?}", cpu),
             },
             Command::ReadMemory(addr, count) => {
                 println!("reading memory at {:04X} on {} byte(s)", addr, count);

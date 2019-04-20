@@ -1,4 +1,4 @@
-//! Frame
+//! Frame.
 
 use sdl2::rect::Rect;
 
@@ -6,16 +6,26 @@ use crate::core::error::CResult;
 
 use super::draw::{draw_frame, draw_text, DrawContext};
 
-/// Frame
+/// Frame.
 pub struct Frame {
-    /// Rect
+    /// Rect.
     pub rect: Rect,
-    /// Title
+    /// Title.
     pub title: String,
 }
 
 impl Frame {
-    /// Create new frame
+    /// Create new frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `rect` - Rect.
+    /// * `title` - Title.
+    ///
+    /// # Returns
+    ///
+    /// * Frame instance.
+    ///
     pub fn new(rect: Rect, title: &str) -> Self {
         Self {
             rect,
@@ -23,7 +33,16 @@ impl Frame {
         }
     }
 
-    /// Render frame
+    /// Render frame.
+    ///
+    /// # Arguments
+    ///
+    /// * `ctx` - Draw context.
+    ///
+    /// # Returns
+    ///
+    /// * Result.
+    ///
     pub fn render(&self, ctx: &mut DrawContext) -> CResult {
         draw_frame(ctx.canvas, self.rect)?;
 

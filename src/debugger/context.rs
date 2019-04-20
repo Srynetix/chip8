@@ -1,4 +1,4 @@
-//! Debugger context
+//! Debugger context.
 
 use rustyline::Editor;
 
@@ -8,34 +8,35 @@ use crate::debugger::Breakpoints;
 
 use super::errors::BadBreakpoint;
 
+/// Debugger mode.
 pub enum DebuggerMode {
-    /// Interactive
+    /// Interactive.
     Interactive,
-    /// Manual
+    /// Manual.
     Manual,
 }
 
-/// Debugger context
+/// Debugger context.
 pub struct DebuggerContext {
-    /// Running
+    /// Running.
     pub running: bool,
-    /// Address
+    /// Address.
     pub address: C8Addr,
-    /// Is stepping
+    /// Is stepping.
     pub is_stepping: bool,
-    /// Is continuing
+    /// Is continuing.
     pub is_continuing: bool,
-    /// Has just hit breakpoint
+    /// Has just hit breakpoint.
     pub breakpoint_hit: bool,
-    /// Has moved
+    /// Has moved.
     pub has_moved: bool,
-    /// Should quit
+    /// Should quit.
     pub should_quit: bool,
-    /// Editor
+    /// Editor.
     pub editor: Editor<()>,
-    /// Mode
+    /// Mode.
     pub mode: DebuggerMode,
-    /// Breakpoints
+    /// Breakpoints.
     pub breakpoints: Breakpoints,
 }
 
@@ -57,48 +58,83 @@ impl Default for DebuggerContext {
 }
 
 impl DebuggerContext {
-    /// Create new context
+    /// Create new context.
+    ///
+    /// # Returns
+    ///
+    /// * Debugger context.
+    ///
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Set debugger address
+    /// Set debugger address.
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - Address.
+    ///
     pub fn set_address(&mut self, addr: C8Addr) {
         self.address = addr;
     }
 
-    /// Pause
+    /// Pause.
     pub fn pause(&mut self) {
         self.is_continuing = false;
         self.is_stepping = false;
     }
 
-    /// Is paused?
+    /// Is the debugger paused?
+    ///
+    /// # Returns
+    ///
+    /// `true` if paused.
+    /// `false` if not.
+    ///
     pub fn is_paused(&self) -> bool {
         !self.is_continuing
     }
 
-    /// Set manual mode
+    /// Set manual mode.
     pub fn set_manual(&mut self) {
         self.mode = DebuggerMode::Manual;
     }
 
-    /// Set interactive mode
+    /// Set interactive mode.
     pub fn set_interactive(&mut self) {
         self.mode = DebuggerMode::Interactive;
     }
 
-    /// Register breakpoint
+    /// Register breakpoint.
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - Address.
+    ///
     pub fn register_breakpoint(&mut self, addr: C8Addr) {
         self.breakpoints.register(addr);
     }
 
-    /// Unregister breakpoint
+    /// Unregister breakpoint.
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - Address.
+    ///
     pub fn unregister_breakpoint(&mut self, addr: C8Addr) {
         self.breakpoints.unregister(addr);
     }
 
-    /// Register breakpoint as string
+    /// Register breakpoint as string.
+    ///
+    /// # Arguments
+    ///
+    /// * `addr` - Address.
+    ///
+    /// # Returns
+    ///
+    /// * Breakpoint result.
+    ///
     pub fn register_breakpoint_str(&mut self, addr: &str) -> CResult {
         if let Some(addr) = convert_hex_addr(addr) {
             self.breakpoints.register(addr);
