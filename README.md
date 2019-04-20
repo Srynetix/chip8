@@ -41,5 +41,5 @@ OPTIONS:
     -t, --trace <trace>                 trace execution to file
 
 ARGS:
-    <FILENAME>    cartridge name (not the path)
+    <FILENAME>    cartridge path
 ```
