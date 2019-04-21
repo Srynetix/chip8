@@ -32,6 +32,8 @@ pub enum EmulationState {
     Normal,
     /// Wait for input.
     WaitForInput,
+    /// Wait for delay.
+    WaitForDelay,
 }
 
 /// Emulator context.
@@ -202,6 +204,19 @@ impl Emulator {
                 // Wait for key.
                 return EmulationState::WaitForInput;
             }
+        }
+
+        // Handle delays.
+        if self.cpu.peripherals.screen.is_scrolling() {
+            if self.cpu.sync_timer.get_value() == 0 {
+                // Delay ok.
+                println!("SCROLL DELAY OK.");
+            }
+        }
+
+        // Reset sync timer.
+        if self.cpu.sync_timer.get_value() == 0 {
+            self.cpu.sync_timer.reset(60);
         }
 
         if ctx

@@ -5,7 +5,7 @@ use std::fmt;
 use rand::random;
 
 use crate::peripherals::cartridge::Cartridge;
-use crate::peripherals::screen::ScreenMode;
+use crate::peripherals::screen::{ScreenMode, ScreenScrollDirection};
 use crate::peripherals::Peripherals;
 
 use super::font::{Font, FONT_CHAR_HEIGHT, FONT_DATA_ADDR};
@@ -26,10 +26,12 @@ pub struct CPU {
     /// Stack.
     pub stack: Stack,
 
-    /// Syncronization timer.
+    /// Delay timer.
     pub delay_timer: Timer,
     /// Sound timer.
     pub sound_timer: Timer,
+    /// Synchronization timer.
+    pub sync_timer: Timer,
 
     /// Default font.
     pub font: Font,
@@ -64,6 +66,7 @@ impl CPU {
 
             delay_timer: Timer::new("Delay".to_string()),
             sound_timer: Timer::new("Sound".to_string()),
+            sync_timer: Timer::new("Sync".to_string()),
 
             font: Font::new_system_font(),
             instruction_count: 0,
@@ -111,6 +114,7 @@ impl CPU {
         self.stack.load_from_save(state.stack);
         self.delay_timer.load_from_save(state.delay_timer);
         self.sound_timer.load_from_save(state.sound_timer);
+        self.sync_timer.load_from_save(state.sync_timer);
     }
 
     /// Load cartridge data.
@@ -130,6 +134,7 @@ impl CPU {
     pub fn decrement_timers(&mut self) {
         self.delay_timer.decrement();
         self.sound_timer.decrement();
+        self.sync_timer.decrement();
     }
 
     /// Reset CPU.
@@ -142,6 +147,7 @@ impl CPU {
         self.stack.reset();
         self.delay_timer.reset(0);
         self.sound_timer.reset(0);
+        self.sync_timer.reset(60);
     }
 
     /// Execute instruction.
@@ -445,8 +451,10 @@ impl CPU {
             }
 
             // S-CHIP.
-            OpCode::SCRD(_b) => {
-                println!("executing SCRD");
+            OpCode::SCRD(lines) => {
+                self.peripherals.screen.data.scroll.scrolling = true;
+                self.peripherals.screen.data.scroll.lines = lines;
+                self.peripherals.screen.data.scroll.direction = ScreenScrollDirection::Down;
             }
             OpCode::SCRR => {
                 println!("executing SCRR");

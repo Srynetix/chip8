@@ -29,12 +29,37 @@ pub enum ScreenMode {
     Extended,
 }
 
+/// Screen scroll direction.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ScreenScrollDirection {
+    /// Down.
+    Down,
+    /// Right.
+    Right,
+    /// Left.
+    Left,
+    /// Disabled.
+    Disabled
+}
+
+/// Screen scroll.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScreenScroll {
+    /// Scrolling.
+    pub scrolling: bool,
+    /// Lines.
+    pub lines: C8Byte,
+    /// Direction.
+    pub direction: ScreenScrollDirection
+}
+
 /// Screen data.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScreenData {
     data: Vec<C8Byte>,
     alpha: Vec<C8Byte>,
     mode: ScreenMode,
+    pub scroll: ScreenScroll,
 }
 
 /// Screen memory struct.
@@ -53,6 +78,11 @@ impl Default for Screen {
                 data,
                 alpha,
                 mode: ScreenMode::Standard,
+                scroll: ScreenScroll {
+                    scrolling: false,
+                    lines: 0,
+                    direction: ScreenScrollDirection::Disabled,
+                }
             },
         }
     }
@@ -94,6 +124,17 @@ impl Screen {
             ScreenMode::Standard => 1,
             ScreenMode::Extended => 2,
         }
+    }
+
+    /// Check if screen is scrolling.
+    ///
+    /// # Returns
+    ///
+    /// * `true` if scrolling.
+    /// * `false` if not.
+    ///
+    pub fn is_scrolling(&self) -> bool {
+        self.data.scroll.scrolling
     }
 
     /// Draw sprite.
@@ -192,7 +233,7 @@ impl Screen {
     /// * Result.
     ///
     pub fn render(&mut self, origin_x: u32, origin_y: u32, renderer: &mut WindowCanvas) -> CResult {
-        // Render to surface
+        // Render to surface.
         for (pos, px) in self.data.data.iter().enumerate() {
             let x = pos % VIDEO_MEMORY_WIDTH;
             let y = pos / VIDEO_MEMORY_WIDTH;

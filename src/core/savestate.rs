@@ -52,6 +52,8 @@ pub struct SaveState {
     pub delay_timer: Timer,
     /// Sound timer.
     pub sound_timer: Timer,
+    /// Sync timer.
+    pub sync_timer: Timer,
     /// Instruction count.
     pub instruction_count: usize,
 }
@@ -77,6 +79,7 @@ impl SaveState {
             stack: cpu.stack.clone(),
             delay_timer: cpu.delay_timer.clone(),
             sound_timer: cpu.sound_timer.clone(),
+            sync_timer: cpu.sync_timer.clone(),
             instruction_count: cpu.instruction_count,
         }
     }
