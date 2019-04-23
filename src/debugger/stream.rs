@@ -9,14 +9,14 @@ pub struct DebuggerStreamLine {
 /// Debugger stream.
 pub struct DebuggerStream {
     lines: Vec<DebuggerStreamLine>,
-    use_console: bool,
+    console: bool,
 }
 
 impl Default for DebuggerStream {
     fn default() -> Self {
         Self {
             lines: vec![],
-            use_console: false,
+            console: false,
         }
     }
 }
@@ -38,8 +38,8 @@ impl DebuggerStream {
     ///
     /// * `v` - Value.
     ///
-    pub fn set_use_console(&mut self, v: bool) {
-        self.use_console = v;
+    pub fn use_console(&mut self, v: bool) {
+        self.console = v;
     }
 
     /// Write to stdout.
@@ -49,7 +49,7 @@ impl DebuggerStream {
     /// * `s` - String line.
     ///
     pub fn writeln_stdout<T: AsRef<str>>(&mut self, s: T) {
-        if self.use_console {
+        if self.console {
             println!("{}", s.as_ref());
         } else {
             self.lines.push(DebuggerStreamLine {
@@ -66,7 +66,7 @@ impl DebuggerStream {
     /// * `s` - String line.
     ///
     pub fn writeln_stderr<T: AsRef<str>>(&mut self, s: T) {
-        if self.use_console {
+        if self.console {
             eprintln!("{}", s.as_ref());
         } else {
             self.lines.push(DebuggerStreamLine {
