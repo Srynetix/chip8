@@ -36,11 +36,9 @@ impl Timer {
         if self.count > 0 {
             self.count -= 1;
 
-            // End
-            if self.count == 0 {
-                if self.title == "Sound" {
-                    println!("** BEEP **");
-                }
+            // End.
+            if self.count == 0 && self.title == "Sound" {
+                println!("** BEEP **");
             }
         }
 

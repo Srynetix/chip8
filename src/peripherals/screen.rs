@@ -39,7 +39,7 @@ pub enum ScreenScrollDirection {
     /// Left.
     Left,
     /// Disabled.
-    Disabled
+    Disabled,
 }
 
 /// Screen scroll.
@@ -50,7 +50,7 @@ pub struct ScreenScroll {
     /// Lines.
     pub lines: C8Byte,
     /// Direction.
-    pub direction: ScreenScrollDirection
+    pub direction: ScreenScrollDirection,
 }
 
 /// Screen data.
@@ -59,6 +59,7 @@ pub struct ScreenData {
     data: Vec<C8Byte>,
     alpha: Vec<C8Byte>,
     mode: ScreenMode,
+    /// Scroll.
     pub scroll: ScreenScroll,
 }
 
@@ -82,7 +83,7 @@ impl Default for Screen {
                     scrolling: false,
                     lines: 0,
                     direction: ScreenScrollDirection::Disabled,
-                }
+                },
             },
         }
     }
