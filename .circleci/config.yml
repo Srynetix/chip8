@@ -10,6 +10,10 @@ jobs:
 
     steps:
       - checkout
+      - run:
+          name: Install components
+          command: |
+            rustup component add rustfmt
       - restore_cache:
           key: project-cache
       - run:
