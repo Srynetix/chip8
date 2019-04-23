@@ -1,14 +1,32 @@
 //! CPU opcodes.
 
 use std::collections::HashMap;
+use std::error::Error;
+use std::fmt;
 
 use super::types::{C8Addr, C8Byte, C8RegIdx};
+
+/// Bad instruction.
+#[derive(Debug)]
+pub struct BadInstruction(pub String);
+
+impl Error for BadInstruction {
+    fn description(&self) -> &str {
+        "bad instruction"
+    }
+}
+
+impl fmt::Display for BadInstruction {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "bad instruction: {}.", self.0)
+    }
+}
 
 /// Opcode flag/mask.
 type OpCodeFlagMask = (C8Addr, C8Addr);
 
 /// Opcode enum.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum OpCode {
     /// 0nnn - SYS addr.
     /// * Jump to a machine code routine at nnn.

@@ -30,3 +30,17 @@ pub fn convert_hex_addr(s: &str) -> Option<C8Addr> {
 fn _convert_hex_addr(s: &str) -> Option<C8Addr> {
     C8Addr::from_str_radix(s, 16).ok()
 }
+
+/// Convert hexadecimal byte.
+///
+/// # Arguments
+///
+/// * `s` - Input string.
+///
+/// # Returns
+///
+/// * Byte option.
+///
+pub fn convert_hex_byte(s: &str) -> Option<C8Byte> {
+    C8Byte::from_str_radix(s, 16).ok()
+}

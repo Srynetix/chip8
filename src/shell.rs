@@ -3,6 +3,7 @@
 use std::env;
 use std::process;
 
+use super::core::assembler::Assembler;
 use super::core::logger::init_logger;
 use super::debugger::{Debugger, DebuggerContext};
 use super::emulator::{Emulator, EmulatorContext};
@@ -72,6 +73,14 @@ pub fn start_shell_using_args(args: &[&str]) {
                 .short("v")
                 .help("verbose mode"),
         )
+        .arg(
+            Arg::with_name("assemble")
+                .long("assemble")
+                .short("a")
+                .help("assemble code")
+                .value_name("OUTPUT")
+                .takes_value(true),
+        )
         .arg(Arg::with_name("gui").long("gui").help("GUI mode"));
 
     let matches = if args.is_empty() {
@@ -107,11 +116,38 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
         .unwrap_or_else(|_| panic!("failed to initialize logger with level: {:?}", level));
 
     if matches.is_present("gui") {
+        // GUI mode.
         if let Err(e) = start_window_gui() {
             eprintln!("execution error: {}", e);
             process::exit(1);
         }
+    } else if matches.is_present("assemble") {
+        // Assembly mode.
+        let cartridge_path = match matches.value_of("file") {
+            Some(f) => f,
+            None => {
+                eprintln!("error: missing file argument. show help with --help");
+                process::exit(1);
+            }
+        };
+
+        let output_path = match matches.value_of("assemble") {
+            Some(f) => f,
+            None => {
+                eprintln!("error: missing output argument. show help with --help");
+                process::exit(1);
+            }
+        };
+
+        let assembler = Assembler::from_path(cartridge_path).expect("error while reading assembly");
+        let cartridge = assembler
+            .assemble_cartridge()
+            .expect("error while assembling cartridge");
+        cartridge
+            .save_to_path(output_path)
+            .expect("error while saving cartridge");
     } else {
+        // CLI mode.
         let cartridge_path = match matches.value_of("file") {
             Some(f) => f,
             None => {

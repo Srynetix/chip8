@@ -18,8 +18,9 @@ use crate::core::types::{C8Addr, C8Byte};
 use super::memory::INITIAL_MEMORY_POINTER;
 
 /// Cartridge max size.
-const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
-const EMPTY_GAME_NAME: &str = "<EMPTY>";
+pub const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
+/// Empty game name.
+pub const EMPTY_GAME_NAME: &str = "<EMPTY>";
 
 /// Available extensions.
 ///
@@ -64,6 +65,16 @@ impl Cartridge {
             path: String::from(""),
             data: vec![],
         }
+    }
+
+    /// Set data.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Data
+    ///
+    pub fn set_data(&mut self, data: Vec<C8Byte>) {
+        self.data = data;
     }
 
     /// Get game path.
@@ -182,6 +193,19 @@ impl Cartridge {
         // Strip path.
         let game_name = Self::get_game_name(path.as_ref());
         Cartridge::load_from_string(&game_name, path.as_ref(), &contents)
+    }
+
+    /// Save cartridge to path.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to file.
+    ///
+    pub fn save_to_path<P: AsRef<Path>>(&self, path: P) -> CResult<()> {
+        let mut file = File::create(path.as_ref())?;
+
+        file.write_all(&self.data)?;
+        Ok(())
     }
 
     /// Load cartridge from games directory.
