@@ -141,6 +141,7 @@ pub fn start_window_cli(
 
     // Create stream.
     let mut stream = DebuggerStream::new();
+    stream.use_console(true);
 
     'running: loop {
         // Event handling.
