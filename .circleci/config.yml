@@ -13,6 +13,9 @@ jobs:
       - run:
           name: Install components
           command: |
+            apt-get update -y
+            apt-get install libsdl2-dev
+            apt-get install libsdl2-ttf-dev
             rustup component add rustfmt
             rustup toolchain install stable
       - restore_cache:
