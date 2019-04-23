@@ -9,7 +9,6 @@ pub mod scenemanager;
 pub mod scenes;
 
 use std::env;
-use std::path::Path;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -52,7 +51,7 @@ pub fn start_window_gui() -> CResult {
     let mut font_handler = FontHandler::new(&ttf_context);
 
     // Load a font.
-    let mut assets_dir = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap()).to_path_buf();
+    let mut assets_dir = env::current_dir()?;
     assets_dir.push("assets");
     assets_dir.push("fonts");
     assets_dir.push("PressStart2P-Regular.ttf");
