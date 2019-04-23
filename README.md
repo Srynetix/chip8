@@ -16,6 +16,8 @@ Features
 - CLI-driven mode to specifically use one functionality
 - GUI-driven mode using a custom TUI-like frame system
 - Game disassembler
+- Game assembler
+  - Write CHIP-8 assembly and build cartridges
 - Save-state system
 - Custom debugger
   - Terminal debugger with a GDB-like experience in CLI mode
@@ -36,6 +38,7 @@ FLAGS:
     -v, --verbose           verbose mode
 
 OPTIONS:
+    -a, --assemble <OUTPUT>             assemble code
     -b, --breakpoint <breakpoint>...    add breakpoint at address
     -d, --disassemble <disassemble>     disassemble cartridge to file (use '-' to trace in console)
     -t, --trace <trace>                 trace execution to file
