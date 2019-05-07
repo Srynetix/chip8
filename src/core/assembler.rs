@@ -195,10 +195,10 @@ fn parse_3_arg_token(args: Vec<&str>) -> CResult<(ArgToken, ArgToken, ArgToken)>
 ///
 pub fn words_to_opcode(words: &str) -> CResult<OpCode> {
     lazy_static! {
-        static ref re: Regex = Regex::new(r"(?P<opcode>[A-Z]+)( (?P<args>.*))?").unwrap();
+        static ref RE: Regex = Regex::new(r"(?P<opcode>[A-Z]+)( (?P<args>.*))?").unwrap();
     }
 
-    let caps: Vec<_> = re.captures_iter(words).collect();
+    let caps: Vec<_> = RE.captures_iter(words).collect();
     if caps.is_empty() {
         return Err(Box::new(BadInstruction("instruction is empty".to_owned())));
     }
@@ -564,10 +564,10 @@ impl Assembler {
     ///
     pub fn assemble_line_from_str(&self, line: &str) -> Option<Instruction> {
         lazy_static! {
-            static ref re: Regex = Regex::new(r"((?P<line>[0-9A-Z]{4})\|)?( \((?P<opcode>[0-9A-Z]{4})\) )? ?((?P<instr>[A-Z0-9, ]+))?(;(?P<comment>.*))?").unwrap();
+            static ref RE: Regex = Regex::new(r"((?P<line>[0-9A-Z]{4})\|)?( \((?P<opcode>[0-9A-Z]{4})\) )? ?((?P<instr>[A-Z0-9, ]+))?(;(?P<comment>.*))?").unwrap();
         }
 
-        let caps: Vec<_> = re.captures_iter(line).collect();
+        let caps: Vec<_> = RE.captures_iter(line).collect();
         if caps.is_empty() {
             return None;
         }
@@ -660,7 +660,7 @@ mod tests {
         let comment_example = r#"; toto"#;
         let comment2_example = r#";   toto"#;
 
-        let mut assembler = Assembler::new();
+        let assembler = Assembler::new();
         assert_eq!(
             assembler.assemble_line_from_str(full_example),
             Some(Instruction {

@@ -18,7 +18,8 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Start shell.
 pub fn start_shell() {
-    start_shell_using_args(&[]);
+    let args: Vec<String> = env::args().skip(1).collect();
+    start_shell_using_args(&args);
 }
 
 /// Start shell using args.
@@ -27,7 +28,7 @@ pub fn start_shell() {
 ///
 /// * `args` - Arguments.
 ///
-pub fn start_shell_using_args(args: &[&str]) {
+pub fn start_shell_using_args(args: &[String]) {
     let mut app = App::new("chip8")
         .version(VERSION)
         .author("Denis B. <bourge.denis@gmail.com>")
@@ -83,15 +84,15 @@ pub fn start_shell_using_args(args: &[&str]) {
         )
         .arg(Arg::with_name("gui").long("gui").help("GUI mode"));
 
-    let matches = if args.is_empty() {
-        app.get_matches_from_safe_borrow(&mut env::args_os())
-    } else {
-        app.get_matches_from_safe_borrow(args)
-    };
+    let cmd_name = std::env::current_exe().expect("current executable name missing");
+    let mut full_args: Vec<String> = vec![];
+    full_args.push(String::from(cmd_name.to_str().unwrap()));
+    for arg in args.iter() {
+        full_args.push(arg.clone());
+    }
 
-    match matches {
+    match app.get_matches_from_safe_borrow(&full_args) {
         Ok(result) => parse_args(&result),
-
         Err(error) => {
             eprintln!("{}", error.to_string());
         }

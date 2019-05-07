@@ -19,3 +19,4 @@ pub mod window;
 
 pub use crate::emulator::Emulator;
 pub use crate::shell::start_shell;
+pub use crate::shell::start_shell_using_args;
