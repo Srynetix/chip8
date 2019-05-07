@@ -17,7 +17,11 @@ fn test_assembler_cmd() {
     fs::write(&tmppath, example).expect("failed to write to file");
 
     // Start executable in assembly mode
-    chip8::start_shell_using_args(&[String::from("-a"), String::from(outpath.to_str().unwrap()), String::from(tmppath.to_str().unwrap())]);
+    chip8::start_shell_using_args(&[
+        String::from("-a"),
+        String::from(outpath.to_str().unwrap()),
+        String::from(tmppath.to_str().unwrap()),
+    ]);
 
     // Read the output file
     let cartridge = Cartridge::load_from_path(&outpath).expect("failed to read cartridge");
