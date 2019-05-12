@@ -137,7 +137,9 @@ fn parse_arg_token(arg: &str) -> CResult<ArgToken> {
             // Key.
             Ok(ArgToken::Key)
         } else {
-            Err(Box::new(BadInstruction("bad instruction".to_owned())))
+            // Byte.
+            let byte = convert_hex_byte(arg).unwrap();
+            Ok(ArgToken::Byte(byte))
         }
     } else {
         Err(Box::new(BadInstruction("bad instruction".to_owned())))
@@ -528,6 +530,7 @@ impl Assembler {
     pub fn from_path<P: AsRef<Path>>(path: P) -> CResult<Self> {
         let mut file = File::open(path.as_ref())?;
 
+        debug!("reading assembler code from {:?}", path.as_ref());
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
 
@@ -564,7 +567,7 @@ impl Assembler {
     ///
     pub fn assemble_line_from_str(&self, line: &str) -> Option<Instruction> {
         lazy_static! {
-            static ref RE: Regex = Regex::new(r"((?P<line>[0-9A-Z]{4})\|)?( \((?P<opcode>[0-9A-Z]{4})\) )? ?((?P<instr>[A-Z0-9, ]+))?(;(?P<comment>.*))?").unwrap();
+            static ref RE: Regex = Regex::new(r"((?P<line>[0-9A-Z]{4})\|)?( \((?P<opcode>[0-9A-Z]{4})\) )? ?((?P<instr>[A-Z0-9, \[\]]+))?(;(?P<comment>.*))?").unwrap();
         }
 
         let caps: Vec<_> = RE.captures_iter(line).collect();
@@ -603,6 +606,7 @@ impl Assembler {
     ///
     pub fn assemble_data(&self) -> CResult<Vec<C8Byte>> {
         // Generate instructions.
+        debug!("assembling instructions ...");
         let mut data: Vec<C8Byte> = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
         for line in self.contents.split('\n') {
             let instruction = self.assemble_line_from_str(line);
@@ -614,6 +618,7 @@ impl Assembler {
                 data.push(b2);
             }
         }
+        debug!("{} instructions assembled", data.len());
 
         Ok(data)
     }
@@ -699,6 +704,14 @@ mod tests {
         );
         assert_eq!(assembler.assemble_line_from_str(comment_example), None);
         assert_eq!(assembler.assemble_line_from_str(comment2_example), None);
+
+        let test_str = "0254| (F065)  LD V0, [I]           ; read registers V0 through V0 from memory starting at location I";
+        assert_eq!(assembler.assemble_line_from_str(test_str), Some(Instruction {
+            line: Some(0x0254),
+            opcode: Some(0xF065),
+            words: "LD V0, [I]".to_owned(),
+            comment: Some("read registers V0 through V0 from memory starting at location I".to_owned())
+        }));
     }
 
     #[test]
@@ -714,6 +727,14 @@ mod tests {
         };
 
         assert_eq!(inst.resolve().unwrap(), 0x120E);
+
+        let inst = Instruction {
+            line: None,
+            opcode: None,
+            words: "SCRD 1".to_owned(),
+            comment: None
+        };
+        assert_eq!(inst.resolve().unwrap(), 0x00C1);
     }
 
     #[test]
