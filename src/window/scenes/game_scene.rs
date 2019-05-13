@@ -63,7 +63,7 @@ impl Scene for GameScene {
         let game_path = ctx.get_cache_data("selected_game_path").unwrap();
 
         self.game_name = Cartridge::get_game_name(Path::new(&game_path));
-        self.cartridge = Cartridge::load_from_games_directory(&game_path).expect("bad game name");
+        self.cartridge = Cartridge::load_from_path(&game_path).expect("bad game name");
 
         self.title_frame
             .set_title(&format!("GAME - {}", self.game_name));

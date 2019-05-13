@@ -109,7 +109,7 @@ impl DebugScene {
 impl Scene for DebugScene {
     fn init(&mut self, ctx: &mut SceneContext) {
         let game_path = ctx.get_cache_data("selected_game_path").unwrap();
-        let cartridge = Cartridge::load_from_games_directory(&game_path).expect("bad game name");
+        let cartridge = Cartridge::load_from_path(&game_path).expect("bad game name");
 
         self.game_name = Cartridge::get_game_name(Path::new(&game_path));
         self.title_frame

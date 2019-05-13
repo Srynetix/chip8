@@ -209,7 +209,7 @@ pub fn words_to_opcode(words: &str) -> CResult<OpCode> {
     let word = cap.name("opcode").unwrap().as_str();
     let args = cap
         .name("args")
-        .map(|x| x.as_str().split(',').map(|y| y.trim()).collect::<Vec<_>>())
+        .map(|x| x.as_str().split(',').map(str::trim).collect::<Vec<_>>())
         .unwrap_or_else(|| vec![]);
 
     let opcode = match word {
@@ -706,12 +706,17 @@ mod tests {
         assert_eq!(assembler.assemble_line_from_str(comment2_example), None);
 
         let test_str = "0254| (F065)  LD V0, [I]           ; read registers V0 through V0 from memory starting at location I";
-        assert_eq!(assembler.assemble_line_from_str(test_str), Some(Instruction {
-            line: Some(0x0254),
-            opcode: Some(0xF065),
-            words: "LD V0, [I]".to_owned(),
-            comment: Some("read registers V0 through V0 from memory starting at location I".to_owned())
-        }));
+        assert_eq!(
+            assembler.assemble_line_from_str(test_str),
+            Some(Instruction {
+                line: Some(0x0254),
+                opcode: Some(0xF065),
+                words: "LD V0, [I]".to_owned(),
+                comment: Some(
+                    "read registers V0 through V0 from memory starting at location I".to_owned()
+                )
+            })
+        );
     }
 
     #[test]
@@ -732,7 +737,7 @@ mod tests {
             line: None,
             opcode: None,
             words: "SCRD 1".to_owned(),
-            comment: None
+            comment: None,
         };
         assert_eq!(inst.resolve().unwrap(), 0x00C1);
     }
