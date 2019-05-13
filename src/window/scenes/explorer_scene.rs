@@ -96,14 +96,26 @@ impl Scene for ExplorerScene {
                 self.game_cursor = modulo(self.game_cursor + 1, self.game_list.len() as i32)
             }
             Keycode::F3 => {
+                let mut game_dir = Cartridge::get_games_directory();
                 let game = &self.game_list[self.game_cursor as usize];
-                ctx.set_cache_data("selected_game_path", game.clone());
+                game_dir.push(game);
+
+                ctx.set_cache_data(
+                    "selected_game_path",
+                    String::from(game_dir.to_str().unwrap()),
+                );
                 ctx.set_current_scene("debug");
             }
             Keycode::Escape => ctx.set_current_scene("home"),
             Keycode::Return => {
+                let mut game_dir = Cartridge::get_games_directory();
                 let game = &self.game_list[self.game_cursor as usize];
-                ctx.set_cache_data("selected_game_path", game.clone());
+                game_dir.push(game);
+
+                ctx.set_cache_data(
+                    "selected_game_path",
+                    String::from(game_dir.to_str().unwrap()),
+                );
                 ctx.set_current_scene("game");
             }
             _ => {}

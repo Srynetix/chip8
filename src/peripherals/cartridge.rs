@@ -4,11 +4,11 @@ use std::env;
 use std::error::Error;
 use std::fmt;
 use std::fs::File;
+use std::fs::metadata;
 use std::fs::OpenOptions;
 use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
-
 use walkdir;
 
 use crate::core::error::CResult;
@@ -21,13 +21,6 @@ use super::memory::INITIAL_MEMORY_POINTER;
 pub const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
 /// Empty game name.
 pub const EMPTY_GAME_NAME: &str = "<EMPTY>";
-
-/// Available extensions.
-///
-/// - No extension ("")
-/// - CH8 extension (.ch8/.CH8)
-///
-const AVAILABLE_EXTENSIONS: [&str; 5] = ["", "ch8", "CH8", "c8k", "C8K"];
 
 /// Cartridge type.
 pub struct Cartridge {
@@ -77,36 +70,6 @@ impl Cartridge {
         self.data = data;
     }
 
-    /// Get game path.
-    ///
-    /// Automatically add extension if not in name.
-    /// Supported extensions are: "", "ch8", "CH8".
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - Game name.
-    ///
-    /// # Returns
-    ///
-    /// * Game path result.
-    ///
-    fn get_game_path(name: &str) -> CResult<String> {
-        // Concat games directory to path.
-        let mut game_path = Cartridge::get_games_directory();
-        game_path.push(name);
-
-        for ext in &AVAILABLE_EXTENSIONS {
-            game_path.set_extension(ext);
-            debug!("searching for game {:?}...", game_path);
-
-            if game_path.exists() {
-                return Ok(String::from(game_path.to_str().unwrap()));
-            }
-        }
-
-        Err(Box::new(MissingCartridgeError(name.to_string())))
-    }
-
     /// Get game name from path.
     ///
     /// # Arguments
@@ -143,7 +106,7 @@ impl Cartridge {
 
         match path.extension() {
             Some(ext) => match ext.to_string_lossy().as_ref() {
-                "ch8" | "CH8" | "c8k" | "C8K" => true,
+                "ch8" | "CH8" => true,
                 _ => false,
             },
             None => true,
@@ -162,9 +125,14 @@ impl Cartridge {
 
         for entry in walkdir::WalkDir::new(game_dir.to_str().unwrap())
             .into_iter()
-            .filter_map(|e| e.ok())
+            .filter_map(Result::ok)
         {
             // Remove game_dir from entry.
+            let mdata = metadata(entry.path()).unwrap();
+            if mdata.is_dir() {
+                continue;
+            }
+
             let fname = entry.path().strip_prefix(&game_dir).unwrap();
             if Self::check_game_extension(&fname) {
                 res.push(fname.to_string_lossy().into_owned());
@@ -208,28 +176,6 @@ impl Cartridge {
         Ok(())
     }
 
-    /// Load cartridge from games directory.
-    ///
-    /// # Arguments
-    ///
-    /// * `name` - Game name.
-    ///
-    /// # Returns
-    ///
-    /// * Cartridge result.
-    ///
-    pub fn load_from_games_directory(name: &str) -> CResult<Cartridge> {
-        let game_path = Cartridge::get_game_path(name)?;
-        let mut file = File::open(&game_path)?;
-
-        let mut contents = Vec::with_capacity(CARTRIDGE_MAX_SIZE);
-        file.read_to_end(&mut contents)?;
-
-        // Strip path.
-        let game_name = Self::get_game_name(Path::new(&game_path));
-        Cartridge::load_from_string(&game_name, &game_path, &contents)
-    }
-
     /// Load cartridge from bytes.
     ///
     /// # Arguments
@@ -260,7 +206,7 @@ impl Cartridge {
     ///
     /// * Games directory.
     ///
-    fn get_games_directory() -> PathBuf {
+    pub fn get_games_directory() -> PathBuf {
         let cargo_path = match env::var("CARGO_MANIFEST_DIR") {
             Ok(path) => path,
             Err(_) => ".".to_string(),
@@ -431,10 +377,10 @@ mod tests {
     #[test]
     fn test_game_extension() {
         assert!(Cartridge::check_game_extension(Path::new("TOTO.ch8")));
-        assert!(Cartridge::check_game_extension(Path::new("TOTO.c8k")));
-        assert!(Cartridge::check_game_extension(Path::new("TEST/TOTO.c8k")));
         assert!(Cartridge::check_game_extension(Path::new("TEST/TOTO")));
+        assert!(!Cartridge::check_game_extension(Path::new("TOTO.c8k")));
         assert!(!Cartridge::check_game_extension(Path::new("TOTO.txt")));
+        assert!(!Cartridge::check_game_extension(Path::new("TEST/TOTO.c8k")));
         assert!(!Cartridge::check_game_extension(Path::new("TEST/TOTO.bat")));
         assert!(!Cartridge::check_game_extension(Path::new("")));
     }

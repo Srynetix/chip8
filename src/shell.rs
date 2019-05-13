@@ -35,7 +35,7 @@ pub fn start_shell_using_args(args: &[String]) {
         .about("CHIP-8 emulator")
         .arg(
             Arg::with_name("file")
-                .value_name("FILENAME")
+                .value_name("INPUT_FILE")
                 .help("cartridge path")
                 .takes_value(true),
         )
@@ -43,6 +43,7 @@ pub fn start_shell_using_args(args: &[String]) {
             Arg::with_name("disassemble")
                 .long("disassemble")
                 .short("d")
+                .value_name("OUTPUT_FILE")
                 .help("disassemble cartridge to file (use '-' to trace in console)")
                 .takes_value(true),
         )
@@ -52,6 +53,7 @@ pub fn start_shell_using_args(args: &[String]) {
                 .long("breakpoint")
                 .multiple(true)
                 .number_of_values(1)
+                .value_name("ADDR")
                 .help("add breakpoint at address")
                 .takes_value(true),
         )
@@ -65,6 +67,7 @@ pub fn start_shell_using_args(args: &[String]) {
             Arg::with_name("trace")
                 .short("t")
                 .long("trace")
+                .value_name("OUTPUT_FILE")
                 .help("trace execution to file")
                 .takes_value(true),
         )
@@ -78,8 +81,8 @@ pub fn start_shell_using_args(args: &[String]) {
             Arg::with_name("assemble")
                 .long("assemble")
                 .short("a")
-                .help("assemble code")
-                .value_name("OUTPUT")
+                .help("assemble code to create cartridge")
+                .value_name("OUTPUT_FILE")
                 .takes_value(true),
         )
         .arg(Arg::with_name("gui").long("gui").help("GUI mode"));
@@ -123,7 +126,8 @@ pub fn parse_args(matches: &ArgMatches<'_>) {
             process::exit(1);
         }
     } else if matches.is_present("assemble") {
-        // Assembly mode.
+        // Assembler mode.
+        println!("assembler mode");
         let cartridge_path = match matches.value_of("file") {
             Some(f) => f,
             None => {

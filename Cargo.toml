@@ -1,26 +1,26 @@
 [package]
 name = "chip8"
-version = "0.13.0"
+version = "0.14.0"
 authors = ["Denis BOURGE <denis.bourge@sharingcloud.com>"]
 edition = "2018"
 build = "build.rs"
 
 [dependencies]
-lazy_static = "1.2"
-rand = "0.6"
-log = "0.4"
-time = "0.1"
+bincode = "1.1"
+chrono = "0.4"
 clap = "2.32"
 fern = "0.5"
+lazy_static = "1.2"
+log = "0.4"
 num = "0.2"
-chrono = "0.4"
-bincode = "1.1"
-walkdir = "2.2.7"
+rand = "0.6"
+regex = "1"
+rustyline = "3.0"
 serde = "1.0"
 serde_derive = "1.0"
 tempdir = "0.3.7"
-rustyline = "3.0"
-regex = "1"
+time = "0.1"
+walkdir = "2.2.7"
 
 [dependencies.sdl2]
 version = "0.32.1"
