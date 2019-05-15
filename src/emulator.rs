@@ -36,9 +36,18 @@ pub enum EmulationState {
     WaitForDelay,
 }
 
+/// Tracefile handle.
+#[derive(Debug)]
+pub enum TracefileHandle {
+    /// File
+    File(File),
+    /// Stdout
+    Stdout,
+}
+
 /// Emulator context.
 pub struct EmulatorContext {
-    tracefile_handle: Option<File>,
+    tracefile_handle: Option<TracefileHandle>,
     timer_frametime: PreciseTime,
     cpu_frametime: PreciseTime,
     frametime: PreciseTime,
@@ -74,13 +83,19 @@ impl EmulatorContext {
     ///
     pub fn prepare_tracefile(&mut self, tracefile: &Option<String>) {
         self.tracefile_handle = match tracefile {
-            Some(ref path) => Some(
-                OpenOptions::new()
-                    .write(true)
-                    .create(true)
-                    .open(path)
-                    .unwrap(),
-            ),
+            Some(ref path) => {
+                if path == "-" {
+                    Some(TracefileHandle::Stdout)
+                } else {
+                    Some(TracefileHandle::File(
+                        OpenOptions::new()
+                            .write(true)
+                            .create(true)
+                            .open(path)
+                            .unwrap(),
+                    ))
+                }
+            }
             None => None,
         };
     }

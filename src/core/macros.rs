@@ -11,8 +11,11 @@
 #[macro_export]
 macro_rules! trace_exec {
     ($tracefile:expr, $format:expr, $($args:tt)*) => {
-        if let Some(ref mut tf) = $tracefile {
-            writeln!(tf, $format, $($args)*).unwrap();
+        if let Some(ref mut hndl) = $tracefile {
+            match hndl {
+                crate::emulator::TracefileHandle::Stdout => println!($format, $($args)*),
+                crate::emulator::TracefileHandle::File(ref mut file) => writeln!(file, $format, $($args)*).unwrap()
+            }
         }
     }
 }

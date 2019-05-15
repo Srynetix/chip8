@@ -44,7 +44,7 @@ pub fn start_shell_using_args(args: &[String]) {
                 .long("disassemble")
                 .short("d")
                 .value_name("OUTPUT_FILE")
-                .help("disassemble cartridge to file (use '-' to trace in console)")
+                .help("disassemble cartridge to file (use '-' to disassemble in console)")
                 .takes_value(true),
         )
         .arg(
@@ -68,7 +68,7 @@ pub fn start_shell_using_args(args: &[String]) {
                 .short("t")
                 .long("trace")
                 .value_name("OUTPUT_FILE")
-                .help("trace execution to file")
+                .help("trace execution to file (use '-' to trace in console)")
                 .takes_value(true),
         )
         .arg(
