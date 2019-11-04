@@ -1,8 +1,6 @@
 chip8
 =====
 
-[![CircleCI](https://circleci.com/gh/Srynetix/chip8.svg?style=svg)](https://circleci.com/gh/Srynetix/chip8)
-
 ![screen](assets/screen.gif)
 ![debugger](assets/debugger.gif)
 
