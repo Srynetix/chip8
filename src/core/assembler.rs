@@ -567,7 +567,7 @@ impl Assembler {
     ///
     pub fn assemble_line_from_str(&self, line: &str) -> Option<Instruction> {
         lazy_static! {
-            static ref RE: Regex = Regex::new(r"((?P<line>[0-9A-Z]{4})\|)?( \((?P<opcode>[0-9A-Z]{4})\) )? ?((?P<instr>[A-Z0-9, \[\]]+))?(;(?P<comment>.*))?").unwrap();
+            static ref RE: Regex = Regex::new(r"((?P<line>[0-9A-Z]{4})\|)?([ *]?\((?P<opcode>[0-9A-Z]{4})\) )? ?((?P<instr>[A-Z0-9, \[\]]+))?(;(?P<comment>.*))?").unwrap();
         }
 
         let caps: Vec<_> = RE.captures_iter(line).collect();
@@ -715,6 +715,16 @@ mod tests {
                 comment: Some(
                     "read registers V0 through V0 from memory starting at location I".to_owned()
                 )
+            })
+        );
+
+        assert_eq!(
+            assembler.assemble_line_from_str("0000|*(F065)  LD V0, [I] ; toto"),
+            Some(Instruction {
+                line: Some(0x0000),
+                opcode: Some(0xF065),
+                words: "LD V0, [I]".to_owned(),
+                comment: Some("toto".to_owned())
             })
         );
     }
