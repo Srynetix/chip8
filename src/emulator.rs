@@ -224,7 +224,7 @@ impl Emulator {
         // Handle delays.
         if self.cpu.peripherals.screen.is_scrolling() && self.cpu.sync_timer.get_value() == 0 {
             // Delay ok.
-            println!("SCROLL DELAY OK.");
+            self.cpu.peripherals.screen.apply_scroll();
         }
 
         // Reset sync timer.

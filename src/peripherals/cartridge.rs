@@ -12,7 +12,9 @@ use std::path::{Path, PathBuf};
 use walkdir;
 
 use crate::core::error::CResult;
-use crate::core::opcodes::{extract_opcode_from_array, get_opcode_enum, get_opcode_str};
+use crate::core::opcodes::{
+    extract_opcode_from_array, get_opcode_enum, get_opcode_str, is_opcode_schip,
+};
 use crate::core::types::{C8Addr, C8Byte};
 
 use super::memory::INITIAL_MEMORY_POINTER;
@@ -307,10 +309,12 @@ impl Cartridge {
         let mut ptr_value = INITIAL_MEMORY_POINTER;
 
         for i in 0..assembly.len() {
+            let schip_chr = if is_opcode_schip(code[i]) { "*" } else { " " };
+
             writeln!(
                 output_stream,
-                "{:04X}| ({:04X})  {:20} ; {}",
-                ptr_value, code[i], assembly[i], verbose[i]
+                "{:04X}|{}({:04X})  {:20} ; {}",
+                ptr_value, schip_chr, code[i], assembly[i], verbose[i]
             )
             .unwrap();
             ptr_value += 2;

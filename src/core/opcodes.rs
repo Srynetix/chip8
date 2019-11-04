@@ -612,3 +612,28 @@ pub fn extract_opcode_from_array(array: &[u8], ptr: usize) -> C8Addr {
         (C8Addr::from(array[ptr]) << 8) + C8Addr::from(array[ptr + 1])
     }
 }
+
+/// Check if opcode is SCHIP.
+///
+/// # Arguments
+///
+/// * `opcode`- Opcode
+///
+/// # Returns
+///
+/// * True/False
+pub fn is_opcode_schip(opcode: C8Addr) -> bool {
+    let opcode_enum = get_opcode_enum(opcode);
+    match opcode_enum {
+        OpCode::SCRD(_)
+        | OpCode::SCRR
+        | OpCode::SCRL
+        | OpCode::EXIT
+        | OpCode::LOW
+        | OpCode::HIGH
+        | OpCode::LDXSprite(_)
+        | OpCode::LDXS(_)
+        | OpCode::LDXR(_) => true,
+        _ => false,
+    }
+}

@@ -13,7 +13,7 @@ pub const FONT_CHAR_WIDTH: usize = 8;
 pub const FONT_CHAR_HEIGHT: usize = 5;
 
 /// System font data.
-static SYSTEM_FONT_DATA: &'static [C8Byte] = &[
+static SYSTEM_FONT_DATA: &[C8Byte] = &[
     0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
     0x20, 0x60, 0x20, 0x20, 0x70, // 1
     0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2

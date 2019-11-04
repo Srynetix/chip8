@@ -166,7 +166,7 @@ impl Debugger {
 
             match readline {
                 Ok(line) => {
-                    ctx.editor.add_history_entry(line.as_ref());
+                    ctx.editor.add_history_entry(&line);
                     let command = self.read_command(&line, stream);
 
                     match command {

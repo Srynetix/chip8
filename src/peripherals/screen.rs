@@ -30,7 +30,7 @@ pub enum ScreenMode {
 }
 
 /// Screen scroll direction.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub enum ScreenScrollDirection {
     /// Down.
     Down,
@@ -193,6 +193,58 @@ impl Screen {
         }
     }
 
+    /// Apply scroll.
+    pub fn apply_scroll(&mut self) {
+        let direction = self.data.scroll.direction;
+        let qty = self.data.scroll.lines;
+        let coef = self.get_screen_size_coef();
+
+        let data_sz = self.data.data.len();
+
+        match direction {
+            ScreenScrollDirection::Down => {
+                for idx in (0..data_sz).rev() {
+                    let y = idx / (VIDEO_MEMORY_WIDTH * coef);
+                    let offset = (VIDEO_MEMORY_WIDTH * coef) * qty as usize;
+
+                    if y == 0 {
+                        self.data.data[idx] = 0;
+                    } else if offset < idx {
+                        let target = idx - offset;
+                        self.data.data[idx] = self.data.data[target];
+                    }
+                }
+            }
+            ScreenScrollDirection::Left => {
+                for idx in 0..data_sz {
+                    let x = idx % (VIDEO_MEMORY_WIDTH * coef);
+
+                    if x > (VIDEO_MEMORY_WIDTH * coef) - 4 {
+                        self.data.data[idx] = 0;
+                    } else {
+                        let target = idx + 4;
+                        self.data.data[idx] = self.data.data[target];
+                    }
+                }
+            }
+            ScreenScrollDirection::Right => {
+                for idx in 0..data_sz {
+                    let x = idx % (VIDEO_MEMORY_WIDTH * coef);
+
+                    if x < 4 {
+                        self.data.data[idx] = 0;
+                    } else {
+                        let target = idx - 4;
+                        self.data.data[idx] = self.data.data[target];
+                    }
+                }
+            }
+            _ => (),
+        }
+
+        self.data.scroll.scrolling = false;
+    }
+
     /// Toggle pixel position.
     ///
     /// # Arguments
@@ -234,10 +286,16 @@ impl Screen {
     /// * Result.
     ///
     pub fn render(&mut self, origin_x: u32, origin_y: u32, renderer: &mut WindowCanvas) -> CResult {
+        let scale = match self.data.mode {
+            ScreenMode::Standard => RENDERER_SCALE,
+            ScreenMode::Extended => RENDERER_SCALE / 2,
+        };
+        let coef = self.get_screen_size_coef();
+
         // Render to surface.
         for (pos, px) in self.data.data.iter().enumerate() {
-            let x = pos % VIDEO_MEMORY_WIDTH;
-            let y = pos / VIDEO_MEMORY_WIDTH;
+            let x = pos % (VIDEO_MEMORY_WIDTH * coef);
+            let y = pos / (VIDEO_MEMORY_WIDTH * coef);
 
             let alpha = &self.data.alpha[pos];
 
@@ -245,10 +303,10 @@ impl Screen {
             renderer.set_draw_color(color);
 
             renderer.fill_rect(rectf!(
-                origin_x as i32 + (x * RENDERER_SCALE) as i32,
-                origin_y as i32 + (y * RENDERER_SCALE) as i32,
-                RENDERER_SCALE as u32,
-                RENDERER_SCALE as u32
+                origin_x as i32 + (x * scale) as i32,
+                origin_y as i32 + (y * scale) as i32,
+                scale as u32,
+                scale as u32
             ))?;
         }
 

@@ -86,7 +86,7 @@ pub struct SceneManager {
     /// Last loaded scene.
     pub last_loaded_scene: Option<String>,
     /// Scenes.
-    pub scenes: HashMap<String, Box<Scene>>,
+    pub scenes: HashMap<String, Box<dyn Scene>>,
 }
 
 impl Default for SceneManager {
@@ -119,7 +119,7 @@ impl SceneManager {
     ///
     /// * Scene option.
     ///
-    pub fn get_scene(&mut self, name: &str) -> Option<&mut Scene> {
+    pub fn get_scene(&mut self, name: &str) -> Option<&mut dyn Scene> {
         if let Some(scene) = self.scenes.get_mut(name) {
             Some(&mut **scene)
         } else {
@@ -134,7 +134,7 @@ impl SceneManager {
     /// * `name` - Scene name.
     /// * `scene` - Scene box.
     ///
-    pub fn register_scene(&mut self, name: &str, scene: Box<Scene>) {
+    pub fn register_scene(&mut self, name: &str, scene: Box<dyn Scene>) {
         self.scenes.insert(String::from(name), scene);
     }
 
@@ -148,7 +148,7 @@ impl SceneManager {
     ///
     /// * Scene option.
     ///
-    pub fn get_current_scene(&mut self, ctx: &mut SceneContext) -> Option<&mut Scene> {
+    pub fn get_current_scene(&mut self, ctx: &mut SceneContext) -> Option<&mut dyn Scene> {
         let name = ctx.current_scene_name.as_ref().cloned();
 
         if let Some(name) = name {
