@@ -9,6 +9,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Install dependencies
+      run: apt-get install libsdl2-dev libsdl2-ttf-dev -y
     - name: Build
       run: cargo build --verbose
     - name: Check lints
