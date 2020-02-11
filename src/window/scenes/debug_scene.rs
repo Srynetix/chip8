@@ -7,8 +7,8 @@ use sdl2::keyboard::Keycode;
 use sdl2::EventPump;
 
 use crate::core::error::CResult;
-use crate::debugger::{Command, Debugger, DebuggerContext, DebuggerState, DebuggerStream};
-use crate::emulator::{Emulator, EmulatorContext};
+use crate::debugger::{Command, Debugger, DebuggerContext, DebuggerStream};
+use crate::emulator::{EmulationState, Emulator, EmulatorContext};
 use crate::peripherals::cartridge::Cartridge;
 use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
 use crate::rectf;
@@ -266,7 +266,7 @@ impl Scene for DebugScene {
             &mut self.debugger_stream,
         );
 
-        if let DebuggerState::Quit = state {
+        if let EmulationState::Quit = state {
             ctx.set_current_scene("explorer");
         }
     }

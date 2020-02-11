@@ -11,7 +11,7 @@ use sdl2::EventPump;
 use crate::core::cpu::CPU;
 use crate::core::opcodes::{get_opcode_enum, get_opcode_str};
 use crate::core::types::{convert_hex_addr, C8Addr};
-use crate::emulator::{Emulator, EmulatorContext};
+use crate::emulator::{EmulationState, Emulator, EmulatorContext};
 use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
 
 use context::DebuggerMode;
@@ -22,15 +22,6 @@ pub use stream::DebuggerStream;
 
 /// Debugger.
 pub struct Debugger {}
-
-/// Debugger state.
-#[derive(Debug)]
-pub enum DebuggerState {
-    /// Quit.
-    Quit,
-    /// Normal.
-    Normal,
-}
 
 /// Debugger command.
 #[derive(Clone, Debug, PartialEq)]
@@ -102,11 +93,14 @@ impl Debugger {
         debug_ctx: &mut DebuggerContext,
         pump: &mut EventPump,
         stream: &mut DebuggerStream,
-    ) -> DebuggerState {
+    ) -> EmulationState {
         // Should quit?
         if debug_ctx.should_quit {
-            return DebuggerState::Quit;
+            return EmulationState::Quit;
         }
+
+        // Emulator step result
+        let mut emulator_step_result = EmulationState::Normal;
 
         // Check for breakpoint.
         if debug_ctx.is_continuing && !debug_ctx.breakpoint_hit {
@@ -121,7 +115,7 @@ impl Debugger {
         // Step.
         if debug_ctx.is_stepping || debug_ctx.is_continuing {
             emulator.cpu.peripherals.input.process_input(pump);
-            emulator.step(emulator_ctx);
+            emulator_step_result = emulator.step(emulator_ctx);
 
             // Just moved.
             debug_ctx.has_moved = true;
@@ -149,7 +143,7 @@ impl Debugger {
             }
         }
 
-        DebuggerState::Normal
+        emulator_step_result
     }
 
     /// Start prompt.

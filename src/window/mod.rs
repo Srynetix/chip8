@@ -15,8 +15,8 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 
 use crate::core::error::CResult;
-use crate::debugger::{Debugger, DebuggerContext, DebuggerState, DebuggerStream};
-use crate::emulator::{Emulator, EmulatorContext};
+use crate::debugger::{Debugger, DebuggerContext, DebuggerStream};
+use crate::emulator::{EmulationState, Emulator, EmulatorContext};
 use crate::peripherals::cartridge::Cartridge;
 
 use self::draw::{DrawContext, SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH};
@@ -26,6 +26,8 @@ use self::scenes::debug_scene::DebugScene;
 use self::scenes::explorer_scene::ExplorerScene;
 use self::scenes::game_scene::GameScene;
 use self::scenes::home_scene::HomeScene;
+
+const WINDOW_TITLE: &str = "CHIP-8 Emulator GUI";
 
 /// Start window GUI.
 ///
@@ -40,7 +42,7 @@ pub fn start_window_gui() -> CResult {
     let ttf_context = sdl2::ttf::init().map_err(|e| e.to_string())?;
 
     let window = video_subsys
-        .window("CHIP-8 Emulator GUI", WINDOW_WIDTH, WINDOW_HEIGHT)
+        .window(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT)
         .position_centered()
         .opengl()
         .build()
@@ -121,7 +123,7 @@ pub fn start_window_cli(
     let mut event_pump = sdl_context.event_pump()?;
 
     let window = video_subsys
-        .window("CHIP-8 Emulator CLI", SCREEN_WIDTH, SCREEN_HEIGHT)
+        .window(WINDOW_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT)
         .position_centered()
         .opengl()
         .build()
@@ -194,8 +196,18 @@ pub fn start_window_cli(
             &mut stream,
         );
 
-        if let DebuggerState::Quit = state {
-            break 'running;
+        match state {
+            EmulationState::Quit => break 'running,
+            EmulationState::WaitForInput => {
+                // Change window title
+                canvas
+                    .window_mut()
+                    .set_title(&format!("{} [WAITING FOR INPUT]", WINDOW_TITLE))?;
+            }
+            _ => {
+                // Reset window title
+                canvas.window_mut().set_title(WINDOW_TITLE)?;
+            }
         }
     }
 
