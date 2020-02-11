@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use log::debug;
+
 use crate::core::types::C8Addr;
 
 /// Breakpoints.

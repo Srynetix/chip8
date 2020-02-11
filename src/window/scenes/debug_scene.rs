@@ -11,6 +11,7 @@ use crate::debugger::{Command, Debugger, DebuggerContext, DebuggerState, Debugge
 use crate::emulator::{Emulator, EmulatorContext};
 use crate::peripherals::cartridge::Cartridge;
 use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
+use crate::rectf;
 use crate::window::draw::{
     clear_screen, DrawContext, SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_WIDTH,
 };

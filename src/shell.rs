@@ -12,7 +12,7 @@ use super::peripherals::memory::INITIAL_MEMORY_POINTER;
 use super::window::{start_window_cli, start_window_gui};
 
 use clap::{App, Arg, ArgMatches};
-use log;
+use log::{self, debug};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 

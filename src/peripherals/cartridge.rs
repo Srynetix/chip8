@@ -3,8 +3,8 @@
 use std::env;
 use std::error::Error;
 use std::fmt;
-use std::fs::File;
 use std::fs::metadata;
+use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
 use std::io::prelude::*;

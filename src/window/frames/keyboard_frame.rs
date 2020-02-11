@@ -2,11 +2,13 @@
 
 use std::collections::HashMap;
 
+use lazy_static::lazy_static;
 use sdl2::pixels::Color;
 
 use crate::core::error::CResult;
 use crate::core::types::C8Byte;
 use crate::emulator::Emulator;
+use crate::rectf;
 use crate::window::draw::{draw_text_ex, DrawContext};
 use crate::window::frame::Frame;
 

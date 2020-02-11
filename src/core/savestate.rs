@@ -7,6 +7,7 @@ use std::io::{Read, Write};
 use std::path::Path;
 
 use bincode::{deserialize, serialize};
+use serde_derive::{Deserialize, Serialize};
 
 use crate::peripherals::input::InputState;
 use crate::peripherals::memory::Memory;

@@ -7,6 +7,7 @@ use sdl2::EventPump;
 use crate::core::error::CResult;
 use crate::core::math::modulo;
 use crate::peripherals::cartridge::Cartridge;
+use crate::rectf;
 use crate::window::draw::{clear_screen, DrawContext, WINDOW_HEIGHT, WINDOW_WIDTH};
 use crate::window::frames::list_frame::{ListFrame, ListFrameData};
 use crate::window::frames::status_frame::StatusFrame;

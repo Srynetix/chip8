@@ -1,6 +1,7 @@
 //! Title frame.
 
 use crate::core::error::CResult;
+use crate::rectf;
 use crate::window::draw::{draw_text, DrawContext, Rect, WINDOW_WIDTH};
 use crate::window::frame::Frame;
 

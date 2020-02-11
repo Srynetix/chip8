@@ -2,6 +2,7 @@
 
 use crate::core::error::CResult;
 use crate::emulator::Emulator;
+use crate::rectf;
 use crate::window::draw::{DrawContext, SCREEN_HEIGHT, SCREEN_WIDTH};
 use crate::window::frame::Frame;
 

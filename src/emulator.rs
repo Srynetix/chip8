@@ -10,6 +10,7 @@ use super::core::error::CResult;
 use super::core::opcodes;
 use super::core::savestate::{MissingSaveState, SaveState};
 use super::peripherals::cartridge::Cartridge;
+use super::trace_exec;
 
 const TIMER_FRAME_LIMIT: i64 = 16;
 const CPU_FRAME_LIMIT: i64 = 2;
@@ -158,7 +159,7 @@ impl Emulator {
         let filename = format!("{}.sav", name);
         let savestate = SaveState::read_from_file(&filename);
         match savestate {
-            None => Err(Box::new(MissingSaveState(filename.clone()))),
+            None => Err(Box::new(MissingSaveState(filename))),
             Some(ss) => {
                 self.cpu.load_savestate(ss);
                 Ok(())

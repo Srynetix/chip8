@@ -9,6 +9,7 @@ use sdl2::VideoSubsystem;
 pub use sdl2::rect::Rect;
 
 use crate::core::error::CResult;
+use crate::rectf;
 
 use super::font::FontHandler;
 

@@ -2,6 +2,8 @@
 
 use std::fmt;
 
+use serde_derive::{Deserialize, Serialize};
+
 use super::types::{C8Addr, C8Byte, C8RegIdx};
 
 /// Register count.

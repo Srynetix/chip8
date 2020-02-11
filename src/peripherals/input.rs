@@ -10,8 +10,10 @@
 use std::collections::HashMap;
 use std::fmt;
 
+use lazy_static::lazy_static;
 use sdl2::keyboard::{Keycode, Scancode};
 use sdl2::EventPump;
+use serde_derive::{Deserialize, Serialize};
 
 use crate::core::types::{C8Byte, C8RegIdx};
 

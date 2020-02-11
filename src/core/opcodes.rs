@@ -4,6 +4,8 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 
+use lazy_static::lazy_static;
+
 use super::types::{C8Addr, C8Byte, C8RegIdx};
 
 /// Bad instruction.
