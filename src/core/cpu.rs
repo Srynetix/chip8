@@ -457,13 +457,15 @@ impl CPU {
                 self.peripherals.screen.data.scroll.direction = ScreenScrollDirection::Down;
             }
             OpCode::SCRR => {
-                println!("executing SCRR");
+                self.peripherals.screen.data.scroll.scrolling = true;
+                self.peripherals.screen.data.scroll.direction = ScreenScrollDirection::Right;
             }
             OpCode::SCRL => {
-                println!("executing SCRL");
+                self.peripherals.screen.data.scroll.scrolling = true;
+                self.peripherals.screen.data.scroll.direction = ScreenScrollDirection::Left;
             }
             OpCode::EXIT => {
-                println!("executing EXIT");
+                return true;
             }
             OpCode::LOW => {
                 self.peripherals
@@ -476,15 +478,19 @@ impl CPU {
                     .reload_screen_for_mode(ScreenMode::Extended);
             }
             OpCode::DRWX(_reg1, _reg2) => {
+                // TODO: Implement
                 println!("executing DRWX");
             }
             OpCode::LDXSprite(_reg) => {
+                // TODO: Implement
                 println!("executing LDXSprite");
             }
             OpCode::LDXS(_reg) => {
+                // TODO: Implement
                 println!("executing LDXS");
             }
             OpCode::LDXR(_reg) => {
+                // TODO: Implement
                 println!("executing LDXR");
             }
 

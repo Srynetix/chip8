@@ -2,7 +2,6 @@
 
 use std::fmt;
 
-use sdl2;
 use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
 use serde_derive::{Deserialize, Serialize};
@@ -221,7 +220,7 @@ impl Screen {
                 for idx in 0..data_sz {
                     let x = idx % (VIDEO_MEMORY_WIDTH * coef);
 
-                    if x > (VIDEO_MEMORY_WIDTH * coef) - 4 {
+                    if x >= (VIDEO_MEMORY_WIDTH * coef) - 4 {
                         self.data.data[idx] = 0;
                     } else {
                         let target = idx + 4;
@@ -233,7 +232,7 @@ impl Screen {
                 for idx in 0..data_sz {
                     let x = idx % (VIDEO_MEMORY_WIDTH * coef);
 
-                    if x < 4 {
+                    if x <= 4 {
                         self.data.data[idx] = 0;
                     } else {
                         let target = idx - 4;

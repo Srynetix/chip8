@@ -9,7 +9,6 @@ use std::fs::OpenOptions;
 use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
-use walkdir;
 
 use crate::core::error::CResult;
 use crate::core::opcodes::{

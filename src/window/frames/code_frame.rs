@@ -52,7 +52,7 @@ impl CodeFrame {
         let char_height = (font.height() + 4) as usize;
         let rect_height = self.frame.rect.height() as usize;
 
-        (rect_height / char_height)
+        rect_height / char_height
     }
 
     /// Add text.
@@ -77,6 +77,11 @@ impl CodeFrame {
     /// * Result.
     ///
     pub fn render(&self, debug_ctx: &DebuggerContext, ctx: &mut DrawContext) -> CResult {
+        // If emulator is in continue mode, do not render code
+        if debug_ctx.is_continuing {
+            return self.frame.render(ctx);
+        }
+
         let font = ctx.font_handler.get_font("default", 8).unwrap();
         let mut cursor_y = self.frame.rect.y() + 4;
         let char_height = font.height() + 4;

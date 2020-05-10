@@ -101,7 +101,7 @@ impl ShellFrame {
         let char_height = (font.height() + 4) as usize;
         let rect_height = self.frame.rect.height() as usize;
 
-        (rect_height / char_height)
+        rect_height / char_height
     }
 
     /// Render buffer.

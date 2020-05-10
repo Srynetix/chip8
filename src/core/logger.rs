@@ -2,10 +2,6 @@
 
 use std::io;
 
-use chrono;
-use fern;
-use log;
-
 /// Initialize logger.
 ///
 /// # Arguments

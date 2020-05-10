@@ -9,6 +9,7 @@ pub mod scenemanager;
 pub mod scenes;
 
 use std::env;
+use std::time::Instant;
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -144,7 +145,45 @@ pub fn start_window_cli(
     let mut stream = DebuggerStream::new();
     stream.use_console(true);
 
+    let mut last_elapsed_time = Instant::now();
+    let mut fps_timer = Instant::now();
+    let cpu_multiplicator = 10;
+
     'running: loop {
+        let frame_time = last_elapsed_time.elapsed().as_millis() as f32 / 1000.0;
+
+        if fps_timer.elapsed().as_millis() > 2000 {
+            println!("FPS: {}", 1.0 / frame_time);
+
+            fps_timer = Instant::now();
+        }
+
+        for _ in 0..cpu_multiplicator {
+            // Update.
+            let state = debugger.step(
+                emulator,
+                emulator_ctx,
+                debug_ctx,
+                &mut event_pump,
+                &mut stream,
+            );
+
+            // Update state handling
+            match state {
+                EmulationState::Quit => break 'running,
+                EmulationState::WaitForInput => {
+                    // Change window title
+                    canvas
+                        .window_mut()
+                        .set_title(&format!("{} [WAITING FOR INPUT]", WINDOW_TITLE))?;
+                }
+                _ => {
+                    // Reset window title
+                    canvas.window_mut().set_title(WINDOW_TITLE)?;
+                }
+            }
+        }
+
         // Event handling.
         for event in event_pump.poll_iter() {
             match event {
@@ -182,33 +221,12 @@ pub fn start_window_cli(
             }
         }
 
+        last_elapsed_time = Instant::now();
+
         // Render.
         canvas.clear();
         emulator.cpu.peripherals.screen.render(0, 0, &mut canvas)?;
         canvas.present();
-
-        // Update.
-        let state = debugger.step(
-            emulator,
-            emulator_ctx,
-            debug_ctx,
-            &mut event_pump,
-            &mut stream,
-        );
-
-        match state {
-            EmulationState::Quit => break 'running,
-            EmulationState::WaitForInput => {
-                // Change window title
-                canvas
-                    .window_mut()
-                    .set_title(&format!("{} [WAITING FOR INPUT]", WINDOW_TITLE))?;
-            }
-            _ => {
-                // Reset window title
-                canvas.window_mut().set_title(WINDOW_TITLE)?;
-            }
-        }
     }
 
     Ok(())
