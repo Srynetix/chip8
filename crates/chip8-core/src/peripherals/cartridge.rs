@@ -10,11 +10,11 @@ use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
-use crate::core::error::CResult;
 use crate::core::opcodes::{
     extract_opcode_from_array, get_opcode_enum, get_opcode_str, is_opcode_schip,
 };
 use crate::core::types::{C8Addr, C8Byte};
+use crate::errors::CResult;
 
 use super::memory::INITIAL_MEMORY_POINTER;
 

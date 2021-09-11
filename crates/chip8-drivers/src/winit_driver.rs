@@ -7,9 +7,16 @@ use pixels::{Pixels, PixelsContext, SurfaceTexture};
 use winit::{dpi::LogicalSize, event::{Event, VirtualKeyCode}, event_loop::ControlFlow, window::Window};
 use winit_input_helper::WinitInputHelper;
 
-use crate::{Emulator, core::{error::CResult, types::C8Byte}, debugger::{Debugger, DebuggerContext, DebuggerStream}, emulator::{EmulationState, EmulatorContext}, peripherals::{cartridge::Cartridge, input::{INPUT_STATE_COUNT, InputState}}, window::constants::{SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WIDTH}};
+use chip8_core::{
+    errors::CResult,
+    core::types::C8Byte,
+    debugger::{Debugger, DebuggerContext, DebuggerStream},
+    emulator::{Emulator, EmulationState, EmulatorContext},
+    peripherals::{cartridge::Cartridge, input::{INPUT_STATE_COUNT, InputState}},
+    drivers::{SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WIDTH, InputInterface, WindowInterface}
+};
 
-use super::{InputInterface, WindowInterface, pixels_driver::PixelsRenderDriver};
+use super::pixels_driver::PixelsRenderDriver;
 
 /// Window driver for winit
 pub struct WinitWindowDriver;

@@ -9,9 +9,9 @@ use regex::Regex;
 use lazy_static::lazy_static;
 use log::debug;
 
-use crate::core::error::CResult;
 use crate::core::opcodes::{BadInstruction, OpCode};
 use crate::core::types::{convert_hex_addr, convert_hex_byte, C8Addr, C8Byte, C8RegIdx};
+use crate::errors::CResult;
 use crate::peripherals::cartridge::{Cartridge, CARTRIDGE_MAX_SIZE};
 
 /// Assembler.

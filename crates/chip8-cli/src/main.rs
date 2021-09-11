@@ -3,16 +3,16 @@
 use std::path::PathBuf;
 use std::process;
 
-use crate::core::error::CResult;
-use crate::drivers::WinitWindowDriver;
+use chip8_core::drivers::WindowInterface;
+use chip8_core::errors::CResult;
+use chip8_drivers::WinitWindowDriver;
 
-use super::core::assembler::Assembler;
-use super::core::logger::init_logger;
-use super::debugger::{Debugger, DebuggerContext};
-use super::emulator::{Emulator, EmulatorContext};
-use super::peripherals::cartridge::Cartridge;
-use super::peripherals::memory::INITIAL_MEMORY_POINTER;
-use super::window::{start_window_cli, start_window_cli_debug, start_window_gui};
+use chip8_core::core::assembler::Assembler;
+use chip8_core::core::logger::init_logger;
+use chip8_core::debugger::{Debugger, DebuggerContext};
+use chip8_core::emulator::{Emulator, EmulatorContext};
+use chip8_core::peripherals::cartridge::Cartridge;
+use chip8_core::peripherals::memory::INITIAL_MEMORY_POINTER;
 
 use argh::FromArgs;
 
@@ -40,8 +40,6 @@ pub enum SubCommands {
     Assemble(AssembleCommand),
     /// Disassemble command
     Disassemble(DisassembleCommand),
-    /// UI command
-    Ui(UiCommand)
 }
 
 /// play cartridge
@@ -96,13 +94,8 @@ pub struct DisassembleCommand {
     pub output: Option<PathBuf>,
 }
 
-/// start user interface
-#[derive(FromArgs)]
-#[argh(subcommand, name = "ui")]
-pub struct UiCommand {}
-
 /// Start shell.
-pub fn start_shell() -> CResult {
+fn main() -> CResult {
     let args: Args = argh::from_env();
     start_shell_using_args(args)
 }
@@ -124,13 +117,6 @@ fn parse_args(args: Args) -> CResult {
         .unwrap_or_else(|_| panic!("failed to initialize logger with level: {:?}", level));
 
     match args.nested {
-        SubCommands::Ui(_) => {
-            let driver = WinitWindowDriver::new();
-            if let Err(e) = start_window_gui(driver) {
-                eprintln!("execution error: {}", e);
-                process::exit(1);
-            }
-        },
         SubCommands::Assemble(cmd) => {
             let assembler = Assembler::from_path(&cmd.source).expect("error while reading assembly");
             let cartridge = assembler
@@ -163,9 +149,8 @@ fn parse_args(args: Args) -> CResult {
                 emulator.set_tracefile(&trace.to_string_lossy().to_string());
             }
 
-            let driver = WinitWindowDriver::new();
-            if let Err(e) = start_window_cli(
-                driver,
+            let mut driver = WinitWindowDriver::new();
+            if let Err(e) = driver.run_emulator(
                 emulator,
                 emulator_context,
                 cartridge,
@@ -199,9 +184,8 @@ fn parse_args(args: Args) -> CResult {
 
             debugger_context.register_breakpoint(INITIAL_MEMORY_POINTER);
 
-            let driver = WinitWindowDriver::new();
-            if let Err(e) = start_window_cli_debug(
-                driver,
+            let mut driver = WinitWindowDriver::new();
+            if let Err(e) = driver.run_debugger(
                 debugger,
                 debugger_context,
                 emulator,

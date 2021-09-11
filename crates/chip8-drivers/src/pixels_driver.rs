@@ -1,6 +1,6 @@
-use crate::core::error::CResult;
-
-use super::RenderInterface;
+use chip8_core::errors::CResult;
+use chip8_core::drivers::RenderInterface;
+use chip8_core::peripherals::screen::Color;
 
 pub struct PixelsRenderDriver<'a> {
     frame: &'a mut [u8]
@@ -15,7 +15,7 @@ impl<'a> PixelsRenderDriver<'a> {
 }
 
 impl<'a> RenderInterface for PixelsRenderDriver<'a> {
-    fn render_pixel(&mut self, origin_x: u32, origin_y: u32, x: usize, y: usize, scale: usize, color: crate::peripherals::screen::Color, frame_width: usize) -> CResult {
+    fn render_pixel(&mut self, origin_x: u32, origin_y: u32, x: usize, y: usize, scale: usize, color: Color, frame_width: usize) -> CResult {
         let cursor = ((origin_x + (x * scale * 4) as u32) + (origin_y + (y * scale * frame_width * 4) as u32)) as usize;
         for l in 0..scale {
             for m in 0..scale {

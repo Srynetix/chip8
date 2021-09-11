@@ -1,9 +1,18 @@
 //! Drivers.
 
-mod winit_driver;
-mod pixels_driver;
+use crate::{emulator::Emulator, debugger::{Debugger, DebuggerContext}, emulator::EmulatorContext, peripherals::{cartridge::Cartridge, input::InputState, screen::Color}};
+use super::errors::CResult;
 
-use crate::{Emulator, core::error::CResult, debugger::{Debugger, DebuggerContext}, emulator::EmulatorContext, peripherals::{cartridge::Cartridge, input::InputState, screen::Color}};
+/// Screen width.
+pub const SCREEN_WIDTH: u32 = 640;
+/// Screen height.
+pub const SCREEN_HEIGHT: u32 = 320;
+/// Window width.
+pub const WINDOW_WIDTH: u32 = 960;
+/// Window height.
+pub const WINDOW_HEIGHT: u32 = 720;
+/// Window title.
+pub const WINDOW_TITLE: &str = "CHIP-8 Emulator GUI";
 
 /// Window interface.
 pub trait WindowInterface {
@@ -28,6 +37,3 @@ pub trait RenderInterface {
     /// Render pixel.
     fn render_pixel(&mut self, origin_x: u32, origin_y: u32, x: usize, y: usize, scale: usize, color: Color, frame_width: usize) -> CResult;
 }
-
-pub use winit_driver::{WinitWindowDriver, WinitInputDriver};
-pub use pixels_driver::PixelsRenderDriver;

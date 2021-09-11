@@ -2,7 +2,6 @@
 
 pub mod assembler;
 pub mod cpu;
-pub mod error;
 pub mod font;
 pub mod logger;
 

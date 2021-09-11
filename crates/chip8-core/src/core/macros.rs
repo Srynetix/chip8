@@ -19,23 +19,3 @@ macro_rules! trace_exec {
         }
     }
 }
-
-/// Create rect.
-///
-/// # Arguments
-///
-/// - `x` - X value.
-/// - `y` - Y value.
-/// - `w` - W value.
-/// - `h` - H value.
-///
-/// # Returns
-///
-/// * Rect.
-///
-#[macro_export]
-macro_rules! rectf(
-    ($x:expr, $y:expr, $w:expr, $h:expr) => (
-        sdl2::rect::Rect::new($x as i32, $y as i32, $w as u32, $h as u32)
-    )
-);

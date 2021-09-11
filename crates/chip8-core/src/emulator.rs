@@ -4,9 +4,9 @@ use std::fs::{File, OpenOptions};
 use std::io::Write;
 
 use super::core::cpu::CPU;
-use super::core::error::CResult;
 use super::core::opcodes;
 use super::core::savestate::{MissingSaveState, SaveState};
+use super::errors::CResult;
 use super::peripherals::cartridge::Cartridge;
 use super::trace_exec;
 

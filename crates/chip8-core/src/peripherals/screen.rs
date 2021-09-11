@@ -4,10 +4,10 @@ use std::fmt;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::core::error::CResult;
 use crate::core::font::FONT_CHAR_WIDTH;
 use crate::core::types::C8Byte;
 use crate::drivers::RenderInterface;
+use crate::errors::CResult;
 
 /// Video memory width.
 pub const VIDEO_MEMORY_WIDTH: usize = 64;
