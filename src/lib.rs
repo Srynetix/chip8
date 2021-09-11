@@ -4,6 +4,7 @@
 
 pub mod core;
 pub mod debugger;
+pub mod drivers;
 pub mod emulator;
 pub mod peripherals;
 pub mod shell;

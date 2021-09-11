@@ -3,8 +3,6 @@
 use std::fs::{File, OpenOptions};
 use std::io::Write;
 
-use time::{self, PreciseTime};
-
 use super::core::cpu::CPU;
 use super::core::error::CResult;
 use super::core::opcodes;
@@ -12,8 +10,8 @@ use super::core::savestate::{MissingSaveState, SaveState};
 use super::peripherals::cartridge::Cartridge;
 use super::trace_exec;
 
-const TIMER_FRAME_LIMIT: i64 = 16;
-const CPU_FRAME_LIMIT: i64 = 2;
+const TIMER_FRAME_LIMIT: u64 = 16;
+const CPU_FRAME_LIMIT: u64 = 0;
 
 /// CHIP-8 emulator.
 #[derive(Default)]
@@ -49,18 +47,20 @@ pub enum TracefileHandle {
 /// Emulator context.
 pub struct EmulatorContext {
     tracefile_handle: Option<TracefileHandle>,
-    timer_frametime: PreciseTime,
-    cpu_frametime: PreciseTime,
-    frametime: PreciseTime,
+    timer_frametime: u64,
+    cpu_frametime: u64,
+
+    /// CPU multiplicator
+    pub cpu_multiplicator: u64,
 }
 
 impl Default for EmulatorContext {
     fn default() -> Self {
         Self {
             tracefile_handle: None,
-            timer_frametime: time::PreciseTime::now(),
-            cpu_frametime: time::PreciseTime::now(),
-            frametime: time::PreciseTime::now(),
+            cpu_multiplicator: 8,
+            timer_frametime: 0,
+            cpu_frametime: 0,
         }
     }
 }
@@ -183,9 +183,8 @@ impl Emulator {
         self.cpu.load_cartridge_data(cartridge);
 
         // Reset vars.
-        ctx.timer_frametime = time::PreciseTime::now();
-        ctx.cpu_frametime = time::PreciseTime::now();
-        ctx.frametime = time::PreciseTime::now();
+        ctx.timer_frametime = 0;
+        ctx.cpu_frametime = 0;
     }
 
     /// Step emulation.
@@ -235,8 +234,6 @@ impl Emulator {
 
         if ctx
             .cpu_frametime
-            .to(time::PreciseTime::now())
-            .num_milliseconds()
             >= cpu_framelimit
         {
             // Read next instruction.
@@ -261,21 +258,21 @@ impl Emulator {
 
             self.cpu.instruction_count += 1;
 
-            ctx.cpu_frametime = time::PreciseTime::now();
+            ctx.cpu_frametime = 0;
+        } else {
+            ctx.cpu_frametime += 1;
         }
 
         if ctx
             .timer_frametime
-            .to(time::PreciseTime::now())
-            .num_milliseconds()
             >= TIMER_FRAME_LIMIT
         {
             // Handle timers.
             self.cpu.decrement_timers();
-            ctx.timer_frametime = time::PreciseTime::now();
+            ctx.timer_frametime = 0;
+        } else {
+            ctx.timer_frametime += 1;
         }
-
-        ctx.frametime = time::PreciseTime::now();
 
         EmulationState::Normal
     }

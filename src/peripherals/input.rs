@@ -7,12 +7,8 @@
 //!     A 0 B F
 //!
 
-use std::collections::HashMap;
 use std::fmt;
 
-use lazy_static::lazy_static;
-use sdl2::keyboard::{Keycode, Scancode};
-use sdl2::EventPump;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::core::types::{C8Byte, C8RegIdx};
@@ -21,33 +17,6 @@ use crate::core::types::{C8Byte, C8RegIdx};
 pub const INPUT_STATE_COUNT: usize = 16;
 /// Input empty key.
 pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
-
-lazy_static! {
-    static ref KEY_BINDINGS: HashMap<C8Byte, Keycode> = {
-        let mut initial_binding = HashMap::new();
-        initial_binding.insert(0x1, Keycode::Num1);
-        initial_binding.insert(0x2, Keycode::Num2);
-        initial_binding.insert(0x3, Keycode::Num3);
-        initial_binding.insert(0xC, Keycode::Num4);
-
-        initial_binding.insert(0x4, Keycode::A);
-        initial_binding.insert(0x5, Keycode::Z);
-        initial_binding.insert(0x6, Keycode::E);
-        initial_binding.insert(0xD, Keycode::R);
-
-        initial_binding.insert(0x7, Keycode::Q);
-        initial_binding.insert(0x8, Keycode::S);
-        initial_binding.insert(0x9, Keycode::D);
-        initial_binding.insert(0xE, Keycode::F);
-
-        initial_binding.insert(0xA, Keycode::W);
-        initial_binding.insert(0x0, Keycode::X);
-        initial_binding.insert(0xB, Keycode::C);
-        initial_binding.insert(0xF, Keycode::V);
-
-        initial_binding
-    };
-}
 
 /// Input lock.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -179,26 +148,6 @@ impl InputState {
     ///
     pub fn new() -> Self {
         Default::default()
-    }
-
-    /// Process input.
-    ///
-    /// # Arguments
-    ///
-    /// * `event_pump` - Event pump.
-    ///
-    pub fn process_input(&mut self, event_pump: &mut EventPump) {
-        // Keyboard state
-        for key in 0..INPUT_STATE_COUNT {
-            let key8 = key as C8Byte;
-            let kb = Scancode::from_keycode(KEY_BINDINGS[&key8]).unwrap();
-
-            if event_pump.keyboard_state().is_scancode_pressed(kb) {
-                self.press(key8);
-            } else {
-                self.release(key8);
-            }
-        }
     }
 
     /// Wait for input.

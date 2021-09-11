@@ -2,14 +2,12 @@
 
 use std::fmt;
 
-use sdl2::pixels::Color;
-use sdl2::render::WindowCanvas;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::core::error::CResult;
 use crate::core::font::FONT_CHAR_WIDTH;
 use crate::core::types::C8Byte;
-use crate::rectf;
+use crate::drivers::RenderInterface;
 
 /// Video memory width.
 pub const VIDEO_MEMORY_WIDTH: usize = 64;
@@ -20,6 +18,32 @@ pub const RENDERER_SCALE: usize = 10;
 
 const PIXEL_FADE_COEFFICIENT: f32 = 0.8;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
+
+/// Color.
+pub struct Color {
+    /// Red.
+    pub r: u8,
+    /// Green.
+    pub g: u8,
+    /// Blue.
+    pub b: u8,
+    /// Alpha.
+    pub a: u8
+}
+
+impl Color {
+    /// Creates color from RGB components.
+    pub fn from_rgb(r: u8, g: u8, b: u8) -> Self {
+        Self::from_rgba(r, g, b, 255)
+    }
+
+    /// Creates color from RGBA components.
+    pub fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
+        Color {
+            r, g, b, a
+        }
+    }
+}
 
 /// Screen mode.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -274,41 +298,20 @@ impl Screen {
         flip
     }
 
-    /// Render screen.
-    ///
-    /// # Arguments
-    ///
-    /// * `origin_x` - X origin.
-    /// * `origin_y` - Y origin.
-    /// * `renderer` - Renderer.
-    ///
-    /// # Returns
-    ///
-    /// * Result.
-    ///
-    pub fn render(&mut self, origin_x: u32, origin_y: u32, renderer: &mut WindowCanvas) -> CResult {
+    /// Render pixels.
+    pub fn render_pixels(&mut self, origin_x: u32, origin_y: u32, frame_width: usize, driver: &mut impl RenderInterface) -> CResult {
         let scale = match self.data.mode {
             ScreenMode::Standard => RENDERER_SCALE,
             ScreenMode::Extended => RENDERER_SCALE / 2,
         };
         let coef = self.get_screen_size_coef();
 
-        // Render to surface.
         for (pos, px) in self.data.data.iter().enumerate() {
             let x = pos % (VIDEO_MEMORY_WIDTH * coef);
             let y = pos / (VIDEO_MEMORY_WIDTH * coef);
-
             let alpha = &self.data.alpha[pos];
-
             let color = color_from_byte(*px, *alpha);
-            renderer.set_draw_color(color);
-
-            renderer.fill_rect(rectf!(
-                origin_x as i32 + (x * scale) as i32,
-                origin_y as i32 + (y * scale) as i32,
-                scale as u32,
-                scale as u32
-            ))?;
+            driver.render_pixel(origin_x, origin_y, x, y, scale, color, frame_width)?;
         }
 
         self.fade_pixels();
@@ -389,7 +392,7 @@ impl fmt::Debug for Screen {
 
 fn color_from_byte(byte: C8Byte, alpha: C8Byte) -> Color {
     match byte {
-        0 => Color::RGB(alpha, alpha, alpha),
-        _ => Color::RGB(255, 255, 255),
+        0 => Color::from_rgb(alpha, alpha, alpha),
+        _ => Color::from_rgb(255, 255, 255),
     }
 }

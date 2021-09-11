@@ -281,12 +281,9 @@ impl Cartridge {
     ///
     /// * `output_file` - Output stream.
     ///
-    pub fn write_disassembly_to_file(&self, output_file: &str) {
-        if output_file == "-" {
-            println!("disassembly:");
-            self.write_disassembly_to_stream(&mut io::stdout());
-        } else {
-            println!("disassembly dumped to file {}", output_file);
+    pub fn write_disassembly_to_file(&self, output_file: Option<PathBuf>) {
+        if let Some(output_file) = output_file {
+            println!("disassembly dumped to file {}", output_file.display());
             let mut file_handle = OpenOptions::new()
                 .create(true)
                 .write(true)
@@ -294,6 +291,8 @@ impl Cartridge {
                 .unwrap();
 
             self.write_disassembly_to_stream(&mut file_handle);
+        } else {
+            self.write_disassembly_to_stream(&mut io::stdout());
         }
     }
 

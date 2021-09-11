@@ -258,13 +258,14 @@ impl Scene for DebugScene {
 
     fn keyup(&mut self, _ctx: &mut SceneContext, _kc: Keycode) {}
     fn update(&mut self, ctx: &mut SceneContext, pump: &mut EventPump) {
-        let state = self.debugger.step(
-            &mut self.emulator,
-            &mut self.emulator_context,
-            &mut self.debugger_context,
-            pump,
-            &mut self.debugger_stream,
-        );
+        // let state = self.debugger.step(
+        //     &mut self.emulator,
+        //     &mut self.emulator_context,
+        //     &mut self.debugger_context,
+        //     pump,
+        //     &mut self.debugger_stream,
+        // );
+        let state = EmulationState::Normal;
 
         if let EmulationState::Quit = state {
             ctx.set_current_scene("explorer");

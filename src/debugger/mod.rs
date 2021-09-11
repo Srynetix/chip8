@@ -6,7 +6,6 @@ mod errors;
 mod stream;
 
 use rustyline::error::ReadlineError;
-use sdl2::EventPump;
 
 use crate::core::cpu::CPU;
 use crate::core::opcodes::{get_opcode_enum, get_opcode_str};
@@ -79,7 +78,6 @@ impl Debugger {
     /// * `emulator_ctx` - Emulator context.
     /// * `debug_ctx` - Debugger context.
     /// * `cartridge` - Cartridge.
-    /// * `pump` - Event pump.
     /// * `stream` - Debugger stream.
     ///
     /// # Returns
@@ -91,7 +89,6 @@ impl Debugger {
         emulator: &mut Emulator,
         emulator_ctx: &mut EmulatorContext,
         debug_ctx: &mut DebuggerContext,
-        pump: &mut EventPump,
         stream: &mut DebuggerStream,
     ) -> EmulationState {
         // Should quit?
@@ -114,7 +111,6 @@ impl Debugger {
 
         // Step.
         if debug_ctx.is_stepping || debug_ctx.is_continuing {
-            emulator.cpu.peripherals.input.process_input(pump);
             emulator_step_result = emulator.step(emulator_ctx);
 
             // Just moved.

@@ -1,5 +1,7 @@
 //! CHIP-8 emulator.
 
-fn main() {
-    chip8::start_shell();
+use chip8::core::error::CResult;
+
+fn main() -> CResult {
+    chip8::start_shell()
 }

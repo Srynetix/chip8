@@ -95,7 +95,7 @@ impl Scene for GameScene {
 
     fn update(&mut self, _ctx: &mut SceneContext, pump: &mut EventPump) {
         // Process input.
-        self.emulator.cpu.peripherals.input.process_input(pump);
+        // self.emulator.cpu.peripherals.input.process_input(pump);
 
         // Step emulation.
         self.emulator.step(&mut self.emulator_context);
