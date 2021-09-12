@@ -9,3 +9,4 @@ chip8-core = { path = "../chip8-core" }
 chip8-drivers = { path = "../chip8-drivers" }
 argh = "0.1.6"
 log = "0.4"
+env_logger = "0.9.0"

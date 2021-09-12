@@ -1,20 +1,17 @@
 //! CHIP-8 shell.
 
-use std::path::PathBuf;
-use std::process;
-
-use chip8_core::drivers::WindowInterface;
-use chip8_core::errors::CResult;
-use chip8_drivers::WinitWindowDriver;
-
-use chip8_core::core::assembler::Assembler;
-use chip8_core::core::logger::init_logger;
-use chip8_core::debugger::{Debugger, DebuggerContext};
-use chip8_core::emulator::{Emulator, EmulatorContext};
-use chip8_core::peripherals::cartridge::Cartridge;
-use chip8_core::peripherals::memory::INITIAL_MEMORY_POINTER;
+use std::{path::PathBuf, process};
 
 use argh::FromArgs;
+use chip8_core::{
+    core::assembler::Assembler,
+    debugger::{Debugger, DebuggerContext},
+    drivers::WindowInterface,
+    emulator::{Emulator, EmulatorContext},
+    errors::CResult,
+    peripherals::{cartridge::Cartridge, memory::INITIAL_MEMORY_POINTER},
+};
+use chip8_drivers::WinitWindowDriver;
 
 /// CHIP-8 emulator
 #[derive(FromArgs)]
@@ -25,7 +22,7 @@ pub struct Args {
 
     /// subcommand
     #[argh(subcommand)]
-    pub nested: SubCommands
+    pub nested: SubCommands,
 }
 
 /// Subcommands
@@ -40,6 +37,8 @@ pub enum SubCommands {
     Assemble(AssembleCommand),
     /// Disassemble command
     Disassemble(DisassembleCommand),
+    /// Version command
+    Version(VersionCommand),
 }
 
 /// play cartridge
@@ -94,6 +93,11 @@ pub struct DisassembleCommand {
     pub output: Option<PathBuf>,
 }
 
+/// show version
+#[derive(FromArgs)]
+#[argh(subcommand, name = "version")]
+pub struct VersionCommand {}
+
 /// Start shell.
 fn main() -> CResult {
     let args: Args = argh::from_env();
@@ -107,18 +111,21 @@ pub fn start_shell_using_args(args: Args) -> CResult {
 
 /// Parse arguments.
 fn parse_args(args: Args) -> CResult {
-    let level = if args.verbose {
-        log::LevelFilter::Debug
-    } else {
-        log::LevelFilter::Info
-    };
-
-    init_logger(level)
-        .unwrap_or_else(|_| panic!("failed to initialize logger with level: {:?}", level));
+    env_logger::init();
 
     match args.nested {
+        SubCommands::Version(_) => {
+            let cmd_name = std::env::current_exe()
+                .unwrap()
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+            println!("{} {}", cmd_name, env!("CARGO_PKG_VERSION"));
+        }
         SubCommands::Assemble(cmd) => {
-            let assembler = Assembler::from_path(&cmd.source).expect("error while reading assembly");
+            let assembler =
+                Assembler::from_path(&cmd.source).expect("error while reading assembly");
             let cartridge = assembler
                 .assemble_cartridge()
                 .expect("error while assembling cartridge");
@@ -150,11 +157,7 @@ fn parse_args(args: Args) -> CResult {
             }
 
             let mut driver = WinitWindowDriver::new();
-            if let Err(e) = driver.run_emulator(
-                emulator,
-                emulator_context,
-                cartridge,
-            ) {
+            if let Err(e) = driver.run_emulator(emulator, emulator_context, cartridge) {
                 eprintln!("execution error: {}", e);
                 process::exit(1);
             }

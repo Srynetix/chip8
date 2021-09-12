@@ -5,22 +5,25 @@ mod context;
 mod errors;
 mod stream;
 
-use rustyline::error::ReadlineError;
-
-use crate::core::cpu::CPU;
-use crate::core::opcodes::{get_opcode_enum, get_opcode_str};
-use crate::core::types::{convert_hex_addr, C8Addr};
-use crate::emulator::{EmulationState, Emulator, EmulatorContext};
-use crate::peripherals::memory::INITIAL_MEMORY_POINTER;
-
-use context::DebuggerMode;
-
 pub use breakpoints::Breakpoints;
 pub use context::DebuggerContext;
+use context::DebuggerMode;
+use rustyline::error::ReadlineError;
 pub use stream::DebuggerStream;
 
+use crate::{
+    core::{
+        cpu::CPU,
+        opcodes::{get_opcode_enum, get_opcode_str},
+        types::{convert_hex_addr, C8Addr},
+    },
+    emulator::{EmulationState, Emulator, EmulatorContext},
+    peripherals::memory::INITIAL_MEMORY_POINTER,
+};
+
 /// Debugger.
-pub struct Debugger {}
+#[derive(Default)]
+pub struct Debugger;
 
 /// Debugger command.
 #[derive(Clone, Debug, PartialEq)]
@@ -51,12 +54,6 @@ pub enum Command {
     Help,
     /// Empty.
     Empty,
-}
-
-impl Default for Debugger {
-    fn default() -> Self {
-        Self {}
-    }
 }
 
 impl Debugger {

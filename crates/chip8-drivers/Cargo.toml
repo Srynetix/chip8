@@ -6,9 +6,11 @@ edition = "2018"
 
 [dependencies]
 chip8-core = { path = "../chip8-core" }
+cpal = "0.11.0"
 winit = "0.25.0"
 pixels = "0.6.0"
 egui = "0.14.2"
 egui_wgpu_backend = "0.12.0"
 egui_winit_platform = "0.10.0"
 winit_input_helper = "0.10.0"
+usfx = "0.1.3"

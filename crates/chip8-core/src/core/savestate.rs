@@ -1,22 +1,18 @@
 //! Save state.
 
-use std::error::Error;
-use std::fmt;
-use std::fs::File;
-use std::io::{Read, Write};
-use std::path::Path;
+use std::{
+    error::Error,
+    fmt,
+    fs::File,
+    io::{Read, Write},
+    path::Path,
+};
 
 use bincode::{deserialize, serialize};
 use serde_derive::{Deserialize, Serialize};
 
-use crate::peripherals::input::InputState;
-use crate::peripherals::memory::Memory;
-use crate::peripherals::screen::ScreenData;
-
-use super::cpu::CPU;
-use super::registers::Registers;
-use super::stack::Stack;
-use super::timer::Timer;
+use super::{cpu::CPU, registers::Registers, stack::Stack, timer::Timer};
+use crate::peripherals::{input::InputState, memory::Memory, screen::ScreenData};
 
 /// Missing save state.
 #[derive(Debug)]

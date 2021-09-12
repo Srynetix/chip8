@@ -11,6 +11,7 @@ use super::types::C8Byte;
 pub struct Timer {
     title: String,
     count: C8Byte,
+    will_finish: bool,
 }
 
 impl Timer {
@@ -25,7 +26,11 @@ impl Timer {
     /// * Timer instance.
     ///
     pub fn new(title: String) -> Self {
-        Timer { title, count: 0 }
+        Timer {
+            title,
+            count: 0,
+            will_finish: false,
+        }
     }
 
     /// Decrement timer.
@@ -38,9 +43,8 @@ impl Timer {
         if self.count > 0 {
             self.count -= 1;
 
-            // End.
-            if self.count == 0 && self.title == "Sound" {
-                println!("** BEEP **");
+            if self.count == 0 {
+                self.will_finish = true;
             }
         }
 
@@ -59,6 +63,7 @@ impl Timer {
     ///
     pub fn reset(&mut self, value: C8Byte) -> &Self {
         self.count = value;
+        self.will_finish = false;
         self
     }
 
@@ -70,6 +75,16 @@ impl Timer {
     ///
     pub fn get_value(&self) -> C8Byte {
         self.count
+    }
+
+    /// Finished.
+    pub fn finished(&mut self) -> bool {
+        if self.will_finish {
+            self.will_finish = false;
+            true
+        } else {
+            false
+        }
     }
 
     /// Load from save.

@@ -7,18 +7,10 @@ pub struct DebuggerStreamLine {
 }
 
 /// Debugger stream.
+#[derive(Default)]
 pub struct DebuggerStream {
     lines: Vec<DebuggerStreamLine>,
     console: bool,
-}
-
-impl Default for DebuggerStream {
-    fn default() -> Self {
-        Self {
-            lines: vec![],
-            console: false,
-        }
-    }
 }
 
 impl DebuggerStream {

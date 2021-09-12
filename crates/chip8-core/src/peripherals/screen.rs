@@ -4,10 +4,11 @@ use std::fmt;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::core::font::FONT_CHAR_WIDTH;
-use crate::core::types::C8Byte;
-use crate::drivers::RenderInterface;
-use crate::errors::CResult;
+use crate::{
+    core::{font::FONT_CHAR_WIDTH, types::C8Byte},
+    drivers::RenderInterface,
+    errors::CResult,
+};
 
 /// Video memory width.
 pub const VIDEO_MEMORY_WIDTH: usize = 64;
@@ -28,7 +29,7 @@ pub struct Color {
     /// Blue.
     pub b: u8,
     /// Alpha.
-    pub a: u8
+    pub a: u8,
 }
 
 impl Color {
@@ -39,9 +40,7 @@ impl Color {
 
     /// Creates color from RGBA components.
     pub fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
-        Color {
-            r, g, b, a
-        }
+        Color { r, g, b, a }
     }
 }
 
@@ -299,7 +298,13 @@ impl Screen {
     }
 
     /// Render pixels.
-    pub fn render_pixels(&mut self, origin_x: u32, origin_y: u32, frame_width: usize, driver: &mut impl RenderInterface) -> CResult {
+    pub fn render_pixels(
+        &mut self,
+        origin_x: u32,
+        origin_y: u32,
+        frame_width: usize,
+        driver: &mut impl RenderInterface,
+    ) -> CResult {
         let scale = match self.data.mode {
             ScreenMode::Standard => RENDERER_SCALE,
             ScreenMode::Extended => RENDERER_SCALE / 2,

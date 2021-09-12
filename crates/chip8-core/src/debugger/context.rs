@@ -2,11 +2,12 @@
 
 use rustyline::Editor;
 
-use crate::core::types::{convert_hex_addr, C8Addr};
-use crate::debugger::Breakpoints;
-use crate::errors::CResult;
-
 use super::errors::BadBreakpoint;
+use crate::{
+    core::types::{convert_hex_addr, C8Addr},
+    debugger::Breakpoints,
+    errors::CResult,
+};
 
 /// Debugger mode.
 pub enum DebuggerMode {

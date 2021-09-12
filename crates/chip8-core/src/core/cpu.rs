@@ -4,22 +4,30 @@ use std::fmt;
 
 use rand::random;
 
-use crate::peripherals::cartridge::Cartridge;
-use crate::peripherals::screen::{ScreenMode, ScreenScrollDirection};
-use crate::peripherals::Peripherals;
-
-use super::font::{Font, FONT_CHAR_HEIGHT, FONT_DATA_ADDR};
-use super::opcodes::OpCode;
-use super::registers::Registers;
-use super::savestate::SaveState;
-use super::stack::Stack;
-use super::timer::Timer;
-use super::types::{C8Addr, C8Byte};
+use super::{
+    font::{Font, FONT_CHAR_HEIGHT, FONT_DATA_ADDR},
+    opcodes::OpCode,
+    registers::Registers,
+    savestate::SaveState,
+    stack::Stack,
+    timer::Timer,
+    types::{C8Addr, C8Byte},
+};
+use crate::{
+    drivers::Drivers,
+    peripherals::{
+        cartridge::Cartridge,
+        screen::{ScreenMode, ScreenScrollDirection},
+        Peripherals,
+    },
+};
 
 /// CHIP-8 CPU.
 pub struct CPU {
     /// Peripherals.
     pub peripherals: Peripherals,
+    /// Drivers.
+    pub drivers: Drivers,
 
     /// Registers.
     pub registers: Registers,
@@ -60,6 +68,7 @@ impl CPU {
     pub fn new() -> Self {
         CPU {
             peripherals: Peripherals::new(),
+            drivers: Drivers::new(),
 
             registers: Registers::new(),
             stack: Stack::new(),
@@ -135,6 +144,12 @@ impl CPU {
         self.delay_timer.decrement();
         self.sound_timer.decrement();
         self.sync_timer.decrement();
+
+        if self.sound_timer.finished() {
+            if let Some(audio) = self.drivers.audio.as_deref_mut() {
+                self.peripherals.sound.play_beep(audio);
+            }
+        }
     }
 
     /// Reset CPU.

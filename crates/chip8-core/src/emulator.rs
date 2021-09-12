@@ -1,14 +1,20 @@
 //! CHIP-8 emulator.
 
-use std::fs::{File, OpenOptions};
-use std::io::Write;
+use std::{
+    fs::{File, OpenOptions},
+    io::Write,
+};
 
-use super::core::cpu::CPU;
-use super::core::opcodes;
-use super::core::savestate::{MissingSaveState, SaveState};
-use super::errors::CResult;
-use super::peripherals::cartridge::Cartridge;
-use super::trace_exec;
+use super::{
+    core::{
+        cpu::CPU,
+        opcodes,
+        savestate::{MissingSaveState, SaveState},
+    },
+    errors::CResult,
+    peripherals::cartridge::Cartridge,
+    trace_exec,
+};
 
 const TIMER_FRAME_LIMIT: u64 = 16;
 const CPU_FRAME_LIMIT: u64 = 0;
@@ -110,7 +116,7 @@ impl Emulator {
     /// * Emulator instance.
     ///
     pub fn new() -> Self {
-        Emulator { cpu: CPU::new() }
+        Default::default()
     }
 
     /// Set CPU tracefile.
@@ -232,10 +238,7 @@ impl Emulator {
             self.cpu.sync_timer.reset(60);
         }
 
-        if ctx
-            .cpu_frametime
-            >= cpu_framelimit
-        {
+        if ctx.cpu_frametime >= cpu_framelimit {
             // Read next instruction.
             let opcode = self.cpu.peripherals.memory.read_opcode();
             trace_exec!(
@@ -263,10 +266,7 @@ impl Emulator {
             ctx.cpu_frametime += 1;
         }
 
-        if ctx
-            .timer_frametime
-            >= TIMER_FRAME_LIMIT
-        {
+        if ctx.timer_frametime >= TIMER_FRAME_LIMIT {
             // Handle timers.
             self.cpu.decrement_timers();
             ctx.timer_frametime = 0;

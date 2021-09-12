@@ -4,8 +4,10 @@ use std::fmt;
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::core::opcodes::extract_opcode_from_array;
-use crate::core::types::{C8Addr, C8Byte};
+use crate::core::{
+    opcodes::extract_opcode_from_array,
+    types::{C8Addr, C8Byte},
+};
 
 // CPU memory vars.
 

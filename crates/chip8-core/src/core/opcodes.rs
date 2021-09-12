@@ -1,8 +1,6 @@
 //! CPU opcodes.
 
-use std::collections::HashMap;
-use std::error::Error;
-use std::fmt;
+use std::{collections::HashMap, error::Error, fmt};
 
 use lazy_static::lazy_static;
 
@@ -626,16 +624,16 @@ pub fn extract_opcode_from_array(array: &[u8], ptr: usize) -> C8Addr {
 /// * True/False
 pub fn is_opcode_schip(opcode: C8Addr) -> bool {
     let opcode_enum = get_opcode_enum(opcode);
-    match opcode_enum {
+    matches!(
+        opcode_enum,
         OpCode::SCRD(_)
-        | OpCode::SCRR
-        | OpCode::SCRL
-        | OpCode::EXIT
-        | OpCode::LOW
-        | OpCode::HIGH
-        | OpCode::LDXSprite(_)
-        | OpCode::LDXS(_)
-        | OpCode::LDXR(_) => true,
-        _ => false,
-    }
+            | OpCode::SCRR
+            | OpCode::SCRL
+            | OpCode::EXIT
+            | OpCode::LOW
+            | OpCode::HIGH
+            | OpCode::LDXSprite(_)
+            | OpCode::LDXS(_)
+            | OpCode::LDXR(_)
+    )
 }

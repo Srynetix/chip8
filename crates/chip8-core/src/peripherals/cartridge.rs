@@ -1,22 +1,23 @@
 //! Cartridge.
 
-use std::env;
-use std::error::Error;
-use std::fmt;
-use std::fs::metadata;
-use std::fs::File;
-use std::fs::OpenOptions;
-use std::io;
-use std::io::prelude::*;
-use std::path::{Path, PathBuf};
-
-use crate::core::opcodes::{
-    extract_opcode_from_array, get_opcode_enum, get_opcode_str, is_opcode_schip,
+use std::{
+    env,
+    error::Error,
+    fmt,
+    fs::{metadata, File, OpenOptions},
+    io,
+    io::prelude::*,
+    path::{Path, PathBuf},
 };
-use crate::core::types::{C8Addr, C8Byte};
-use crate::errors::CResult;
 
 use super::memory::INITIAL_MEMORY_POINTER;
+use crate::{
+    core::{
+        opcodes::{extract_opcode_from_array, get_opcode_enum, get_opcode_str, is_opcode_schip},
+        types::{C8Addr, C8Byte},
+    },
+    errors::CResult,
+};
 
 /// Cartridge max size.
 pub const CARTRIDGE_MAX_SIZE: usize = 4096 - 512;
@@ -106,10 +107,7 @@ impl Cartridge {
         }
 
         match path.extension() {
-            Some(ext) => match ext.to_string_lossy().as_ref() {
-                "ch8" | "CH8" => true,
-                _ => false,
-            },
+            Some(ext) => matches!(ext.to_string_lossy().as_ref(), "ch8" | "CH8"),
             None => true,
         }
     }
@@ -123,6 +121,7 @@ impl Cartridge {
     pub fn list_from_games_directory() -> Vec<String> {
         let mut res = vec![];
         let game_dir = Self::get_games_directory();
+        println!("{:?}", game_dir);
 
         for entry in walkdir::WalkDir::new(game_dir.to_str().unwrap())
             .into_iter()
@@ -135,7 +134,7 @@ impl Cartridge {
             }
 
             let fname = entry.path().strip_prefix(&game_dir).unwrap();
-            if Self::check_game_extension(&fname) {
+            if Self::check_game_extension(fname) {
                 res.push(fname.to_string_lossy().into_owned());
             }
         }
@@ -209,11 +208,14 @@ impl Cartridge {
     ///
     pub fn get_games_directory() -> PathBuf {
         let cargo_path = match env::var("CARGO_MANIFEST_DIR") {
-            Ok(path) => path,
-            Err(_) => ".".to_string(),
+            Ok(path) => {
+                let cargo_path = PathBuf::from(path);
+                cargo_path.parent().unwrap().parent().unwrap().to_owned()
+            }
+            Err(_) => PathBuf::from("."),
         };
 
-        Path::new(&cargo_path).join("games")
+        cargo_path.join("games")
     }
 
     /// Get cartridge title.
@@ -334,7 +336,7 @@ mod tests {
         let mut disasm_raw = Vec::new();
         cartridge.write_disassembly_to_stream(&mut disasm_raw);
         let disasm_str = ::std::str::from_utf8(&disasm_raw).unwrap();
-        let disasm_lines: Vec<_> = disasm_str.split("\n").collect();
+        let disasm_lines: Vec<_> = disasm_str.split('\n').collect();
 
         assert_eq!(
             disasm_lines[0],
@@ -349,7 +351,7 @@ mod tests {
     #[test]
     fn test_game_list() {
         let game_list = Cartridge::list_from_games_directory();
-        assert!(game_list.len() > 0);
+        assert!(!game_list.is_empty());
     }
 
     #[test]

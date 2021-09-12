@@ -9,13 +9,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Install dependencies
-      run: sudo apt-get install libsdl2-dev libsdl2-ttf-dev -y
     - name: Build
-      run: cargo build --verbose
+      run: cargo xtask build
     - name: Check lints
-      run: cargo clippy --verbose --all
+      run: cargo xtask lint --error
     - name: Check format
-      run: cargo fmt --verbose --all -- --check
+      run: cargo xtask fmt --check
     - name: Run tests
-      run: cargo test --verbose --all
+      run: cargo xtask test

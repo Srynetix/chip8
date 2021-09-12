@@ -1,35 +1,68 @@
 use std::time::Instant;
 
-use egui::{ClippedMesh, CtxRef, FontDefinitions};
-use egui_wgpu_backend::{BackendError, RenderPass, ScreenDescriptor, wgpu::{CommandEncoder, TextureView}};
-use egui_winit_platform::{Platform, PlatformDescriptor};
-use pixels::{Pixels, PixelsContext, SurfaceTexture};
-use winit::{dpi::LogicalSize, event::{Event, VirtualKeyCode}, event_loop::ControlFlow, window::Window};
-use winit_input_helper::WinitInputHelper;
-
 use chip8_core::{
-    errors::CResult,
     core::types::C8Byte,
     debugger::{Debugger, DebuggerContext, DebuggerStream},
-    emulator::{Emulator, EmulationState, EmulatorContext},
-    peripherals::{cartridge::Cartridge, input::{INPUT_STATE_COUNT, InputState}},
-    drivers::{SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE, WINDOW_WIDTH, InputInterface, WindowInterface}
+    drivers::{
+        InputInterface, WindowInterface, SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_HEIGHT, WINDOW_TITLE,
+        WINDOW_WIDTH,
+    },
+    emulator::{EmulationState, Emulator, EmulatorContext},
+    errors::CResult,
+    peripherals::{
+        cartridge::Cartridge,
+        input::{InputState, INPUT_STATE_COUNT},
+    },
 };
+use egui::{ClippedMesh, CtxRef, FontDefinitions};
+use egui_wgpu_backend::{
+    wgpu::{CommandEncoder, TextureView},
+    BackendError, RenderPass, ScreenDescriptor,
+};
+use egui_winit_platform::{Platform, PlatformDescriptor};
+use pixels::{Pixels, PixelsContext, SurfaceTexture};
+use winit::{
+    dpi::LogicalSize,
+    event::{Event, VirtualKeyCode},
+    event_loop::{ControlFlow, EventLoop},
+    platform::windows::WindowBuilderExtWindows,
+    window::Window,
+};
+use winit_input_helper::WinitInputHelper;
 
 use super::pixels_driver::PixelsRenderDriver;
+use crate::UsfxAudioDriver;
 
 /// Window driver for winit
+#[derive(Default)]
 pub struct WinitWindowDriver;
 
 /// Inout driver for winit
 pub struct WinitInputDriver {
-    helper: WinitInputHelper
+    helper: WinitInputHelper,
 }
 
 impl WinitWindowDriver {
     /// Creates new driver.
     pub fn new() -> Self {
-        Self
+        Default::default()
+    }
+
+    pub fn create_window(&mut self) -> CResult<(EventLoop<()>, Window)> {
+        let event_loop = winit::event_loop::EventLoop::new();
+        let sz = LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT);
+        let mut wb = winit::window::WindowBuilder::new()
+            .with_title(WINDOW_TITLE)
+            .with_inner_size(sz)
+            .with_min_inner_size(sz);
+
+        if cfg!(windows) {
+            // Disable D&D on Windows.
+            wb = wb.with_drag_and_drop(false);
+        }
+
+        let window = wb.build(&event_loop)?;
+        Ok((event_loop, window))
     }
 }
 
@@ -37,7 +70,7 @@ impl WinitInputDriver {
     /// Creates new driver.
     pub fn new() -> Self {
         Self {
-            helper: WinitInputHelper::new()
+            helper: WinitInputHelper::new(),
         }
     }
 
@@ -64,7 +97,7 @@ impl WinitInputDriver {
             0x0 => VirtualKeyCode::X,
             0xB => VirtualKeyCode::C,
             0xF => VirtualKeyCode::V,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
@@ -77,9 +110,7 @@ pub struct Gui {
     paint_jobs: Vec<ClippedMesh>,
     about_window_open: bool,
     explorer_window_open: bool,
-    game_window_open: bool,
     game_list: Vec<String>,
-    game_selected: Option<String>,
 }
 
 impl Gui {
@@ -89,12 +120,12 @@ impl Gui {
             physical_height: height,
             scale_factor,
             font_definitions: FontDefinitions::default(),
-            style: Default::default()
+            style: Default::default(),
         });
         let screen_descriptor = ScreenDescriptor {
             physical_width: width,
             physical_height: height,
-            scale_factor: scale_factor as f32
+            scale_factor: scale_factor as f32,
         };
         let rpass = RenderPass::new(pixels.device(), pixels.render_texture_format(), 1);
 
@@ -106,9 +137,7 @@ impl Gui {
             paint_jobs: Vec::new(),
             about_window_open: false,
             explorer_window_open: false,
-            game_window_open: false,
             game_list: Cartridge::list_from_games_directory(),
-            game_selected: None
         }
     }
 
@@ -140,8 +169,6 @@ impl Gui {
 
     fn ui(&mut self, ctx: &CtxRef) {
         let games = self.game_list.clone();
-        let games_count = games.len();
-        let text_style = egui::TextStyle::Body;
 
         egui::TopBottomPanel::top("menubar_container").show(ctx, |ui| {
             egui::menu::bar(ui, |ui| {
@@ -152,18 +179,6 @@ impl Gui {
                     if ui.button("About...").clicked() {
                         self.about_window_open = true;
                     }
-                });
-
-                egui::menu::menu(ui, "Cartridges", |ui| {
-                    let row_height = ui.fonts()[text_style].row_height();
-                    egui::ScrollArea::auto_sized()
-                        .show_rows(ui, row_height, games_count, |ui, row_range| {
-                            for row in row_range {
-                                if ui.label(games[row].clone()).clicked() {
-                                    self.game_selected = Some(games[row].clone());
-                                }
-                            }
-                        });
                 });
             })
         });
@@ -186,47 +201,66 @@ impl Gui {
             .show(ctx, |ui| {
                 ui.label("Select a cartridge to load");
                 ui.separator();
-                // egui::Grid::new("explorer_grid")
-                //     .striped(true)
-                //     .min_col_width(100.0)
-                //     .max_col_width(200.0)
-                //     .show(ui, |ui| {
-                //         for game in games {
-                //             ui.label(game);
-                //             ui.end_row();
-                //         }
-                //     })
-
+                egui::Grid::new("explorer_grid")
+                    .striped(true)
+                    .min_col_width(100.0)
+                    .max_col_width(200.0)
+                    .show(ui, |ui| {
+                        for game in games {
+                            ui.label(game);
+                            ui.end_row();
+                        }
+                    })
             });
     }
 
-    pub fn render(&mut self, encoder: &mut CommandEncoder, render_target: &TextureView, context: &PixelsContext) -> Result<(), BackendError> {
-        self.rpass.update_texture(&context.device, &context.queue, &self.platform.context().texture());
-        self.rpass.update_user_textures(&context.device, &context.queue);
-        self.rpass.update_buffers(&context.device, &context.queue, &self.paint_jobs, &self.screen_descriptor);
-        self.rpass.execute(encoder, render_target, &self.paint_jobs, &self.screen_descriptor, None)
+    pub fn render(
+        &mut self,
+        encoder: &mut CommandEncoder,
+        render_target: &TextureView,
+        context: &PixelsContext,
+    ) -> Result<(), BackendError> {
+        self.rpass.update_texture(
+            &context.device,
+            &context.queue,
+            &self.platform.context().texture(),
+        );
+        self.rpass
+            .update_user_textures(&context.device, &context.queue);
+        self.rpass.update_buffers(
+            &context.device,
+            &context.queue,
+            &self.paint_jobs,
+            &self.screen_descriptor,
+        );
+        self.rpass.execute(
+            encoder,
+            render_target,
+            &self.paint_jobs,
+            &self.screen_descriptor,
+            None,
+        )
     }
 }
 
 impl WindowInterface for WinitWindowDriver {
     fn run_gui(&mut self) -> CResult {
-        let event_loop = winit::event_loop::EventLoop::new();
-        let sz = LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT);
-        let window = winit::window::WindowBuilder::new()
-            .with_title(WINDOW_TITLE)
-            .with_inner_size(sz)
-            .with_min_inner_size(sz)
-            .build(&event_loop)?;
+        let (event_loop, window) = self.create_window()?;
 
         let cartridge = Cartridge::load_from_path("games/15PUZZLE.ch8")?;
         let mut emulator = Emulator::new();
+        emulator
+            .cpu
+            .drivers
+            .set_audio_driver(Box::new(UsfxAudioDriver::default()));
         let mut emulator_ctx = EmulatorContext::new();
         emulator.load_game(&cartridge);
 
         let (mut pixels, mut gui) = {
             let window_size = window.inner_size();
             let scale_factor = window.scale_factor();
-            let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
+            let surface_texture =
+                SurfaceTexture::new(window_size.width, window_size.height, &window);
             let pixels = Pixels::new(SCREEN_WIDTH, SCREEN_HEIGHT, surface_texture)?;
             let gui = Gui::new(window_size.width, window_size.height, scale_factor, &pixels);
 
@@ -258,12 +292,19 @@ impl WindowInterface for WinitWindowDriver {
 
             if let winit::event::Event::RedrawRequested(_) = event {
                 gui.prepare(&window);
-                emulator.cpu.peripherals.screen.render_pixels(0, 0, SCREEN_WIDTH as usize, &mut render_driver).expect("oops");
+                emulator
+                    .cpu
+                    .peripherals
+                    .screen
+                    .render_pixels(0, 0, SCREEN_WIDTH as usize, &mut render_driver)
+                    .expect("oops");
 
-                pixels.render_with(|encoder, render_target, context| {
-                    context.scaling_renderer.render(encoder, render_target);
-                    gui.render(encoder, render_target, context).unwrap();
-                }).unwrap();
+                pixels
+                    .render_with(|encoder, render_target, context| {
+                        context.scaling_renderer.render(encoder, render_target);
+                        gui.render(encoder, render_target, context).unwrap();
+                    })
+                    .unwrap();
             }
 
             if input.helper().update(&event) {
@@ -284,19 +325,13 @@ impl WindowInterface for WinitWindowDriver {
                 if let Some(size) = input.helper().window_resized() {
                     pixels.resize_surface(size.width, size.height);
                     gui.resize(size.width, size.height);
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F5) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F5) {
                     // emulator.reset(&cartridge, &mut emulator_ctx);
                     println!("reset");
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F6) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F6) {
                     // emulator.save_state(cartridge.get_title());
                     println!("state saved");
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F7) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F7) {
                     // match emulator.load_state(cartridge.get_title()) {
                     //     Ok(()) => println!("state loaded"),
                     //     Err(e) => eprintln!("error: {}", e)
@@ -307,23 +342,21 @@ impl WindowInterface for WinitWindowDriver {
                     input.update_input_state(&mut emulator.cpu.peripherals.input);
 
                     // Update.
-                    let state = emulator.step(
-                        &mut emulator_ctx,
-                    );
+                    let state = emulator.step(&mut emulator_ctx);
 
                     // Update state handling
                     match state {
                         EmulationState::Quit => {
                             *control_flow = ControlFlow::Exit;
                             break;
-                        },
+                        }
                         EmulationState::WaitForInput => {
                             // Change window title
                             let title = &format!("{} [WAITING FOR INPUT]", WINDOW_TITLE);
                             window.set_title(title);
                             break;
                         }
-                        _ => ()
+                        _ => (),
                     }
                 }
 
@@ -332,22 +365,26 @@ impl WindowInterface for WinitWindowDriver {
         });
     }
 
-    fn run_emulator(&mut self, mut emulator: Emulator, mut emulator_ctx: EmulatorContext, cartridge: Cartridge) -> CResult {
-        let event_loop = winit::event_loop::EventLoop::new();
-        let sz = LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT);
-        let window = winit::window::WindowBuilder::new()
-            .with_title(WINDOW_TITLE)
-            .with_inner_size(sz)
-            .with_min_inner_size(sz)
-            .build(&event_loop)?;
+    fn run_emulator(
+        &mut self,
+        mut emulator: Emulator,
+        mut emulator_ctx: EmulatorContext,
+        cartridge: Cartridge,
+    ) -> CResult {
+        let (event_loop, window) = self.create_window()?;
 
         let mut pixels = {
             let window_size = window.inner_size();
-            let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
+            let surface_texture =
+                SurfaceTexture::new(window_size.width, window_size.height, &window);
             Pixels::new(SCREEN_WIDTH, SCREEN_HEIGHT, surface_texture)?
         };
 
         let mut input = WinitInputDriver::new();
+        emulator
+            .cpu
+            .drivers
+            .set_audio_driver(Box::new(UsfxAudioDriver::default()));
 
         emulator_ctx.prepare_tracefile(&emulator.cpu.tracefile);
 
@@ -372,35 +409,29 @@ impl WindowInterface for WinitWindowDriver {
 
             if let winit::event::Event::RedrawRequested(_) = event {
                 // Render
-                emulator.cpu.peripherals.screen.render_pixels(0, 0, SCREEN_WIDTH as usize, &mut render_driver).expect("oops");
+                emulator
+                    .cpu
+                    .peripherals
+                    .screen
+                    .render_pixels(0, 0, SCREEN_WIDTH as usize, &mut render_driver)
+                    .expect("oops");
                 pixels.render().expect("Oops");
             }
 
             if input.helper().update(&event) {
-                if input.helper().quit() {
+                if input.helper().quit() || input.helper().key_pressed(VirtualKeyCode::Escape) {
                     *control_flow = ControlFlow::Exit;
                     return;
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::Escape) {
-                    *control_flow = ControlFlow::Exit;
-                    return;
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F5) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F5) {
                     emulator.reset(&cartridge, &mut emulator_ctx);
                     println!("reset");
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F6) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F6) {
                     emulator.save_state(cartridge.get_title());
                     println!("state saved");
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F7) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F7) {
                     match emulator.load_state(cartridge.get_title()) {
                         Ok(()) => println!("state loaded"),
-                        Err(e) => eprintln!("error: {}", e)
+                        Err(e) => eprintln!("error: {}", e),
                     }
                 }
 
@@ -408,23 +439,21 @@ impl WindowInterface for WinitWindowDriver {
                     input.update_input_state(&mut emulator.cpu.peripherals.input);
 
                     // Update.
-                    let state = emulator.step(
-                        &mut emulator_ctx,
-                    );
+                    let state = emulator.step(&mut emulator_ctx);
 
                     // Update state handling
                     match state {
                         EmulationState::Quit => {
                             *control_flow = ControlFlow::Exit;
                             break;
-                        },
+                        }
                         EmulationState::WaitForInput => {
                             // Change window title
                             let title = &format!("{} [WAITING FOR INPUT]", WINDOW_TITLE);
                             window.set_title(title);
                             break;
                         }
-                        _ => ()
+                        _ => (),
                     }
                 }
 
@@ -433,22 +462,28 @@ impl WindowInterface for WinitWindowDriver {
         });
     }
 
-    fn run_debugger(&mut self, debugger: Debugger, mut debugger_ctx: DebuggerContext, mut emulator: Emulator, mut emulator_ctx: EmulatorContext, cartridge: Cartridge) -> CResult {
-        let event_loop = winit::event_loop::EventLoop::new();
-        let sz = LogicalSize::new(WINDOW_WIDTH, WINDOW_HEIGHT);
-        let window = winit::window::WindowBuilder::new()
-            .with_title(WINDOW_TITLE)
-            .with_inner_size(sz)
-            .with_min_inner_size(sz)
-            .build(&event_loop)?;
+    fn run_debugger(
+        &mut self,
+        debugger: Debugger,
+        mut debugger_ctx: DebuggerContext,
+        mut emulator: Emulator,
+        mut emulator_ctx: EmulatorContext,
+        cartridge: Cartridge,
+    ) -> CResult {
+        let (event_loop, window) = self.create_window()?;
 
         let mut pixels = {
             let window_size = window.inner_size();
-            let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
+            let surface_texture =
+                SurfaceTexture::new(window_size.width, window_size.height, &window);
             Pixels::new(SCREEN_WIDTH, SCREEN_HEIGHT, surface_texture)?
         };
 
         let mut input = WinitInputDriver::new();
+        emulator
+            .cpu
+            .drivers
+            .set_audio_driver(Box::new(UsfxAudioDriver::default()));
 
         let mut stream = DebuggerStream::new();
         stream.use_console(true);
@@ -475,35 +510,29 @@ impl WindowInterface for WinitWindowDriver {
 
             if let winit::event::Event::RedrawRequested(_) = event {
                 // Render
-                emulator.cpu.peripherals.screen.render_pixels(0, 0, SCREEN_WIDTH as usize, &mut render_driver).expect("oops");
+                emulator
+                    .cpu
+                    .peripherals
+                    .screen
+                    .render_pixels(0, 0, SCREEN_WIDTH as usize, &mut render_driver)
+                    .expect("oops");
                 pixels.render().expect("Oops");
             }
 
             if input.helper().update(&event) {
-                if input.helper().quit() {
+                if input.helper().quit() || input.helper().key_pressed(VirtualKeyCode::Escape) {
                     *control_flow = ControlFlow::Exit;
                     return;
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::Escape) {
-                    *control_flow = ControlFlow::Exit;
-                    return;
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F5) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F5) {
                     emulator.reset(&cartridge, &mut emulator_ctx);
                     println!("reset");
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F6) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F6) {
                     emulator.save_state(cartridge.get_title());
                     println!("state saved");
-                }
-
-                else if input.helper().key_pressed(VirtualKeyCode::F7) {
+                } else if input.helper().key_pressed(VirtualKeyCode::F7) {
                     match emulator.load_state(cartridge.get_title()) {
                         Ok(()) => println!("state loaded"),
-                        Err(e) => eprintln!("error: {}", e)
+                        Err(e) => eprintln!("error: {}", e),
                     }
                 }
 
@@ -523,14 +552,14 @@ impl WindowInterface for WinitWindowDriver {
                         EmulationState::Quit => {
                             *control_flow = ControlFlow::Exit;
                             break;
-                        },
+                        }
                         EmulationState::WaitForInput => {
                             // Change window title
                             let title = &format!("{} [WAITING FOR INPUT]", WINDOW_TITLE);
                             window.set_title(title);
                             break;
                         }
-                        _ => ()
+                        _ => (),
                     }
                 }
 

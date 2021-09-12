@@ -1,18 +1,19 @@
 //! Assembler.
 
-use std::fs::File;
-use std::io::Read;
-use std::path::Path;
-
-use regex::Regex;
+use std::{fs::File, io::Read, path::Path};
 
 use lazy_static::lazy_static;
 use log::debug;
+use regex::Regex;
 
-use crate::core::opcodes::{BadInstruction, OpCode};
-use crate::core::types::{convert_hex_addr, convert_hex_byte, C8Addr, C8Byte, C8RegIdx};
-use crate::errors::CResult;
-use crate::peripherals::cartridge::{Cartridge, CARTRIDGE_MAX_SIZE};
+use crate::{
+    core::{
+        opcodes::{BadInstruction, OpCode},
+        types::{convert_hex_addr, convert_hex_byte, C8Addr, C8Byte, C8RegIdx},
+    },
+    errors::CResult,
+    peripherals::cartridge::{Cartridge, CARTRIDGE_MAX_SIZE},
+};
 
 /// Assembler.
 #[derive(Debug, PartialEq)]
@@ -213,7 +214,7 @@ pub fn words_to_opcode(words: &str) -> CResult<OpCode> {
     let args = cap
         .name("args")
         .map(|x| x.as_str().split(',').map(str::trim).collect::<Vec<_>>())
-        .unwrap_or_else(|| vec![]);
+        .unwrap_or_else(Vec::new);
 
     let opcode = match word {
         "SYS" => {

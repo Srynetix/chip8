@@ -1,0 +1,4 @@
+[alias]
+xtask = "run --package xtask --"
+run-cli = "run --package chip8-cli"
+run-gui = "run --package chip8-gui"

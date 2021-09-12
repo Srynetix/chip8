@@ -1,7 +1,6 @@
 //! Debugger errors.
 
-use std::error::Error;
-use std::fmt;
+use std::{error::Error, fmt};
 
 /// Breakpoint error.
 #[derive(Debug)]

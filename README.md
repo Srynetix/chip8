@@ -5,9 +5,6 @@ chip8
 ![debugger](assets/debugger.gif)
 
 Emulator project for the CHIP-8 virtual console written in Rust.  
-This is for now my main project in Rust, and I try to experiment multiple things.
-
-Windowing and rendering is done thanks to SDL2 and the rust-sdl2 wrapper.
 
 Features
 --------

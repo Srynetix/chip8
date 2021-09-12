@@ -4,10 +4,9 @@ pub mod cartridge;
 pub mod input;
 pub mod memory;
 pub mod screen;
+pub mod sound;
 
-use self::input::InputState;
-use self::memory::Memory;
-use self::screen::Screen;
+use self::{input::InputState, memory::Memory, screen::Screen, sound::Sound};
 
 /// Peripherals.
 pub struct Peripherals {
@@ -17,6 +16,8 @@ pub struct Peripherals {
     pub memory: Memory,
     /// Screen.
     pub screen: Screen,
+    /// Sound.
+    pub sound: Sound,
 }
 
 impl Peripherals {
@@ -31,6 +32,7 @@ impl Peripherals {
             input: InputState::new(),
             memory: Memory::new(),
             screen: Screen::new(),
+            sound: Sound::new(),
         }
     }
 
