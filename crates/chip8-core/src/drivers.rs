@@ -37,9 +37,6 @@ pub trait WindowInterface {
         emulator_ctx: EmulatorContext,
         cartridge: Cartridge,
     ) -> CResult;
-
-    /// Run GUI
-    fn run_gui(&mut self) -> CResult;
 }
 
 /// Input interface.

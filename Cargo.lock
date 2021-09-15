@@ -292,9 +292,6 @@ version = "0.14.0"
 dependencies = [
  "chip8-core",
  "cpal",
- "egui",
- "egui_wgpu_backend",
- "egui_winit_platform",
  "pixels",
  "usfx",
  "winit",
@@ -307,6 +304,9 @@ version = "0.14.0"
 dependencies = [
  "chip8-core",
  "chip8-drivers",
+ "egui",
+ "egui_wgpu_backend",
+ "egui_winit_platform",
 ]
 
 [[package]]
