@@ -12,176 +12,120 @@ use chip8_drivers::{
         winit::{
             event::{Event, VirtualKeyCode},
             event_loop::ControlFlow,
-            window::Window,
         },
         WinitInputDriver,
     },
     PixelsRenderDriver, UsfxAudioDriver, WinitWindowDriver,
 };
-use egui::{ClippedMesh, CtxRef, FontDefinitions};
-use egui_wgpu_backend::{
-    wgpu::{CommandEncoder, TextureView},
-    BackendError, RenderPass, ScreenDescriptor,
-};
-use egui_winit_platform::{Platform, PlatformDescriptor};
+use wgpu::{CommandEncoder, TextureView};
+use wgpu_glyph::{GlyphBrush, GlyphBrushBuilder, Section, Text, ab_glyph};
 
-pub struct Gui {
-    start_time: Instant,
-    platform: Platform,
-    screen_descriptor: ScreenDescriptor,
-    rpass: RenderPass,
-    paint_jobs: Vec<ClippedMesh>,
-    about_window_open: bool,
-    explorer_window_open: bool,
-    game_list: Vec<String>,
-    selected_game: Option<String>,
-    will_update_game: bool,
+pub struct FontRenderer {
+    staging_belt: wgpu::util::StagingBelt,
+    glyph_brush: GlyphBrush<()>
 }
 
-impl Gui {
-    pub fn new(width: u32, height: u32, scale_factor: f64, pixels: &Pixels) -> Self {
-        let platform = Platform::new(PlatformDescriptor {
-            physical_width: width,
-            physical_height: height,
-            scale_factor,
-            font_definitions: FontDefinitions::default(),
-            style: Default::default(),
-        });
-        let screen_descriptor = ScreenDescriptor {
-            physical_width: width,
-            physical_height: height,
-            scale_factor: scale_factor as f32,
-        };
-        let rpass = RenderPass::new(pixels.device(), pixels.render_texture_format(), 1);
+impl FontRenderer {
+    pub fn new(font_data: &'static [u8], pixels: &Pixels) -> Self {
+        let font = ab_glyph::FontArc::try_from_slice(font_data).unwrap();
 
         Self {
-            start_time: Instant::now(),
-            platform,
-            screen_descriptor,
-            rpass,
-            paint_jobs: Vec::new(),
-            about_window_open: false,
-            explorer_window_open: false,
-            game_list: Cartridge::list_from_games_directory(),
-            selected_game: None,
-            will_update_game: false,
+            staging_belt: wgpu::util::StagingBelt::new(1024),
+            glyph_brush: GlyphBrushBuilder::using_font(font).build(pixels.device(), pixels.render_texture_format())
         }
     }
 
-    pub fn handle_event(&mut self, event: &Event<'_, ()>) {
-        self.platform.handle_event(event)
+    pub fn queue_text(&mut self, section: Section) {
+        self.glyph_brush.queue(section);
     }
 
-    pub fn resize(&mut self, width: u32, height: u32) {
-        if width > 0 && height > 0 {
-            self.screen_descriptor.physical_width = width;
-            self.screen_descriptor.physical_height = height;
+    pub fn render(&mut self, encoder: &mut CommandEncoder, render_target: &TextureView, context: &PixelsContext, width: u32, height: u32) {
+        self.glyph_brush.draw_queued(&context.device, &mut self.staging_belt, encoder, render_target, width, height).unwrap();
+        self.staging_belt.finish();
+    }
+}
+
+const COLOR_PRESSED: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+const COLOR_RELEASED: [f32; 4] = [0.25, 0.25, 0.25, 1.25];
+
+pub struct KeyboardRenderer {
+    screen_position_x: u32,
+    screen_position_y: u32,
+    scale: f32,
+    keys_config: [[(&'static str, u8); 4]; 4]
+}
+
+impl KeyboardRenderer {
+    pub fn new(x: u32, y: u32) -> Self {
+        let keys_config = [
+            [
+                (" 1 ", 0x1),
+                (" 2 ", 0x2),
+                (" 3 ", 0x3),
+                (" C ", 0xC),
+            ],
+            [
+                (" 4 ", 0x4),
+                (" 5 ", 0x5),
+                (" 6 ", 0x6),
+                (" D ", 0xD),
+            ],
+            [
+                (" 7 ", 0x7),
+                (" 8 ", 0x8),
+                (" 9 ", 0x9),
+                (" E ", 0xE),
+            ],
+            [
+                (" A ", 0xA),
+                (" 0 ", 0x0),
+                (" B ", 0xB),
+                (" F ", 0xF)
+            ]
+        ];
+
+        Self {
+            screen_position_x: x,
+            screen_position_y: y,
+            scale: 10.0,
+            keys_config
         }
     }
 
-    pub fn scale_factor(&mut self, scale_factor: f64) {
-        self.screen_descriptor.scale_factor = scale_factor as f32;
-    }
+    pub fn update(&self, emulator: &Emulator, font_renderer: &mut FontRenderer) {
+        let pressed_color = |key| {
+            if emulator.cpu.peripherals.input.get(key) == 0 {
+                COLOR_RELEASED
+            } else {
+                COLOR_PRESSED
+            }
+        };
 
-    pub fn prepare(&mut self, window: &Window) {
-        self.platform
-            .update_time(self.start_time.elapsed().as_secs_f64());
-
-        self.platform.begin_frame();
-        self.ui(&self.platform.context());
-
-        let (_output, paint_commands) = self.platform.end_frame(Some(window));
-        self.paint_jobs = self.platform.context().tessellate(paint_commands);
-    }
-
-    fn ui(&mut self, ctx: &CtxRef) {
-        let games = self.game_list.clone();
-        let mut selected_game = self.selected_game.clone();
-        let mut will_update_game = false;
-
-        egui::TopBottomPanel::top("menubar_container").show(ctx, |ui| {
-            egui::menu::bar(ui, |ui| {
-                egui::menu::menu(ui, "File", |ui| {
-                    if ui.button("Explorer...").clicked() {
-                        self.explorer_window_open = true;
-                    }
-                    if ui.button("About...").clicked() {
-                        self.about_window_open = true;
-                    }
-                });
-            })
-        });
-
-        egui::Window::new("About")
-            .resizable(false)
-            .open(&mut self.about_window_open)
-            .show(ctx, |ui| {
-                ui.label("CHIP-8 Emulator");
-                ui.separator();
-                ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x /= 2.0;
-                    ui.label("Source code");
-                    ui.hyperlink("https://github.com/Srynetix/chip8");
-                });
-            });
-
-        egui::Window::new("Explorer")
-            // .scroll(true)
-            .resizable(false)
-            .open(&mut self.explorer_window_open)
-            .show(ctx, |ui| {
-                ui.label("Select a cartridge to load");
-                ui.separator();
-
-                egui::ComboBox::from_label("Select game")
-                    .selected_text(if let Some(game) = selected_game.as_ref() {
-                        game
-                    } else {
-                        ""
-                    })
-                    .width(400.0)
-                    .show_ui(ui, |ui| {
-                        for game in games {
-                            ui.selectable_value(&mut selected_game, Some(game.clone()), game);
-                        }
-                    });
-
-                let btn = egui::Button::new("Load game").enabled(selected_game.is_some());
-                if ui.add(btn).clicked() {
-                    will_update_game = true;
-                }
-            });
-
-        self.will_update_game = will_update_game;
-        self.selected_game = selected_game;
-    }
-
-    pub fn render(
-        &mut self,
-        encoder: &mut CommandEncoder,
-        render_target: &TextureView,
-        context: &PixelsContext,
-    ) -> Result<(), BackendError> {
-        self.rpass.update_texture(
-            &context.device,
-            &context.queue,
-            &self.platform.context().texture(),
+        font_renderer.queue_text(Section::default()
+            .with_screen_position((self.screen_position_x as f32 + self.scale * 2.0, self.screen_position_y as f32))
+            .with_text(
+                vec![
+                    Text::new("Keyboard")
+                        .with_color([1.0, 1.0, 1.0, 1.0])
+                        .with_scale(10.0)
+                ]
+            )
         );
-        self.rpass
-            .update_user_textures(&context.device, &context.queue);
-        self.rpass.update_buffers(
-            &context.device,
-            &context.queue,
-            &self.paint_jobs,
-            &self.screen_descriptor,
-        );
-        self.rpass.execute(
-            encoder,
-            render_target,
-            &self.paint_jobs,
-            &self.screen_descriptor,
-            None,
-        )
+
+        for (idx, line) in self.keys_config.iter().enumerate() {
+            let mut section = Section::default()
+                .with_screen_position((self.screen_position_x as f32, self.screen_position_y as f32 + self.scale * 2.0 + self.scale * 2.0 * idx as f32));
+
+            for (txt, val) in line {
+                section = section.add_text(
+                    Text::new(txt)
+                        .with_color(pressed_color(*val))
+                        .with_scale(self.scale)
+                );
+            }
+
+            font_renderer.queue_text(section);
+        }
     }
 }
 
@@ -198,17 +142,17 @@ fn main() -> CResult {
     let mut emulator_ctx = EmulatorContext::new();
     emulator.load_game(&cartridge);
 
-    let (mut pixels, mut gui) = {
+    let mut pixels = {
         let window_size = window.inner_size();
-        let scale_factor = window.scale_factor();
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
-        let pixels = Pixels::new(SCREEN_WIDTH, SCREEN_HEIGHT, surface_texture)?;
-        let gui = Gui::new(window_size.width, window_size.height, scale_factor, &pixels);
-
-        (pixels, gui)
+        Pixels::new(SCREEN_WIDTH, SCREEN_HEIGHT, surface_texture)?
     };
 
     let mut input = WinitInputDriver::new();
+    let mut font_renderer = FontRenderer::new(include_bytes!(
+        "../../../assets/fonts/PressStart2P-Regular.ttf"
+    ), &pixels);
+    let keyboard_renderer = KeyboardRenderer::new(SCREEN_WIDTH - 125, SCREEN_HEIGHT - 100);
 
     let mut last_elapsed_time = Instant::now();
     let mut fps_timer = Instant::now();
@@ -229,17 +173,9 @@ fn main() -> CResult {
             fps_timer = Instant::now();
         }
 
-        gui.handle_event(&event);
-
-        if gui.will_update_game {
-            let game_dir = Cartridge::get_games_directory();
-            let cart_path = game_dir.join(gui.selected_game.as_ref().unwrap());
-            let cartridge = Cartridge::load_from_path(&cart_path).unwrap();
-            emulator.reset(&cartridge, &mut emulator_ctx);
-        }
+        keyboard_renderer.update(&emulator, &mut font_renderer);
 
         if let Event::RedrawRequested(_) = event {
-            gui.prepare(&window);
             emulator
                 .cpu
                 .peripherals
@@ -250,7 +186,7 @@ fn main() -> CResult {
             pixels
                 .render_with(|encoder, render_target, context| {
                     context.scaling_renderer.render(encoder, render_target);
-                    gui.render(encoder, render_target, context).unwrap();
+                    font_renderer.render(encoder, render_target, context, SCREEN_WIDTH, SCREEN_HEIGHT);
                 })
                 .unwrap();
         }
@@ -266,13 +202,8 @@ fn main() -> CResult {
                 return;
             }
 
-            if let Some(scale_factor) = input.helper().scale_factor() {
-                gui.scale_factor(scale_factor);
-            }
-
             if let Some(size) = input.helper().window_resized() {
                 pixels.resize_surface(size.width, size.height);
-                gui.resize(size.width, size.height);
             } else if input.helper().key_pressed(VirtualKeyCode::F5) {
                 emulator.reset(&cartridge, &mut emulator_ctx);
                 println!("reset");

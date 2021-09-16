@@ -9,6 +9,5 @@ publish = false
 [dependencies]
 chip8-core = { path = "../chip8-core" }
 chip8-drivers = { path = "../chip8-drivers" }
-egui = "0.14.2"
-egui_wgpu_backend = "0.12.0"
-egui_winit_platform = "0.10.0"
+wgpu = "0.10.1"
+wgpu_glyph = "0.14.1"
