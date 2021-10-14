@@ -111,7 +111,8 @@ pub fn start_shell_using_args(args: Args) -> CResult {
 
 /// Parse arguments.
 fn parse_args(args: Args) -> CResult {
-    env_logger::init();
+    let s = tracing_subscriber::fmt(); //.with_env_filter(EnvFilter::from_default_env());
+    s.compact().init();
 
     match args.nested {
         SubCommands::Version(_) => {

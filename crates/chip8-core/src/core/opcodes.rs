@@ -2,7 +2,7 @@
 
 use std::{collections::HashMap, error::Error, fmt};
 
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 
 use super::types::{C8Addr, C8Byte, C8RegIdx};
 
@@ -357,65 +357,63 @@ pub enum OpCode {
     DATA(C8Addr),
 }
 
-lazy_static! {
-    static ref OPCODE_FLAG_MASKS: HashMap<C8Addr, OpCodeFlagMask> = {
-        let mut m = HashMap::new();
-        m.insert(0, (0x0FFF, 0x0000));      // 0nnn
-        m.insert(1, (0x00E0, 0xFFFF));      // 00E0
-        m.insert(2, (0x00EE, 0xFFFF));      // 00EE
-        m.insert(3, (0x1000, 0xF000));      // 1nnn
-        m.insert(4, (0x2000, 0xF000));      // 2nnn
-        m.insert(5, (0x3000, 0xF000));      // 3xkk
-        m.insert(6, (0x4000, 0xF000));      // 4xkk
-        m.insert(7, (0x5000, 0xF00F));      // 5xy0
-        m.insert(8, (0x6000, 0xF000));      // 6xkk
-        m.insert(9, (0x7000, 0xF000));      // 7xkk
-        m.insert(10, (0x8000, 0xF00F));     // 8xy0
-        m.insert(11, (0x8001, 0xF00F));     // 8xy1
-        m.insert(12, (0x8002, 0xF00F));     // 8xy2
-        m.insert(13, (0x8003, 0xF00F));     // 8xy3
-        m.insert(14, (0x8004, 0xF00F));     // 8xy4
-        m.insert(15, (0x8005, 0xF00F));     // 8xy5
-        m.insert(16, (0x8006, 0xF00F));     // 8xy6
-        m.insert(17, (0x8007, 0xF00F));     // 8xy7
-        m.insert(18, (0x800E, 0xF00F));     // 8xyE
-        m.insert(19, (0x9000, 0xF00F));     // 9xy0
-        m.insert(20, (0xA000, 0xF000));     // Annn
-        m.insert(21, (0xB000, 0xF000));     // Bnnn
-        m.insert(22, (0xC000, 0xF000));     // Cxkk
+static OPCODE_FLAG_MASKS: Lazy<HashMap<C8Addr, OpCodeFlagMask>> = Lazy::new(|| {
+    let mut m = HashMap::new();
+    m.insert(0, (0x0FFF, 0x0000)); // 0nnn
+    m.insert(1, (0x00E0, 0xFFFF)); // 00E0
+    m.insert(2, (0x00EE, 0xFFFF)); // 00EE
+    m.insert(3, (0x1000, 0xF000)); // 1nnn
+    m.insert(4, (0x2000, 0xF000)); // 2nnn
+    m.insert(5, (0x3000, 0xF000)); // 3xkk
+    m.insert(6, (0x4000, 0xF000)); // 4xkk
+    m.insert(7, (0x5000, 0xF00F)); // 5xy0
+    m.insert(8, (0x6000, 0xF000)); // 6xkk
+    m.insert(9, (0x7000, 0xF000)); // 7xkk
+    m.insert(10, (0x8000, 0xF00F)); // 8xy0
+    m.insert(11, (0x8001, 0xF00F)); // 8xy1
+    m.insert(12, (0x8002, 0xF00F)); // 8xy2
+    m.insert(13, (0x8003, 0xF00F)); // 8xy3
+    m.insert(14, (0x8004, 0xF00F)); // 8xy4
+    m.insert(15, (0x8005, 0xF00F)); // 8xy5
+    m.insert(16, (0x8006, 0xF00F)); // 8xy6
+    m.insert(17, (0x8007, 0xF00F)); // 8xy7
+    m.insert(18, (0x800E, 0xF00F)); // 8xyE
+    m.insert(19, (0x9000, 0xF00F)); // 9xy0
+    m.insert(20, (0xA000, 0xF000)); // Annn
+    m.insert(21, (0xB000, 0xF000)); // Bnnn
+    m.insert(22, (0xC000, 0xF000)); // Cxkk
 
-        // S-CHIP DRWX insert.
-        m.insert(23, (0xD000, 0xF00F));     // Dxy0
-        m.insert(24, (0xD000, 0xF000));     // Dxyn
+    // S-CHIP DRWX insert.
+    m.insert(23, (0xD000, 0xF00F)); // Dxy0
+    m.insert(24, (0xD000, 0xF000)); // Dxyn
 
-        m.insert(25, (0xE09E, 0xF0FF));     // Ex9E
-        m.insert(26, (0xE0A1, 0xF0FF));     // ExA1
-        m.insert(27, (0xF007, 0xF0FF));     // Fx07
-        m.insert(28, (0xF00A, 0xF0FF));     // Fx0A
-        m.insert(29, (0xF015, 0xF0FF));     // Fx15
-        m.insert(30, (0xF018, 0xF0FF));     // Fx18
-        m.insert(31, (0xF01E, 0xF0FF));     // Fx1E
-        m.insert(32, (0xF029, 0xF0FF));     // Fx29
-        m.insert(33, (0xF033, 0xF0FF));     // Fx33
-        m.insert(34, (0xF055, 0xF0FF));     // Fx55
-        m.insert(35, (0xF065, 0xF0FF));     // Fx65
+    m.insert(25, (0xE09E, 0xF0FF)); // Ex9E
+    m.insert(26, (0xE0A1, 0xF0FF)); // ExA1
+    m.insert(27, (0xF007, 0xF0FF)); // Fx07
+    m.insert(28, (0xF00A, 0xF0FF)); // Fx0A
+    m.insert(29, (0xF015, 0xF0FF)); // Fx15
+    m.insert(30, (0xF018, 0xF0FF)); // Fx18
+    m.insert(31, (0xF01E, 0xF0FF)); // Fx1E
+    m.insert(32, (0xF029, 0xF0FF)); // Fx29
+    m.insert(33, (0xF033, 0xF0FF)); // Fx33
+    m.insert(34, (0xF055, 0xF0FF)); // Fx55
+    m.insert(35, (0xF065, 0xF0FF)); // Fx65
 
-        // S-CHIP.
-        m.insert(36, (0x00C0, 0xFFF0));     // 00Cn
-        m.insert(37, (0x00FB, 0xFFFF));     // 00FB
-        m.insert(38, (0x00FC, 0xFFFF));     // 00FC
-        m.insert(39, (0x00FD, 0xFFFF));     // 00FD
-        m.insert(40, (0x00FE, 0xFFFF));     // 00FE
-        m.insert(41, (0x00FF, 0xFFFF));     // 00FF
-        m.insert(42, (0xF030, 0xF0FF));     // Fx30
-        m.insert(43, (0xF075, 0xF0FF));     // Fx75
-        m.insert(44, (0xF085, 0xF0FF));     // Fx85
+    // S-CHIP.
+    m.insert(36, (0x00C0, 0xFFF0)); // 00Cn
+    m.insert(37, (0x00FB, 0xFFFF)); // 00FB
+    m.insert(38, (0x00FC, 0xFFFF)); // 00FC
+    m.insert(39, (0x00FD, 0xFFFF)); // 00FD
+    m.insert(40, (0x00FE, 0xFFFF)); // 00FE
+    m.insert(41, (0x00FF, 0xFFFF)); // 00FF
+    m.insert(42, (0xF030, 0xF0FF)); // Fx30
+    m.insert(43, (0xF075, 0xF0FF)); // Fx75
+    m.insert(44, (0xF085, 0xF0FF)); // Fx85
 
-        m.insert(45, (0x0000, 0xFFFF));     // 0000
+    m.insert(45, (0x0000, 0xFFFF)); // 0000
 
-        m
-    };
-}
+    m
+});
 
 /// Extract opcode ID.
 ///

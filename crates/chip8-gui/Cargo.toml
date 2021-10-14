@@ -10,3 +10,5 @@ publish = false
 chip8-core = { path = "../chip8-core" }
 chip8-drivers = { path = "../chip8-drivers" }
 macroquad = "0.3.10"
+tracing = "0.1.29"
+tracing-subscriber = "0.2.25"

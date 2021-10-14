@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use log::debug;
+use tracing::info;
 
 use crate::core::types::C8Addr;
 
@@ -29,7 +29,7 @@ impl Breakpoints {
     ///
     pub fn register(&mut self, addr: C8Addr) {
         if self.get_breakpoint(addr).is_none() {
-            debug!("registering breakpoint at address {:04X}", addr);
+            info!("registering breakpoint at address {:04X}", addr);
             self.0.push(addr);
         }
     }
@@ -42,7 +42,7 @@ impl Breakpoints {
     ///
     pub fn unregister(&mut self, addr: C8Addr) {
         if let Some(idx) = self.get_breakpoint(addr) {
-            debug!("unregistering breakpoint at address {:04X}", addr);
+            info!("unregistering breakpoint at address {:04X}", addr);
             self.0.remove(idx);
         }
     }

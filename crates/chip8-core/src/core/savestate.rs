@@ -8,8 +8,7 @@ use std::{
     path::Path,
 };
 
-use bincode::{deserialize, serialize};
-use serde_derive::{Deserialize, Serialize};
+use nanoserde::{DeBin, SerBin};
 
 use super::{cpu::CPU, registers::Registers, stack::Stack, timer::Timer};
 use crate::peripherals::{input::InputState, memory::Memory, screen::ScreenData};
@@ -31,7 +30,7 @@ impl fmt::Display for MissingSaveState {
 }
 
 /// Save state.
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, SerBin, DeBin, Debug)]
 pub struct SaveState {
     /// Version.
     pub version: String,
@@ -88,7 +87,7 @@ impl SaveState {
     /// * `path` - Path to file.
     ///
     pub fn write_to_file(&self, path: &str) {
-        let state_bin = serialize(&self).unwrap();
+        let state_bin = SerBin::serialize_bin(self);
         let mut file = File::create(path).expect("Could not create savestate file.");
         file.write_all(&state_bin)
             .expect("Error when writing savestate.");
@@ -115,6 +114,6 @@ impl SaveState {
         file.read_to_end(&mut data)
             .expect("Error when reading savestate.");
 
-        Some(deserialize(&data).unwrap())
+        Some(DeBin::deserialize_bin(&data).unwrap())
     }
 }

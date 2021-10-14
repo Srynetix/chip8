@@ -103,19 +103,14 @@ impl WindowInterface for MQWindowDriver {
 
                 if is_key_pressed(KeyCode::F5) {
                     emulator.reset(&cartridge, &mut emulator_ctx);
-                    println!("reset");
                 }
 
                 if is_key_pressed(KeyCode::F6) {
                     emulator.save_state(cartridge.get_title());
-                    println!("state saved");
                 }
 
                 if is_key_pressed(KeyCode::F7) {
-                    match emulator.load_state(cartridge.get_title()) {
-                        Ok(()) => println!("state loaded"),
-                        Err(e) => eprintln!("error: {}", e),
-                    }
+                    emulator.load_state(cartridge.get_title()).ok();
                 }
 
                 for _ in 0..emulator_ctx.cpu_multiplicator {
@@ -218,19 +213,14 @@ impl WindowInterface for MQWindowDriver {
 
                 if is_key_pressed(KeyCode::F5) {
                     emulator.reset(&cartridge, &mut emulator_ctx);
-                    println!("reset");
                 }
 
                 if is_key_pressed(KeyCode::F6) {
                     emulator.save_state(cartridge.get_title());
-                    println!("state saved");
                 }
 
                 if is_key_pressed(KeyCode::F7) {
-                    match emulator.load_state(cartridge.get_title()) {
-                        Ok(()) => println!("state loaded"),
-                        Err(e) => eprintln!("error: {}", e),
-                    }
+                    emulator.load_state(cartridge.get_title()).ok();
                 }
 
                 for _ in 0..emulator_ctx.cpu_multiplicator {

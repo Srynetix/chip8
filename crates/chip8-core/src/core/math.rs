@@ -1,6 +1,6 @@
 //! Math utils.
 
-use num::Integer;
+use num_integer::Integer;
 
 /// Absolute modulo operator.
 ///

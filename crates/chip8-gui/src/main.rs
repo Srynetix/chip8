@@ -7,7 +7,10 @@ use chip8_core::{
     peripherals::cartridge::Cartridge,
 };
 use chip8_drivers::{MQInputDriver, MQRenderDriver, UsfxAudioDriver};
-use macroquad::prelude::Conf;
+use macroquad::prelude::{
+    clear_background, draw_text, draw_texture, is_key_pressed, next_frame, screen_height,
+    screen_width, Conf, KeyCode, Texture2D,
+};
 
 // const COLOR_PRESSED: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 // const COLOR_RELEASED: [f32; 4] = [0.25, 0.25, 0.25, 1.25];
@@ -108,8 +111,6 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() -> CResult {
-    use macroquad::prelude::*;
-
     let cartridge = Cartridge::load_from_path("games/15PUZZLE.ch8")?;
     let mut emulator = Emulator::new();
     emulator
@@ -134,7 +135,7 @@ async fn main() -> CResult {
         let frame_time = last_elapsed_time.elapsed().as_micros();
         last_elapsed_time = Instant::now();
 
-        clear_background(BLACK);
+        clear_background(macroquad::color::BLACK);
 
         if fps_timer.elapsed().as_millis() > 500 {
             let frame_time_millis = frame_time as f32 / 1_000.0;
@@ -165,19 +166,14 @@ async fn main() -> CResult {
 
         if is_key_pressed(KeyCode::F5) {
             emulator.reset(&cartridge, &mut emulator_ctx);
-            println!("reset");
         }
 
         if is_key_pressed(KeyCode::F6) {
             emulator.save_state(cartridge.get_title());
-            println!("state saved");
         }
 
         if is_key_pressed(KeyCode::F7) {
-            match emulator.load_state(cartridge.get_title()) {
-                Ok(()) => println!("state loaded"),
-                Err(e) => eprintln!("error: {}", e),
-            }
+            emulator.load_state(cartridge.get_title()).ok();
         }
 
         for _ in 0..emulator_ctx.cpu_multiplicator {
@@ -198,7 +194,7 @@ async fn main() -> CResult {
 
         texture.update(&render_driver.image);
         draw_texture(texture, 0., 0., macroquad::color::WHITE);
-        draw_text(&fps_str, 32., 32., 30., WHITE);
+        draw_text(&fps_str, 32., 32., 30., macroquad::color::WHITE);
         next_frame().await;
     }
 

@@ -5,6 +5,8 @@ use std::{
     io::Write,
 };
 
+use tracing::{error, info};
+
 use super::{
     core::{
         cpu::CPU,
@@ -92,8 +94,13 @@ impl EmulatorContext {
         self.tracefile_handle = match tracefile {
             Some(ref path) => {
                 if path == "-" {
+                    info!(message = "Tracefile defined.", output = "stdout");
                     Some(TracefileHandle::Stdout)
                 } else {
+                    info!(
+                        message = "Tracefile defined.",
+                        output = %path
+                    );
                     Some(TracefileHandle::File(
                         OpenOptions::new()
                             .write(true)
@@ -148,7 +155,14 @@ impl Emulator {
     ///
     pub fn save_state(&self, name: &str) {
         let savestate = SaveState::save_from_cpu(&self.cpu);
-        savestate.write_to_file(&format!("{}.sav", name));
+        let path = format!("{}.sav", name);
+        savestate.write_to_file(&path);
+
+        info!(
+            message = "Game state saved.",
+            title = %name,
+            path = %path,
+        );
     }
 
     /// Load state.
@@ -165,9 +179,21 @@ impl Emulator {
         let filename = format!("{}.sav", name);
         let savestate = SaveState::read_from_file(&filename);
         match savestate {
-            None => Err(Box::new(MissingSaveState(filename))),
+            None => {
+                error!(
+                    message = "Game state loading error.",
+                    title = %name,
+                    path = %filename,
+                );
+                Err(Box::new(MissingSaveState(filename)))
+            }
             Some(ss) => {
                 self.cpu.load_savestate(ss);
+                info!(
+                    message = "Game state loaded.",
+                    title = %name,
+                    path = %filename,
+                );
                 Ok(())
             }
         }
@@ -191,6 +217,8 @@ impl Emulator {
         // Reset vars.
         ctx.timer_frametime = 0;
         ctx.cpu_frametime = 0;
+
+        info!(message = "Emulator reset.")
     }
 
     /// Step emulation.

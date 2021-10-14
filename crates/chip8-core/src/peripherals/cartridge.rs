@@ -10,6 +10,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use tracing::info;
+
 use super::memory::INITIAL_MEMORY_POINTER;
 use crate::{
     core::{
@@ -121,7 +123,6 @@ impl Cartridge {
     pub fn list_from_games_directory() -> Vec<String> {
         let mut res = vec![];
         let game_dir = Self::get_games_directory();
-        println!("{:?}", game_dir);
 
         for entry in walkdir::WalkDir::new(game_dir.to_str().unwrap())
             .into_iter()
@@ -196,6 +197,10 @@ impl Cartridge {
         let title = title.to_string();
         let data = bytes.to_vec();
         let path = path.as_ref().to_str().unwrap().to_string();
+        info!(
+            message = "Cartridge loaded.",
+            title = %title
+        );
 
         Ok(Cartridge { title, data, path })
     }
@@ -285,7 +290,10 @@ impl Cartridge {
     ///
     pub fn write_disassembly_to_file(&self, output_file: Option<PathBuf>) {
         if let Some(output_file) = output_file {
-            println!("disassembly dumped to file {}", output_file.display());
+            info!(
+                message = "Disassembly dumped to file.",
+                path = %output_file.display()
+            );
             let mut file_handle = OpenOptions::new()
                 .create(true)
                 .write(true)

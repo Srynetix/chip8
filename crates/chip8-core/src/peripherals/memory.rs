@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use serde_derive::{Deserialize, Serialize};
+use nanoserde::{DeBin, SerBin};
 
 use crate::core::{
     opcodes::extract_opcode_from_array,
@@ -20,7 +20,7 @@ pub const CHUNK_SIZE: usize = 64;
 pub const INITIAL_MEMORY_POINTER: C8Addr = 0x200;
 
 /// CPU memory struct.
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, SerBin, DeBin, Default)]
 pub struct Memory {
     data: Vec<C8Byte>,
     pointer: C8Addr,

@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use serde_derive::{Deserialize, Serialize};
+use nanoserde::{DeBin, SerBin};
 
 use super::types::{C8Addr, C8Byte, C8RegIdx};
 
@@ -10,7 +10,7 @@ use super::types::{C8Addr, C8Byte, C8RegIdx};
 pub const REGISTER_COUNT: usize = 16;
 
 /// CPU registers.
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, DeBin, SerBin, Default)]
 pub struct Registers {
     data: Vec<C8Byte>,
     i: C8Addr,

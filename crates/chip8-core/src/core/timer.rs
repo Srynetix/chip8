@@ -2,12 +2,12 @@
 
 use std::fmt;
 
-use serde_derive::{Deserialize, Serialize};
+use nanoserde::{DeBin, SerBin};
 
 use super::types::C8Byte;
 
 /// CPU timer.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, SerBin, DeBin)]
 pub struct Timer {
     title: String,
     count: C8Byte,

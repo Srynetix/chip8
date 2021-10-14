@@ -9,7 +9,7 @@
 
 use std::fmt;
 
-use serde_derive::{Deserialize, Serialize};
+use nanoserde::{DeBin, SerBin};
 
 use crate::core::types::{C8Byte, C8RegIdx};
 
@@ -19,7 +19,7 @@ pub const INPUT_STATE_COUNT: usize = 16;
 pub const INPUT_EMPTY_KEY: C8Byte = 0xFF;
 
 /// Input lock.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, SerBin, DeBin)]
 pub struct InputLock {
     active: bool,
     register: C8RegIdx,
@@ -110,7 +110,7 @@ impl InputLock {
 }
 
 /// Input state.
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, SerBin, DeBin)]
 pub struct InputState {
     /// Key data.
     data: Vec<C8Byte>,

@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use serde_derive::{Deserialize, Serialize};
+use nanoserde::{DeBin, SerBin};
 
 use crate::{
     core::{font::FONT_CHAR_WIDTH, types::C8Byte},
@@ -45,7 +45,7 @@ impl Color {
 }
 
 /// Screen mode.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, SerBin, DeBin)]
 pub enum ScreenMode {
     /// Standard screen.
     Standard,
@@ -54,7 +54,7 @@ pub enum ScreenMode {
 }
 
 /// Screen scroll direction.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, SerBin, DeBin)]
 pub enum ScreenScrollDirection {
     /// Down.
     Down,
@@ -67,7 +67,7 @@ pub enum ScreenScrollDirection {
 }
 
 /// Screen scroll.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, SerBin, DeBin)]
 pub struct ScreenScroll {
     /// Scrolling.
     pub scrolling: bool,
@@ -78,7 +78,7 @@ pub struct ScreenScroll {
 }
 
 /// Screen data.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, SerBin, DeBin)]
 pub struct ScreenData {
     data: Vec<C8Byte>,
     alpha: Vec<C8Byte>,

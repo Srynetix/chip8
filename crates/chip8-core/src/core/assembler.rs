@@ -2,9 +2,9 @@
 
 use std::{fs::File, io::Read, path::Path};
 
-use lazy_static::lazy_static;
-use log::debug;
+use once_cell::sync::Lazy;
 use regex::Regex;
+use tracing::debug;
 
 use crate::{
     core::{
@@ -200,9 +200,8 @@ fn parse_3_arg_token(args: Vec<&str>) -> CResult<(ArgToken, ArgToken, ArgToken)>
 /// * Opcode result.
 ///
 pub fn words_to_opcode(words: &str) -> CResult<OpCode> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"(?P<opcode>[A-Z]+)( (?P<args>.*))?").unwrap();
-    }
+    static RE: Lazy<Regex> =
+        Lazy::new(|| Regex::new(r"(?P<opcode>[A-Z]+)( (?P<args>.*))?").unwrap());
 
     let caps: Vec<_> = RE.captures_iter(words).collect();
     if caps.is_empty() {
@@ -570,9 +569,9 @@ impl Assembler {
     /// * Opcode option.
     ///
     pub fn assemble_line_from_str(&self, line: &str) -> Option<Instruction> {
-        lazy_static! {
-            static ref RE: Regex = Regex::new(r"((?P<line>[0-9A-Z]{4})\|)?([ *]?\((?P<opcode>[0-9A-Z]{4})\) )? ?((?P<instr>[A-Z0-9, \[\]]+))?(;(?P<comment>.*))?").unwrap();
-        }
+        static RE: Lazy<Regex> = Lazy::new(|| {
+            Regex::new(r"((?P<line>[0-9A-Z]{4})\|)?([ *]?\((?P<opcode>[0-9A-Z]{4})\) )? ?((?P<instr>[A-Z0-9, \[\]]+))?(;(?P<comment>.*))?").unwrap()
+        });
 
         let caps: Vec<_> = RE.captures_iter(line).collect();
         if caps.is_empty() {

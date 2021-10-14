@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use rand::random;
+use quad_rand::gen_range;
 
 use super::{
     font::{Font, FONT_CHAR_HEIGHT, FONT_DATA_ADDR},
@@ -360,7 +360,7 @@ impl CPU {
             }
             OpCode::RND(reg, byte) => {
                 // Set random value AND byte in register.
-                let rand_value = random::<C8Byte>() & byte;
+                let rand_value = gen_range(0, C8Byte::MAX) & byte;
                 self.registers.set_register(reg, rand_value);
             }
             OpCode::DRW(reg1, reg2, byte) => {

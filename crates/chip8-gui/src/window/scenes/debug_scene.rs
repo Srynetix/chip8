@@ -249,8 +249,6 @@ impl Scene for DebugScene {
             Keycode::F10 => {
                 let filename = format!("{}.dump", self.cartridge.get_title());
                 self.cartridge.write_disassembly_to_file(&filename);
-
-                println!("cartridge disassembled to {}.", filename);
             }
             _ => {}
         }

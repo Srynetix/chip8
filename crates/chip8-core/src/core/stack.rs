@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-use serde_derive::{Deserialize, Serialize};
+use nanoserde::{DeBin, SerBin};
 
 use super::types::{C8Addr, C8Byte};
 
@@ -10,7 +10,7 @@ use super::types::{C8Addr, C8Byte};
 const STACK_DEPTH: usize = 16;
 
 /// CPU stack struct.
-#[derive(Clone, Serialize, Deserialize, Default)]
+#[derive(Clone, DeBin, SerBin, Default)]
 pub struct Stack {
     data: Vec<C8Addr>,
     pointer: C8Byte,
