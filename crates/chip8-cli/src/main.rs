@@ -11,7 +11,7 @@ use chip8_core::{
     errors::CResult,
     peripherals::{cartridge::Cartridge, memory::INITIAL_MEMORY_POINTER},
 };
-use chip8_drivers::WinitWindowDriver;
+use chip8_drivers::MQWindowDriver;
 
 /// CHIP-8 emulator
 #[derive(FromArgs)]
@@ -156,7 +156,7 @@ fn parse_args(args: Args) -> CResult {
                 emulator.set_tracefile(&trace.to_string_lossy().to_string());
             }
 
-            let mut driver = WinitWindowDriver::new();
+            let mut driver = MQWindowDriver::new();
             if let Err(e) = driver.run_emulator(emulator, emulator_context, cartridge) {
                 eprintln!("execution error: {}", e);
                 process::exit(1);
@@ -187,7 +187,7 @@ fn parse_args(args: Args) -> CResult {
 
             debugger_context.register_breakpoint(INITIAL_MEMORY_POINTER);
 
-            let mut driver = WinitWindowDriver::new();
+            let mut driver = MQWindowDriver::new();
             if let Err(e) = driver.run_debugger(
                 debugger,
                 debugger_context,
