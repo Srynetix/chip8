@@ -191,6 +191,7 @@ dependencies = [
  "chip8-core",
  "chip8-drivers",
  "macroquad",
+ "once_cell",
  "tracing",
  "tracing-subscriber",
 ]

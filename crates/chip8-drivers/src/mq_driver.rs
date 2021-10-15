@@ -22,6 +22,7 @@ use crate::UsfxAudioDriver;
 
 pub struct MQRenderDriver {
     pub image: Image,
+    pub texture: Texture2D,
 }
 
 #[derive(Default)]
@@ -163,7 +164,6 @@ impl WindowInterface for MQWindowDriver {
             let mut fps_str = format!("FPS: {} ({} ms)", 0, 0);
 
             let mut render_driver = MQRenderDriver::new();
-            let texture = Texture2D::from_image(&render_driver.image);
             let mut input = MQInputDriver::new();
 
             let mut stream = DebuggerStream::new();
@@ -244,8 +244,8 @@ impl WindowInterface for MQWindowDriver {
                     }
                 }
 
-                texture.update(&render_driver.image);
-                draw_texture(texture, 0., 0., macroquad::color::WHITE);
+                render_driver.texture.update(&render_driver.image);
+                draw_texture(render_driver.texture, 0., 0., macroquad::color::WHITE);
                 draw_text(&fps_str, 32., 32., 30., macroquad::color::WHITE);
                 next_frame().await;
             }
@@ -268,15 +268,15 @@ impl MQInputDriver {
             0x2 => KeyCode::Key2,
             0x3 => KeyCode::Key3,
             0xC => KeyCode::Key4,
-            0x4 => KeyCode::A,
-            0x5 => KeyCode::Z,
+            0x4 => KeyCode::Q,
+            0x5 => KeyCode::W,
             0x6 => KeyCode::E,
             0xD => KeyCode::R,
-            0x7 => KeyCode::Q,
+            0x7 => KeyCode::A,
             0x8 => KeyCode::S,
             0x9 => KeyCode::D,
             0xE => KeyCode::F,
-            0xA => KeyCode::W,
+            0xA => KeyCode::Z,
             0x0 => KeyCode::X,
             0xB => KeyCode::C,
             0xF => KeyCode::V,
@@ -304,12 +304,13 @@ impl InputInterface for MQInputDriver {
 
 impl MQRenderDriver {
     pub fn new() -> Self {
-        let w = screen_width() as u16;
-        let h = screen_height() as u16;
+        let w = SCREEN_WIDTH as u16;
+        let h = SCREEN_HEIGHT as u16;
 
-        Self {
-            image: Image::gen_image_color(w, h, macroquad::color::BLACK),
-        }
+        let image = Image::gen_image_color(w, h, macroquad::color::BLACK);
+        let texture = Texture2D::from_image(&image);
+
+        Self { image, texture }
     }
 }
 

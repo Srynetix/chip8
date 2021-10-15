@@ -1,12 +1,9 @@
 //! Debug info frame.
 
-use sdl2::rect::Rect;
+use chip8_core::{debugger::DebuggerContext, emulator::Emulator};
+use macroquad::prelude::Rect;
 
-use crate::core::error::CResult;
-use crate::debugger::DebuggerContext;
-use crate::emulator::Emulator;
-use crate::window::draw::{draw_text, DrawContext};
-use crate::window::frame::Frame;
+use crate::{draw::ui_draw_text, frame::Frame};
 
 /// Debug info frame.
 pub struct DebugInfoFrame {
@@ -15,15 +12,6 @@ pub struct DebugInfoFrame {
 
 impl DebugInfoFrame {
     /// Create new frame.
-    ///
-    /// # Arguments
-    ///
-    /// * `rect` - Rect
-    ///
-    /// # Returns
-    ///
-    /// * Debug info frame instance.
-    ///
     pub fn new(rect: Rect) -> Self {
         Self {
             frame: Frame::new(rect, "DEBUG"),
@@ -31,24 +19,8 @@ impl DebugInfoFrame {
     }
 
     /// Render.
-    ///
-    /// # Arguments
-    ///
-    /// * `emulator` - Emulator.
-    /// * `debug_ctx` - Debug context.
-    /// * `ctx` - Draw context.
-    ///
-    /// # Returns
-    ///
-    /// * Result.
-    ///
-    pub fn render(
-        &self,
-        emulator: &Emulator,
-        debug_ctx: &DebuggerContext,
-        ctx: &mut DrawContext,
-    ) -> CResult {
-        let font = ctx.font_handler.get_or_create_font("default", 8).unwrap();
+    pub fn render(&self, emulator: &Emulator, debug_ctx: &DebuggerContext) {
+        let font_size = 12;
         let mut output = String::new();
 
         {
@@ -56,7 +28,7 @@ impl DebugInfoFrame {
 
             for (idx, rgx) in emulator.cpu.registers.get_registers().iter().enumerate() {
                 if idx % 5 == 0 {
-                    output.push_str("\n");
+                    output.push('\n');
                 }
 
                 output.push_str(&format!("V{:X}={:02X} ", idx, rgx));
@@ -73,7 +45,7 @@ impl DebugInfoFrame {
 
             for (idx, d) in emulator.cpu.stack.get_data().iter().enumerate() {
                 if idx % 7 == 0 {
-                    output.push_str("\n");
+                    output.push('\n');
                 }
 
                 output.push_str(&format!("{:04X} ", d));
@@ -94,7 +66,7 @@ impl DebugInfoFrame {
 
             for (idx, v) in emulator.cpu.peripherals.input.get_data().iter().enumerate() {
                 if idx % 5 == 0 {
-                    output.push_str("\n");
+                    output.push('\n');
                 }
 
                 output.push_str(&format!("K{:X}={:02X} ", idx, v));
@@ -125,15 +97,13 @@ impl DebugInfoFrame {
             output.push_str(&format!("\nEmulation state: {}", emulation_state));
         }
 
-        draw_text(
-            ctx.canvas,
-            ctx.texture_creator,
-            font,
+        ui_draw_text(
             &output,
-            self.frame.rect.x() as u32 + 4,
-            self.frame.rect.y() as u32 + 4,
-        )?;
+            self.frame.rect.x + 4.,
+            self.frame.rect.y + 4.,
+            font_size,
+        );
 
-        self.frame.render(ctx)
+        self.frame.render();
     }
 }
