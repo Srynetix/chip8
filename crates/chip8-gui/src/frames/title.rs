@@ -33,9 +33,9 @@ impl TitleFrame {
 
     /// Render frame.
     pub fn render(&self) {
-        let font_size = 48;
+        let font_size = 58;
         let x_pos = self.frame.rect.x + PADDING as f32;
-        let y_pos = self.frame.rect.y + TITLE_HEIGHT as f32 / 3.;
+        let y_pos = self.frame.rect.y + font_size as f32 / 4.;
 
         ui_draw_text(&self.title, x_pos, y_pos, font_size);
 

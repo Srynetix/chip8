@@ -38,7 +38,7 @@ impl Default for ExplorerScene {
                 "GAME LIST",
             ),
             status_frame: StatusFrame::new_default(),
-            title_frame: TitleFrame::new("CHIP-8 Emulator - Select a game"),
+            title_frame: TitleFrame::new("CHIP-8 EMULATOR - Select a game"),
             game_list: vec![],
             game_cursor: 0,
         }
