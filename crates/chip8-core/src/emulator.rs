@@ -53,24 +53,11 @@ pub enum TracefileHandle {
 }
 
 /// Emulator context.
+#[derive(Default)]
 pub struct EmulatorContext {
     tracefile_handle: Option<TracefileHandle>,
     timer_frametime: u64,
     cpu_frametime: u64,
-
-    /// CPU multiplicator
-    pub cpu_multiplicator: u64,
-}
-
-impl Default for EmulatorContext {
-    fn default() -> Self {
-        Self {
-            tracefile_handle: None,
-            cpu_multiplicator: 8,
-            timer_frametime: 0,
-            cpu_frametime: 0,
-        }
-    }
 }
 
 impl EmulatorContext {

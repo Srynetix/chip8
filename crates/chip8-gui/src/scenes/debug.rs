@@ -8,7 +8,7 @@ use chip8_core::{
     emulator::{Emulator, EmulatorContext},
     peripherals::{cartridge::Cartridge, memory::INITIAL_MEMORY_POINTER},
 };
-use chip8_drivers::MQInputDriver;
+use chip8_drivers::{MQInputDriver, UsfxAudioDriver};
 use macroquad::prelude::{get_char_pressed, is_key_pressed, KeyCode, Rect};
 
 use crate::{
@@ -134,6 +134,10 @@ impl Scene for DebugScene {
         self.emulator = Emulator::new();
         self.emulator_context = EmulatorContext::new();
         self.emulator.load_game(&self.cartridge);
+        self.emulator
+            .cpu
+            .drivers
+            .set_audio_driver(Box::new(UsfxAudioDriver::default()));
 
         self.debugger = Debugger::new();
         self.debugger_context = DebuggerContext::new();
@@ -150,16 +154,6 @@ impl Scene for DebugScene {
 
         self.focus = DebugFocus::Main;
     }
-
-    // fn event(&mut self, _ctx: &mut SceneContext, e: &Event) {
-    //     if let Event::TextInput { text, .. } = e {
-    //         if let DebugFocus::Shell = self.focus {
-    //             for c in text.chars() {
-    //                 self.shell_frame.add_char(c);
-    //             }
-    //         }
-    //     }
-    // }
 
     fn render(&mut self) {
         self.title_frame.render();
@@ -240,7 +234,7 @@ impl Scene for DebugScene {
             }
         }
 
-        for _ in 0..self.emulator_context.cpu_multiplicator {
+        for _ in 0..self.emulator.cpu.speed_multiplicator {
             self.input_driver
                 .update_input_state(&mut self.emulator.cpu.peripherals.input);
             self.debugger.step(

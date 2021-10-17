@@ -339,14 +339,14 @@ pub enum OpCode {
     /// FX75 - LDX [I], Vx.
     /// * Store V0..VX in RPL user flags (X <= 7).
     ///
-    /// | Store the values of registers v0 to vX into the ‘‘flags’’ registers (this means something in the
+    /// | Store the values of registers v0 to vX into the 'flags' registers (this means something in the
     /// | HP48 implementation) (X < 8).
     LDXS(C8RegIdx),
 
     /// FX85 - LDX Vx, [I].
     /// * Read V0..VX from RPL user flags (X <= 7).
     ///
-    /// | Read the values of registers v0 to vX from the ‘‘flags’’ registers (this means something in the
+    /// | Read the values of registers v0 to vX from the 'flags' registers (this means something in the
     /// | HP48 implementation) (X < 8).
     LDXR(C8RegIdx),
 
@@ -629,6 +629,7 @@ pub fn is_opcode_schip(opcode: C8Addr) -> bool {
             | OpCode::SCRL
             | OpCode::EXIT
             | OpCode::LOW
+            | OpCode::DRWX(_, _)
             | OpCode::HIGH
             | OpCode::LDXSprite(_)
             | OpCode::LDXS(_)

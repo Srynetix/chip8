@@ -114,7 +114,7 @@ impl WindowInterface for MQWindowDriver {
                     emulator.load_state(cartridge.get_title()).ok();
                 }
 
-                for _ in 0..emulator_ctx.cpu_multiplicator {
+                for _ in 0..emulator.cpu.speed_multiplicator {
                     input.update_input_state(&mut emulator.cpu.peripherals.input);
                     let state = emulator.step(&mut emulator_ctx);
 
@@ -223,7 +223,7 @@ impl WindowInterface for MQWindowDriver {
                     emulator.load_state(cartridge.get_title()).ok();
                 }
 
-                for _ in 0..emulator_ctx.cpu_multiplicator {
+                for _ in 0..emulator.cpu.speed_multiplicator {
                     input.update_input_state(&mut emulator.cpu.peripherals.input);
                     let state = debugger.step(
                         &mut emulator,

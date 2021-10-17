@@ -5,7 +5,7 @@ use std::fmt;
 use quad_rand::gen_range;
 
 use super::{
-    font::{Font, FONT_CHAR_HEIGHT, FONT_DATA_ADDR},
+    font::{Font, FONT_CHAR_HEIGHT, FONT_DATA_ADDR, SUPER_FONT_CHAR_HEIGHT, SUPER_FONT_DATA_ADDR},
     opcodes::OpCode,
     registers::Registers,
     savestate::SaveState,
@@ -43,6 +43,8 @@ pub struct CPU {
 
     /// Default font.
     pub font: Font,
+    /// Super font.
+    pub super_font: Font,
     /// Instruction count.
     pub instruction_count: usize,
 
@@ -51,6 +53,9 @@ pub struct CPU {
 
     /// Save state.
     pub savestate: Option<SaveState>,
+
+    /// Speed multiplicator
+    pub speed_multiplicator: u16,
 
     /// SCHIP mode.
     pub schip_mode: bool,
@@ -78,7 +83,9 @@ impl CPU {
             sync_timer: Timer::new("Sync".to_string()),
 
             font: Font::new_system_font(),
+            super_font: Font::new_super_system_font(),
             instruction_count: 0,
+            speed_multiplicator: 8,
 
             tracefile: None,
             savestate: None,
@@ -106,6 +113,10 @@ impl CPU {
         self.peripherals
             .memory
             .write_data_at_offset(FONT_DATA_ADDR, self.font.get_data());
+
+        self.peripherals
+            .memory
+            .write_data_at_offset(SUPER_FONT_DATA_ADDR, self.super_font.get_data());
     }
 
     /// Load savestate.
@@ -145,7 +156,7 @@ impl CPU {
         self.sound_timer.decrement();
         self.sync_timer.decrement();
 
-        if self.sound_timer.finished() {
+        if self.sound_timer.get_value() > 0 {
             if let Some(audio) = self.drivers.audio.as_deref_mut() {
                 self.peripherals.sound.play_beep(audio);
             }
@@ -486,27 +497,41 @@ impl CPU {
                 self.peripherals
                     .screen
                     .reload_screen_for_mode(ScreenMode::Standard);
+                self.speed_multiplicator = 8;
             }
             OpCode::HIGH => {
                 self.peripherals
                     .screen
                     .reload_screen_for_mode(ScreenMode::Extended);
+                self.speed_multiplicator = 16;
             }
-            OpCode::DRWX(_reg1, _reg2) => {
-                // TODO: Implement
-                println!("executing DRWX");
+            OpCode::DRWX(reg1, reg2) => {
+                // Draw sprite.
+                let r1 = self.registers.get_register(reg1);
+                let r2 = self.registers.get_register(reg2);
+                let ri = self.registers.get_i_register();
+                let sprite_data = self
+                    .peripherals
+                    .memory
+                    .read_data_at_offset(ri, C8Addr::from(16u8));
+
+                let collision = self
+                    .peripherals
+                    .screen
+                    .draw_super_sprite(r1, r2, sprite_data);
+                self.registers.set_carry_register(collision as C8Byte);
             }
-            OpCode::LDXSprite(_reg) => {
-                // TODO: Implement
-                println!("executing LDXSprite");
+            OpCode::LDXSprite(reg) => {
+                let r = C8Addr::from(self.registers.get_register(reg));
+                let sprite_addr = SUPER_FONT_DATA_ADDR + (SUPER_FONT_CHAR_HEIGHT as C8Addr * r);
+
+                self.registers.set_i_register(sprite_addr);
             }
-            OpCode::LDXS(_reg) => {
-                // TODO: Implement
-                println!("executing LDXS");
+            OpCode::LDXS(reg) => {
+                println!("Executing LDXS on register V{:X} (does nothing)", reg);
             }
-            OpCode::LDXR(_reg) => {
-                // TODO: Implement
-                println!("executing LDXR");
+            OpCode::LDXR(reg) => {
+                println!("Executing LDXR on register V{:X} (does nothing)", reg);
             }
 
             OpCode::EMPTY => {

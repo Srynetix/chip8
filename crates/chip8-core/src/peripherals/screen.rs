@@ -4,11 +4,7 @@ use std::fmt;
 
 use nanoserde::{DeBin, SerBin};
 
-use crate::{
-    core::{font::FONT_CHAR_WIDTH, types::C8Byte},
-    drivers::RenderInterface,
-    errors::CResult,
-};
+use crate::{core::types::C8Byte, drivers::RenderInterface, errors::CResult};
 
 /// Video memory width.
 pub const VIDEO_MEMORY_WIDTH: usize = 64;
@@ -16,6 +12,11 @@ pub const VIDEO_MEMORY_WIDTH: usize = 64;
 pub const VIDEO_MEMORY_HEIGHT: usize = 32;
 /// Renderer scale.
 pub const RENDERER_SCALE: usize = 10;
+
+/// Sprite width.
+pub const SPRITE_WIDTH: usize = 8;
+/// Super sprite width.
+pub const SUPER_SPRITE_WIDTH: usize = 16;
 
 const PIXEL_FADE_COEFFICIENT: f32 = 0.8;
 const VIDEO_MEMORY_SIZE: usize = VIDEO_MEMORY_WIDTH * VIDEO_MEMORY_HEIGHT;
@@ -183,9 +184,48 @@ impl Screen {
 
         for (i, code) in sprite.iter().enumerate().take(byte) {
             let y = ((r2 as usize) + (i as usize)) % (VIDEO_MEMORY_HEIGHT * coef);
-            let mut shift = FONT_CHAR_WIDTH - 1;
+            let mut shift = SPRITE_WIDTH - 1;
 
-            for j in 0..FONT_CHAR_WIDTH {
+            for j in 0..SPRITE_WIDTH {
+                let x = ((r1 as usize) + (j as usize)) % (VIDEO_MEMORY_WIDTH * coef);
+
+                if code & (0x1 << shift) != 0 && self.toggle_pixel_xy(x, y) {
+                    collision = true;
+                }
+
+                if shift > 0 {
+                    shift -= 1;
+                }
+            }
+        }
+
+        collision
+    }
+
+    /// Draw super sprite.
+    ///
+    /// # Arguments
+    ///
+    /// * `r1` - X position.
+    /// * `r2` - Y position.
+    /// * `sprite` - Sprite to draw.
+    ///
+    /// # Returns
+    ///
+    /// `true` if collision.
+    /// `false` if not.
+    ///
+    pub fn draw_super_sprite(&mut self, r1: C8Byte, r2: C8Byte, sprite: &[C8Byte]) -> bool {
+        let coef = self.get_screen_size_coef();
+
+        let byte = sprite.len();
+        let mut collision = false;
+
+        for (i, code) in sprite.iter().enumerate().take(byte) {
+            let y = ((r2 as usize) + (i as usize)) % (VIDEO_MEMORY_HEIGHT * coef);
+            let mut shift = SUPER_SPRITE_WIDTH - 1;
+
+            for j in 0..SUPER_SPRITE_WIDTH {
                 let x = ((r1 as usize) + (j as usize)) % (VIDEO_MEMORY_WIDTH * coef);
 
                 if code & (0x1 << shift) != 0 && self.toggle_pixel_xy(x, y) {

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - Split project into crates (`chip8-core`, `chip8-drivers`, `chip8-gui`, `chip8-cli`)
+- Use `macroquad` instead of `sdl2`
 
 ## [0.13.0] - 2019-04-23
 
