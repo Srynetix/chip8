@@ -37,8 +37,8 @@ impl ListFrame {
     }
 
     fn draw_data_count(&self, data: &ListFrameData) {
-        let font_size = 16;
-        let char_height = font_size + 4;
+        let font_size = 8;
+        let char_height = font_size;
 
         let cursor_x = self.frame.rect.x + 4.;
         let cursor_y = self.frame.rect.y + self.frame.rect.h - char_height as f32;
@@ -49,7 +49,7 @@ impl ListFrame {
 
     /// Render.
     pub fn render(&self, data: &ListFrameData) {
-        let font_size = 16;
+        let font_size = 8;
         let char_height = font_size + 4;
         let mut cursor_y = self.frame.rect.y + char_height as f32;
         let max_lines = self.get_max_lines(font_size);

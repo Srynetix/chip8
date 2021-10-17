@@ -1,7 +1,15 @@
 use macroquad::prelude::{
-    draw_rectangle, draw_rectangle_lines, draw_text_ex, measure_text, Color, Rect, TextDimensions,
-    TextParams,
+    draw_rectangle, draw_rectangle_lines, draw_text_ex, load_ttf_font_from_bytes, Color, Font,
+    Rect, TextDimensions, TextParams,
 };
+use once_cell::sync::Lazy;
+
+static DEFAULT_FONT: Lazy<Font> = Lazy::new(|| {
+    load_ttf_font_from_bytes(include_bytes!(
+        "../../../assets/fonts/PressStart2P-Regular.ttf"
+    ))
+    .unwrap()
+});
 
 pub fn ui_draw_frame(rect: Rect) {
     draw_rectangle_lines(rect.x, rect.y, rect.w, rect.h, 2., macroquad::color::WHITE);
@@ -30,10 +38,11 @@ pub fn _ui_draw_text_multiline(text: &str, x: f32, y: f32, font_size: u16, color
             draw_text_ex(
                 text,
                 cur_x,
-                cur_y + font_size as f32 / 2.,
+                cur_y,
                 TextParams {
                     color,
                     font_size,
+                    font: *DEFAULT_FONT,
                     ..Default::default()
                 },
             )
@@ -44,7 +53,12 @@ pub fn _ui_draw_text_multiline(text: &str, x: f32, y: f32, font_size: u16, color
 }
 
 pub fn ui_text_size(title: &str, font_size: u16) -> TextDimensions {
-    measure_text(title, None, font_size, 1.)
+    // measure_text(title, None, font_size, 1.)
+    return TextDimensions {
+        width: title.chars().count() as f32 * font_size as f32,
+        height: font_size as f32,
+        offset_y: 0.,
+    };
 }
 
 pub fn ui_draw_fill_rect(rect: Rect, color: Color) {

@@ -64,7 +64,7 @@ impl KeyboardFrame {
     }
 
     fn render_wait_indicator(&self, emulator: &Emulator) {
-        let font_size = 32;
+        let font_size = 16;
         let grey_color = macroquad::color::GRAY;
         let white_color = macroquad::color::WHITE;
 
@@ -82,7 +82,7 @@ impl KeyboardFrame {
         ui_draw_text_ex(
             "WAIT",
             self.frame.rect.x + wait_x as f32 + wait_w as f32 / 2. - wait_sz.width / 2.,
-            self.frame.rect.y + wait_y as f32 + wait_h as f32 / 2. - wait_sz.height / 2.,
+            self.frame.rect.y + wait_y as f32 + wait_h as f32 / 2. + wait_sz.height / 2.,
             font_size,
             color,
         );
@@ -99,7 +99,7 @@ impl KeyboardFrame {
     }
 
     fn render_keyboard(&self, emulator: &Emulator) {
-        let font_size = 32;
+        let font_size = 16;
         let grey_color = macroquad::color::GRAY;
         let white_color = macroquad::color::WHITE;
 
@@ -118,8 +118,9 @@ impl KeyboardFrame {
 
             let c_x = x * (KEY_SIZE + KEY_MARGIN * 2) + (KEY_SIZE + KEY_MARGIN * 2) / 2
                 - font_width as u32 / 2;
-            let c_y = y * (KEY_SIZE + KEY_MARGIN * 2) + (KEY_SIZE + KEY_MARGIN * 2) / 2
-                - font_height as u32 / 2;
+            let c_y = y * (KEY_SIZE + KEY_MARGIN * 2)
+                + (KEY_SIZE + KEY_MARGIN * 2) / 2
+                + font_height as u32 / 2;
 
             ui_draw_text_ex(
                 &character,

@@ -20,9 +20,10 @@ use crate::{
 };
 
 const STATUS_TEXT: &str = "\
-                           F2 - Shell          F4 - Step       ESC - Back\n\
+                           F2 - Shell          F4 - Step\n\
                            F3 - Memory         F5 - Continue\n\
-                           F10 - Dump          F6 - Pause\
+                           F10 - Dump          F6 - Pause\n\
+                           ESC - Back\
                            ";
 
 /// Debug focus.
@@ -209,9 +210,12 @@ impl Scene for DebugScene {
             if let DebugFocus::Shell = self.focus {
                 self.shell_frame.remove_char();
             }
-        } else if is_key_pressed(KeyCode::Enter) {
+        } else if is_key_pressed(KeyCode::Enter) || is_key_pressed(KeyCode::KpEnter) {
             if let DebugFocus::Shell = self.focus {
                 let cmd_str = self.shell_frame.validate();
+                self.debugger_stream
+                    .writeln_stdout(format!("> {}", cmd_str));
+
                 let cmd = self
                     .debugger
                     .read_command(&cmd_str, &mut self.debugger_stream);

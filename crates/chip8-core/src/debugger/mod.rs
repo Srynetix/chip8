@@ -268,7 +268,10 @@ impl Debugger {
             }
             "list-bp" | "lb" => Some(Command::ListBreakpoints),
             "" => Some(Command::Empty),
-            _ => None,
+            c => {
+                stream.writeln_stderr(format!("unknown command: {}", c));
+                None
+            }
         }
     }
 
@@ -324,7 +327,7 @@ impl Debugger {
             }
             Command::ListBreakpoints => ctx.breakpoints.dump_breakpoints(),
             Command::Quit => ctx.should_quit = true,
-            _ => {}
+            Command::Empty => (),
         }
     }
 

@@ -34,10 +34,10 @@ impl CodeFrame {
 
     /// Get max lines.
     pub fn get_max_lines(&self, font_size: u16) -> usize {
-        let char_height = font_size as usize;
+        let char_height = font_size as usize + 1;
         let rect_height = self.frame.rect.h as usize;
 
-        rect_height / char_height
+        rect_height / char_height - 1
     }
 
     /// Add text.
@@ -47,9 +47,9 @@ impl CodeFrame {
 
     /// Render frame.
     pub fn render(&self, debug_ctx: &DebuggerContext) {
-        let font_size = 16;
-        let mut cursor_y = self.frame.rect.y + 4.;
-        let char_height = font_size as f32;
+        let font_size = 8;
+        let mut cursor_y = self.frame.rect.y + font_size as f32 + 4.;
+        let char_height = font_size as f32 + 1.;
 
         let current_cursor = self.address_to_cursor(debug_ctx.address);
 
@@ -74,12 +74,7 @@ impl CodeFrame {
             ui_draw_text_ex(b, self.frame.rect.x + 4., cursor_y, font_size, color);
 
             if count == current_cursor as usize {
-                ui_draw_text(
-                    ">>>",
-                    self.frame.rect.x + font_size as f32 * 3.15,
-                    cursor_y,
-                    font_size,
-                );
+                ui_draw_text(">>>", self.frame.rect.x + 58., cursor_y, font_size);
             }
 
             // Breakpoint.

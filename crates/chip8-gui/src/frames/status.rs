@@ -38,12 +38,12 @@ impl StatusFrame {
 
     /// Render frame.
     pub fn render(&self) {
-        let font_size = 20;
+        let font_size = 12;
 
         ui_draw_text(
             &self.status,
             self.frame.rect.x + 4.,
-            self.frame.rect.y + 4.,
+            self.frame.rect.y + font_size as f32 + 4.,
             font_size,
         );
 

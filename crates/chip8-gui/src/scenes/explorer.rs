@@ -7,13 +7,15 @@ use macroquad::prelude::{is_key_pressed, KeyCode, Rect};
 
 use crate::{
     frames::{ListFrame, ListFrameData, StatusFrame, TitleFrame},
+    input::ui_is_key_auto_pressed,
     scene::{Scene, SceneContext},
 };
 
 const STATUS_TEXT: &str = "\
                            UP - Move up        F3 - Debug\n\
-                           DOWN - Move down    ESC - Quit\n\
-                           RETURN - Confirm\
+                           DOWN - Move down\n\
+                           RETURN - Confirm\n\
+                           ESC - Quit\
                            ";
 
 /// Explorer scene.
@@ -38,7 +40,7 @@ impl Default for ExplorerScene {
                 "GAME LIST",
             ),
             status_frame: StatusFrame::new_default(),
-            title_frame: TitleFrame::new("CHIP-8 EMULATOR - Select a game"),
+            title_frame: TitleFrame::new("CHIP-8 EMULATOR - Select game"),
             game_list: vec![],
             game_cursor: 0,
         }
@@ -75,9 +77,9 @@ impl Scene for ExplorerScene {
     }
 
     fn update(&mut self, ctx: &mut SceneContext) {
-        if is_key_pressed(KeyCode::Up) {
+        if ui_is_key_auto_pressed(KeyCode::Up) {
             self.game_cursor = modulo(self.game_cursor - 1, self.game_list.len() as i32)
-        } else if is_key_pressed(KeyCode::Down) {
+        } else if ui_is_key_auto_pressed(KeyCode::Down) {
             self.game_cursor = modulo(self.game_cursor + 1, self.game_list.len() as i32)
         } else if is_key_pressed(KeyCode::F3) {
             let mut game_dir = Cartridge::get_games_directory();

@@ -9,6 +9,7 @@ use scenes::{DebugScene, ExplorerScene, GameScene};
 mod draw;
 mod frame;
 mod frames;
+mod input;
 mod scene;
 mod scenes;
 

@@ -20,7 +20,7 @@ impl DebugInfoFrame {
 
     /// Render.
     pub fn render(&self, emulator: &Emulator, debug_ctx: &DebuggerContext) {
-        let font_size = 12;
+        let font_size = 9;
         let mut output = String::new();
 
         {
@@ -100,7 +100,7 @@ impl DebugInfoFrame {
         ui_draw_text(
             &output,
             self.frame.rect.x + 4.,
-            self.frame.rect.y + 4.,
+            self.frame.rect.y + font_size as f32 + 4.,
             font_size,
         );
 

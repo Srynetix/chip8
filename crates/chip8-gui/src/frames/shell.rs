@@ -63,20 +63,20 @@ impl ShellFrame {
 
     /// Get max lines.
     pub fn get_max_lines(&self, font_size: u16) -> usize {
-        let char_height = (font_size + 4) as usize;
+        let char_height = font_size as usize;
         let rect_height = self.frame.rect.h as usize;
 
-        rect_height / char_height
+        rect_height / char_height - 1
     }
 
     /// Render buffer.
     pub fn render_buffer(&mut self, stream: &DebuggerStream) {
-        let font_size = 16;
-        let mut cursor_y = self.frame.rect.y + 4.;
+        let font_size = 8;
+        let mut cursor_y = self.frame.rect.y + font_size as f32 + 4.;
         let char_height = font_size as f32 + 4.;
 
         // Get max lines.
-        let max_lines = self.get_max_lines(font_size);
+        let max_lines = self.get_max_lines(char_height as u16);
 
         // Get buffer lines.
         let lines = stream.get_lines();
@@ -107,12 +107,16 @@ impl ShellFrame {
 
         {
             // Draw line buffer.
-            let font_size = 16;
+            let font_size = 8;
             let txt = format!("> {}", self.cmd_buffer);
             let sz = ui_text_size(&txt, font_size);
             let char_height = font_size as f32 + 4.;
 
-            let cursor_y = char_height * stream.get_lines().len() as f32 + 4.;
+            let pos = cmp::min(
+                stream.get_lines().len(),
+                self.get_max_lines(char_height as u16) - 1,
+            ) as f32;
+            let cursor_y = char_height * pos + font_size as f32 + 4.;
 
             ui_draw_text(
                 &txt,
