@@ -5,7 +5,7 @@ use chip8_core::{
     emulator::{Emulator, EmulatorContext},
     peripherals::cartridge::Cartridge,
 };
-use chip8_drivers::{MQInputDriver, UsfxAudioDriver};
+use chip8_drivers::{MQAudioDriver, MQInputDriver};
 use macroquad::prelude::{is_key_pressed, KeyCode};
 
 use crate::{
@@ -74,7 +74,7 @@ impl Scene for GameScene {
         self.emulator
             .cpu
             .drivers
-            .set_audio_driver(Box::new(UsfxAudioDriver::default()));
+            .set_audio_driver(Box::new(MQAudioDriver::default()));
 
         // Prepare tracefile.
         self.emulator_context

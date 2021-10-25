@@ -4,7 +4,8 @@ use chip8_core::{
     core::types::C8Byte,
     debugger::{Debugger, DebuggerContext, DebuggerStream},
     drivers::{
-        InputInterface, RenderInterface, WindowInterface, SCREEN_HEIGHT, SCREEN_WIDTH, WINDOW_TITLE,
+        AudioInterface, InputInterface, RenderInterface, WindowInterface, SCREEN_HEIGHT,
+        SCREEN_WIDTH, WINDOW_TITLE,
     },
     emulator::{EmulationState, Emulator, EmulatorContext},
     errors::CResult,
@@ -13,12 +14,14 @@ use chip8_core::{
         input::{InputState, INPUT_STATE_COUNT},
     },
 };
-use macroquad::prelude::{
-    clear_background, draw_text, draw_texture, is_key_pressed, is_key_released, next_frame,
-    screen_height, screen_width, Conf, Image, KeyCode, Texture2D,
+use futures::executor::block_on;
+use macroquad::{
+    audio::{load_sound_from_bytes, play_sound_once},
+    prelude::{
+        clear_background, draw_text, draw_texture, is_key_pressed, is_key_released, next_frame,
+        screen_height, screen_width, Conf, Image, KeyCode, Texture2D,
+    },
 };
-
-use crate::UsfxAudioDriver;
 
 pub struct MQRenderDriver {
     pub image: Image,
@@ -64,7 +67,7 @@ impl WindowInterface for MQWindowDriver {
             emulator
                 .cpu
                 .drivers
-                .set_audio_driver(Box::new(UsfxAudioDriver::default()));
+                .set_audio_driver(Box::new(MQAudioDriver::default()));
 
             let origin_x = ((screen_width() - SCREEN_WIDTH as f32) / 2.) as u32;
             let origin_y = ((screen_height() - SCREEN_HEIGHT as f32) / 2.) as u32;
@@ -173,7 +176,7 @@ impl WindowInterface for MQWindowDriver {
             emulator
                 .cpu
                 .drivers
-                .set_audio_driver(Box::new(UsfxAudioDriver::default()));
+                .set_audio_driver(Box::new(MQAudioDriver::default()));
 
             let origin_x = ((screen_width() - SCREEN_WIDTH as f32) / 2.) as u32;
             let origin_y = ((screen_height() - SCREEN_HEIGHT as f32) / 2.) as u32;
@@ -344,5 +347,32 @@ impl RenderInterface for MQRenderDriver {
         }
 
         Ok(())
+    }
+}
+
+pub struct MQAudioDriver {
+    beep: macroquad::audio::Sound,
+}
+
+impl MQAudioDriver {
+    pub fn new() -> Self {
+        let beep = block_on(load_sound_from_bytes(include_bytes!(
+            "../../../assets/sounds/beep.wav"
+        )))
+        .unwrap();
+
+        Self { beep }
+    }
+}
+
+impl Default for MQAudioDriver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AudioInterface for MQAudioDriver {
+    fn play_beep(&mut self) {
+        play_sound_once(self.beep);
     }
 }

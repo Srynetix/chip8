@@ -8,7 +8,7 @@ use chip8_core::{
     emulator::{Emulator, EmulatorContext},
     peripherals::{cartridge::Cartridge, memory::INITIAL_MEMORY_POINTER},
 };
-use chip8_drivers::{MQInputDriver, UsfxAudioDriver};
+use chip8_drivers::{MQAudioDriver, MQInputDriver};
 use macroquad::prelude::{get_char_pressed, is_key_pressed, KeyCode, Rect};
 
 use crate::{
@@ -138,7 +138,7 @@ impl Scene for DebugScene {
         self.emulator
             .cpu
             .drivers
-            .set_audio_driver(Box::new(UsfxAudioDriver::default()));
+            .set_audio_driver(Box::new(MQAudioDriver::default()));
 
         self.debugger = Debugger::new();
         self.debugger_context = DebuggerContext::new();
