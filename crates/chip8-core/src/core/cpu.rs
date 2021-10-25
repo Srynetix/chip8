@@ -38,8 +38,6 @@ pub struct CPU {
     pub delay_timer: Timer,
     /// Sound timer.
     pub sound_timer: Timer,
-    /// Synchronization timer.
-    pub sync_timer: Timer,
 
     /// Default font.
     pub font: Font,
@@ -80,7 +78,6 @@ impl CPU {
 
             delay_timer: Timer::new("Delay".to_string()),
             sound_timer: Timer::new("Sound".to_string()),
-            sync_timer: Timer::new("Sync".to_string()),
 
             font: Font::new_system_font(),
             super_font: Font::new_super_system_font(),
@@ -134,7 +131,6 @@ impl CPU {
         self.stack.load_from_save(state.stack);
         self.delay_timer.load_from_save(state.delay_timer);
         self.sound_timer.load_from_save(state.sound_timer);
-        self.sync_timer.load_from_save(state.sync_timer);
     }
 
     /// Load cartridge data.
@@ -154,7 +150,6 @@ impl CPU {
     pub fn decrement_timers(&mut self) {
         self.delay_timer.decrement();
         self.sound_timer.decrement();
-        self.sync_timer.decrement();
 
         if self.sound_timer.get_value() > 0 {
             if let Some(audio) = self.drivers.audio.as_deref_mut() {
@@ -173,7 +168,6 @@ impl CPU {
         self.stack.reset();
         self.delay_timer.reset(0);
         self.sound_timer.reset(0);
-        self.sync_timer.reset(60);
     }
 
     /// Execute instruction.

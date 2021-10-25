@@ -23,7 +23,7 @@ const STATUS_TEXT: &str = "\
                            F2 - Shell          F4 - Step\n\
                            F3 - Memory         F5 - Continue\n\
                            F10 - Dump          F6 - Pause\n\
-                           ESC - Back\
+                           ESC - Back to game list\
                            ";
 
 /// Debug focus.
@@ -83,10 +83,10 @@ impl Default for DebugScene {
                 WINDOW_HEIGHT as f32 / 2.,
             )),
             memory_frame: MemoryFrame::new(Rect::new(
-                16.,
-                16.,
-                WINDOW_WIDTH as f32 - 32.,
-                WINDOW_HEIGHT as f32 - 32.,
+                64.,
+                64.,
+                WINDOW_WIDTH as f32 - 64. * 2.,
+                WINDOW_HEIGHT as f32 - 64. * 2.,
             )),
             emulator: Emulator::new(),
             emulator_context: EmulatorContext::new(),

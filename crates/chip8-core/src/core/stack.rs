@@ -65,6 +65,11 @@ impl Stack {
         self.pointer
     }
 
+    /// Peek value in stack.
+    pub fn peek(&self, idx: usize) -> C8Addr {
+        self.data[idx]
+    }
+
     /// Pop address from stack.
     ///
     /// # Returns

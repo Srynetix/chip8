@@ -381,11 +381,6 @@ impl Screen {
         self.toggle_pixel(x + y * (VIDEO_MEMORY_WIDTH * coef))
     }
 
-    /// Dump screen.
-    pub fn dump_screen(&self) {
-        println!("{:?}", &self);
-    }
-
     /// Reset screen.
     pub fn reset(&mut self) {
         self.data.data = vec![0; VIDEO_MEMORY_SIZE];

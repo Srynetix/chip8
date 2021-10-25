@@ -23,7 +23,7 @@ impl MemoryFrame {
 
     /// Render.
     pub fn render(&self, emulator: &Emulator) {
-        let font_size = 15;
+        let font_size = 6;
         let mut output = String::new();
 
         // Draw background.
@@ -58,7 +58,7 @@ impl MemoryFrame {
         ui_draw_text(
             &output,
             self.frame.rect.x + 4.,
-            self.frame.rect.y + 4.,
+            self.frame.rect.y + font_size as f32 + 4.,
             font_size,
         );
 

@@ -66,7 +66,7 @@ impl Scene for GameScene {
         self.title_frame
             .set_title(&format!("GAME - {}", self.game_name));
         self.status_frame
-            .set_status("F5 - Reset\nF6 - Save state\nF7 - Load state\nESC - Back");
+            .set_status("F5 - Reset\nF6 - Save state\nF7 - Load state\nESC - Back to game list");
 
         self.emulator = Emulator::new();
         self.emulator_context = EmulatorContext::new();

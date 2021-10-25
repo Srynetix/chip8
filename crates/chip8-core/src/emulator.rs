@@ -242,15 +242,9 @@ impl Emulator {
             }
         }
 
-        // Handle delays.
-        if self.cpu.peripherals.screen.is_scrolling() && self.cpu.sync_timer.get_value() == 0 {
-            // Delay ok.
+        // Handle scroll.
+        if self.cpu.peripherals.screen.is_scrolling() {
             self.cpu.peripherals.screen.apply_scroll();
-        }
-
-        // Reset sync timer.
-        if self.cpu.sync_timer.get_value() == 0 {
-            self.cpu.sync_timer.reset(60);
         }
 
         if ctx.cpu_frametime >= cpu_framelimit {

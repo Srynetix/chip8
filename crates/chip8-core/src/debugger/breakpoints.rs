@@ -75,11 +75,6 @@ impl Breakpoints {
     pub fn check_breakpoint(&self, addr: C8Addr) -> bool {
         self.get_breakpoint(addr).is_some()
     }
-
-    /// Dump breakpoints in console.
-    pub fn dump_breakpoints(&self) {
-        println!("{:?}", &self);
-    }
 }
 
 impl fmt::Debug for Breakpoints {
@@ -114,7 +109,5 @@ mod tests {
         bps.unregister(0x1234);
         assert!(!bps.check_breakpoint(0x1234));
         bps.unregister(0x1234);
-
-        bps.dump_breakpoints();
     }
 }

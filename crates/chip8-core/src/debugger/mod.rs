@@ -15,7 +15,7 @@ use crate::{
     core::{
         cpu::CPU,
         opcodes::{get_opcode_enum, get_opcode_str},
-        types::{convert_hex_addr, C8Addr},
+        types::{convert_hex_addr, C8Addr, C8RegIdx},
     },
     emulator::{EmulationState, Emulator, EmulatorContext},
     peripherals::memory::INITIAL_MEMORY_POINTER,
@@ -24,6 +24,27 @@ use crate::{
 /// Debugger.
 #[derive(Default)]
 pub struct Debugger;
+
+/// Register kind.
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum RegisterKind {
+    /// Register.
+    Register(C8RegIdx),
+    /// I Register.
+    RegisterI,
+    /// Stack.
+    Stack(C8RegIdx),
+    /// Stack Pointer.
+    StackPointer,
+    /// Input.
+    Input(C8RegIdx),
+    /// Last key pressed.
+    InputLastKey,
+    /// Delay timer.
+    DelayTimer,
+    /// Sound timer.
+    SoundTimer,
+}
 
 /// Debugger command.
 #[derive(Clone, Debug, PartialEq)]
@@ -40,6 +61,8 @@ pub enum Command {
     LongList,
     /// Dump CPU.
     Dump(String),
+    /// Read register.
+    ReadRegister(RegisterKind),
     /// Read memory at offset.
     ReadMemory(C8Addr, C8Addr),
     /// Step instruction.
@@ -156,12 +179,9 @@ impl Debugger {
                     ctx.editor.add_history_entry(&line);
                     let command = self.read_command(&line, stream);
 
-                    match command {
-                        Some(cmd) => {
-                            self.handle_command(cpu, ctx, stream, cmd);
-                            break 'read;
-                        }
-                        None => stream.writeln_stderr(format!("unknown command: {}", line)),
+                    if let Some(cmd) = command {
+                        self.handle_command(cpu, ctx, stream, cmd);
+                        break 'read;
                     }
                 }
                 Err(ReadlineError::Interrupted) | Err(ReadlineError::Eof) => {
@@ -222,8 +242,78 @@ impl Debugger {
                 }
             }
             "longlist" | "ll" => Some(Command::LongList),
-            "step" | "s" => Some(Command::Step),
+            "step" | "s" | "next" | "n" => Some(Command::Step),
             "help" | "h" => Some(Command::Help),
+            "read-reg" | "rreg" => {
+                if cmd_split.len() == 2 {
+                    let arg = cmd_split[1].to_ascii_lowercase();
+                    if arg.is_empty() {
+                        stream.writeln_stderr("error: empty register");
+                        None
+                    } else {
+                        // Try specific patterns first
+                        match &arg[..] {
+                            "i" => return Some(Command::ReadRegister(RegisterKind::RegisterI)),
+                            "dt" => return Some(Command::ReadRegister(RegisterKind::DelayTimer)),
+                            "st" => return Some(Command::ReadRegister(RegisterKind::SoundTimer)),
+                            "lk" => return Some(Command::ReadRegister(RegisterKind::InputLastKey)),
+                            "sp" => return Some(Command::ReadRegister(RegisterKind::StackPointer)),
+                            _ => (),
+                        }
+
+                        let mut chars = arg.chars();
+                        let first_letter = chars.next().unwrap();
+                        match first_letter {
+                            'v' | 's' | 'k' => {
+                                let reg_idx: String = chars.collect();
+                                let reg_idx = match C8RegIdx::from_str_radix(&reg_idx, 16) {
+                                    Ok(i) => {
+                                        if i > 0xF {
+                                            stream.writeln_stderr(format!(
+                                                "error: unsupported V register index: {}",
+                                                reg_idx
+                                            ));
+                                            return None;
+                                        } else {
+                                            i
+                                        }
+                                    }
+                                    Err(e) => {
+                                        stream.writeln_stderr(format!(
+                                            "error: unsupported register idx value: {}",
+                                            e
+                                        ));
+                                        return None;
+                                    }
+                                };
+
+                                match first_letter {
+                                    'v' => {
+                                        Some(Command::ReadRegister(RegisterKind::Register(reg_idx)))
+                                    }
+                                    's' => {
+                                        Some(Command::ReadRegister(RegisterKind::Stack(reg_idx)))
+                                    }
+                                    'k' => {
+                                        Some(Command::ReadRegister(RegisterKind::Input(reg_idx)))
+                                    }
+                                    _ => unreachable!(),
+                                }
+                            }
+                            _ => {
+                                stream.writeln_stderr(format!(
+                                    "error: unknown registry kind: {}",
+                                    arg
+                                ));
+                                None
+                            }
+                        }
+                    }
+                } else {
+                    stream.writeln_stdout("usage: read-reg reg");
+                    None
+                }
+            }
             "read-mem" | "rmem" => {
                 if cmd_split.len() == 3 {
                     if let Some(addr) = convert_hex_addr(cmd_split[1]) {
@@ -293,23 +383,67 @@ impl Debugger {
     ) {
         match command {
             Command::Dump(ref device) => match &device[..] {
-                "memory" | "m" => println!("{:?}", cpu.peripherals.memory),
-                "video" | "v" => cpu.peripherals.screen.dump_screen(),
-                "input" | "i" => println!("{:?}", cpu.peripherals.input),
-                "registers" | "r" => println!("{:?}", cpu.registers),
-                "stack" | "s" => println!("{:?}", cpu.stack),
+                "memory" | "m" => stream.writeln_stdout(format!("{:?}", cpu.peripherals.memory)),
+                "video" | "v" => stream.writeln_stdout(format!("{:?}", cpu.peripherals.screen)),
+                "input" | "i" => stream.writeln_stdout(format!("{:?}", cpu.peripherals.input)),
+                "registers" | "r" => stream.writeln_stdout(format!("{:?}", cpu.registers)),
+                "stack" | "s" => stream.writeln_stdout(format!("{:?}", cpu.stack)),
                 "timers" | "t" => {
-                    println!("{:?}", cpu.delay_timer);
-                    println!("{:?}", cpu.sound_timer);
+                    stream.writeln_stdout(format!("{:?}", cpu.delay_timer));
+                    stream.writeln_stdout(format!("{:?}", cpu.sound_timer));
                 }
-                _ => println!("{:?}", cpu),
+                _ => stream.writeln_stdout(format!("{:?}", cpu)),
+            },
+            Command::ReadRegister(kind) => match kind {
+                RegisterKind::Register(reg_idx) => {
+                    stream.writeln_stdout(format!(
+                        "V{:X} = {:X}",
+                        reg_idx,
+                        cpu.registers.get_register(reg_idx)
+                    ));
+                }
+                RegisterKind::RegisterI => {
+                    stream.writeln_stdout(format!("I = {:X}", cpu.registers.get_i_register()));
+                }
+                RegisterKind::Stack(reg_idx) => {
+                    stream.writeln_stdout(format!(
+                        "S{:X} = {:X}",
+                        reg_idx,
+                        cpu.stack.peek(reg_idx as usize)
+                    ));
+                }
+                RegisterKind::StackPointer => {
+                    stream.writeln_stdout(format!("SP = {:X}", cpu.stack.get_pointer()));
+                }
+                RegisterKind::Input(reg_idx) => {
+                    stream.writeln_stdout(format!(
+                        "K{:X} = {:X}",
+                        reg_idx,
+                        cpu.peripherals.input.get(reg_idx)
+                    ));
+                }
+                RegisterKind::InputLastKey => {
+                    stream.writeln_stdout(format!(
+                        "LK = {:X}",
+                        cpu.peripherals.input.get_last_pressed_key()
+                    ));
+                }
+                RegisterKind::DelayTimer => {
+                    stream.writeln_stdout(format!("DT = {:X}", cpu.delay_timer.get_value()));
+                }
+                RegisterKind::SoundTimer => {
+                    stream.writeln_stdout(format!("ST = {:X}", cpu.sound_timer.get_value()));
+                }
             },
             Command::ReadMemory(addr, count) => {
-                println!("reading memory at {:04X} on {} byte(s)", addr, count);
-                println!(
+                stream.writeln_stdout(format!(
+                    "reading memory at {:04X} on {} byte(s)",
+                    addr, count
+                ));
+                stream.writeln_stdout(format!(
                     "{:?}",
                     cpu.peripherals.memory.read_data_at_offset(addr, count)
-                );
+                ));
             }
             Command::Step => ctx.is_stepping = true,
             Command::Continue => ctx.is_continuing = true,
@@ -319,13 +453,13 @@ impl Debugger {
             Command::Help => self.show_help(stream),
             Command::AddBreakpoint(addr) => {
                 ctx.register_breakpoint(addr);
-                println!("breakpoint added to address 0x{:04X}", addr);
+                stream.writeln_stdout(format!("breakpoint added to address 0x{:04X}", addr));
             }
             Command::RemoveBreakpoint(addr) => {
                 ctx.unregister_breakpoint(addr);
-                println!("breakpoint removed from address 0x{:04X}", addr);
+                stream.writeln_stdout(format!("breakpoint removed from address 0x{:04X}", addr));
             }
-            Command::ListBreakpoints => ctx.breakpoints.dump_breakpoints(),
+            Command::ListBreakpoints => stream.writeln_stdout(format!("{:?}", ctx.breakpoints)),
             Command::Quit => ctx.should_quit = true,
             Command::Empty => (),
         }
@@ -383,10 +517,11 @@ impl Debugger {
         stream.writeln_stdout("  where|w         - show current line");
         stream.writeln_stdout("  list|l          - show current line with context");
         stream.writeln_stdout("  longlist|ll     - show complete source");
-        stream.writeln_stdout("  step|s          - step");
+        stream.writeln_stdout("  step|s|next|n   - step");
         stream.writeln_stdout("  add-bp|b        - add breakpoint at address");
         stream.writeln_stdout("  rem-bp|rb       - remove breakpoint at address");
         stream.writeln_stdout("  list-bp|lb      - list breakpoints");
+        stream.writeln_stdout("  read-reg|rreg   - read register");
         stream.writeln_stdout("  read-mem|rmem   - read memory at offset");
         stream.writeln_stdout("  quit|q          - quit program");
         stream.writeln_stdout("  help|h          - show this help");

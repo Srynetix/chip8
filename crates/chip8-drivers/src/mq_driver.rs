@@ -132,7 +132,7 @@ impl WindowInterface for MQWindowDriver {
 
                 texture.update(&render_driver.image);
                 draw_texture(texture, 0., 0., macroquad::color::WHITE);
-                draw_text(&fps_str, 32., 32., 30., macroquad::color::WHITE);
+                draw_text(&fps_str, 4., 14., 14., macroquad::color::WHITE);
                 next_frame().await;
             }
         };
@@ -246,7 +246,7 @@ impl WindowInterface for MQWindowDriver {
 
                 render_driver.texture.update(&render_driver.image);
                 draw_texture(render_driver.texture, 0., 0., macroquad::color::WHITE);
-                draw_text(&fps_str, 32., 32., 30., macroquad::color::WHITE);
+                draw_text(&fps_str, 4., 14., 14., macroquad::color::WHITE);
                 next_frame().await;
             }
         };

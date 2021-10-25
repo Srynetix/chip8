@@ -188,6 +188,7 @@ dependencies = [
 name = "chip8-gui"
 version = "0.14.0"
 dependencies = [
+ "argh",
  "chip8-core",
  "chip8-drivers",
  "macroquad",

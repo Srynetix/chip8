@@ -9,6 +9,7 @@ publish = false
 [dependencies]
 chip8-core = { path = "../chip8-core" }
 chip8-drivers = { path = "../chip8-drivers" }
+argh = "0.1.6"
 macroquad = "0.3.10"
 once_cell = "1.8.0"
 tracing = "0.1.29"

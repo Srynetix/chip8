@@ -13,13 +13,9 @@ use chip8_core::{
 };
 use chip8_drivers::MQWindowDriver;
 
-/// CHIP-8 emulator
+/// CHIP-8 Emulator CLI
 #[derive(FromArgs)]
-pub struct Args {
-    /// verbose mode
-    #[argh(switch, short = 'v')]
-    pub verbose: bool,
-
+struct Args {
     /// subcommand
     #[argh(subcommand)]
     pub nested: SubCommands,
@@ -28,7 +24,7 @@ pub struct Args {
 /// Subcommands
 #[derive(FromArgs)]
 #[argh(subcommand)]
-pub enum SubCommands {
+enum SubCommands {
     /// Play command
     Play(PlayCommand),
     /// Debug command
@@ -44,7 +40,7 @@ pub enum SubCommands {
 /// play cartridge
 #[derive(FromArgs)]
 #[argh(subcommand, name = "play")]
-pub struct PlayCommand {
+struct PlayCommand {
     /// cartridge path
     #[argh(positional)]
     pub file: PathBuf,
@@ -57,7 +53,7 @@ pub struct PlayCommand {
 /// debug cartridge
 #[derive(FromArgs)]
 #[argh(subcommand, name = "debug")]
-pub struct DebugCommand {
+struct DebugCommand {
     /// cartridge path
     #[argh(positional)]
     pub file: PathBuf,
@@ -70,7 +66,7 @@ pub struct DebugCommand {
 /// assemble cartridge
 #[derive(FromArgs)]
 #[argh(subcommand, name = "assemble")]
-pub struct AssembleCommand {
+struct AssembleCommand {
     /// source assembly path
     #[argh(positional)]
     pub source: PathBuf,
@@ -83,7 +79,7 @@ pub struct AssembleCommand {
 /// disassemble cartridge
 #[derive(FromArgs)]
 #[argh(subcommand, name = "disassemble")]
-pub struct DisassembleCommand {
+struct DisassembleCommand {
     /// cartridge path
     #[argh(positional)]
     pub file: PathBuf,
@@ -96,7 +92,7 @@ pub struct DisassembleCommand {
 /// show version
 #[derive(FromArgs)]
 #[argh(subcommand, name = "version")]
-pub struct VersionCommand {}
+struct VersionCommand {}
 
 /// Start shell.
 fn main() -> CResult {
@@ -105,13 +101,13 @@ fn main() -> CResult {
 }
 
 /// Start shell using args.
-pub fn start_shell_using_args(args: Args) -> CResult {
+fn start_shell_using_args(args: Args) -> CResult {
     parse_args(args)
 }
 
 /// Parse arguments.
 fn parse_args(args: Args) -> CResult {
-    let s = tracing_subscriber::fmt(); //.with_env_filter(EnvFilter::from_default_env());
+    let s = tracing_subscriber::fmt();
     s.compact().init();
 
     match args.nested {

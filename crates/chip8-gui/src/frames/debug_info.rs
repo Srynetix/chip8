@@ -58,7 +58,6 @@ impl DebugInfoFrame {
             output.push_str("\nTIMERS:\n");
             output.push_str(&format!("DELAY={}\n", emulator.cpu.delay_timer.get_value()));
             output.push_str(&format!("SOUND={}\n", emulator.cpu.sound_timer.get_value()));
-            output.push_str(&format!("SYNC={}\n", emulator.cpu.sync_timer.get_value()));
         }
 
         {
@@ -94,6 +93,10 @@ impl DebugInfoFrame {
                 "RUNNING"
             };
 
+            output.push_str(&format!(
+                "\nCPU multiplicator: {}x",
+                emulator.cpu.speed_multiplicator
+            ));
             output.push_str(&format!("\nEmulation state: {}", emulation_state));
         }
 
