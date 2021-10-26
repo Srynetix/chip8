@@ -16,3 +16,4 @@ RUN bash -c "source $HOME/.cargo/env && rustup toolchain install nightly-2021-09
 WORKDIR /app
 ADD . /app
 RUN bash -c "source $HOME/.cargo/env && cargo build --all"
+ENTRYPOINT [ "/app/target/debug/chip8-gui"]
