@@ -1,16 +1,10 @@
-chip8
-=====
+# CHIP-8 Emulator
 
-![screen](assets/screen.gif)
-![debugger](assets/debugger.gif)
+![anim](assets/anim.gif)
 
-Emulator project for the CHIP-8 virtual console written in Rust.  
-This is for now my main project in Rust, and I try to experiment multiple things.
+Emulator project for the CHIP-8 virtual console written in Rust.
 
-Windowing and rendering is done thanks to SDL2 and the rust-sdl2 wrapper.
-
-Features
---------
+## Features
 
 - Support almost all CHIP-8 games
 - CLI-driven mode to specifically use one functionality
@@ -23,26 +17,73 @@ Features
   - Terminal debugger with a GDB-like experience in CLI mode
   - Graphical debugger in GUI mode
 
-Command-line help
------------------
+## Command-line help
+
+### CLI application
+
+**Command list**
 
 ```
-USAGE:
-    chip8.exe [FLAGS] [OPTIONS] [--] [FILENAME]
+Usage: chip8-cli <command> [<args>]
 
-FLAGS:
-    -s, --break-at-start    add breakpoint at start
-        --gui               GUI mode
-    -h, --help              Prints help information
-    -V, --version           Prints version information
-    -v, --verbose           verbose mode
+CHIP-8 Emulator CLI
 
-OPTIONS:
-    -a, --assemble <OUTPUT>             assemble code
-    -b, --breakpoint <breakpoint>...    add breakpoint at address
-    -d, --disassemble <disassemble>     disassemble cartridge to file (use '-' to trace in console)
-    -t, --trace <trace>                 trace execution to file
+Commands:
+  play              play cartridge
+  debug             debug cartridge
+  assemble          assemble cartridge
+  disassemble       disassemble cartridge
+  version           show version
+```
 
-ARGS:
-    <FILENAME>    cartridge path
+**Command: `play`**
+
+```
+Usage: chip8-cli play <file> [-t <trace>]
+
+play cartridge
+
+Options:
+  -t, --trace       trace output file
+```
+
+**Command: `debug`**
+
+```
+Usage: chip8-cli debug <file> [-b <breakpoint...>]
+
+debug cartridge
+
+Options:
+  -b, --breakpoint  add breakpoint at address
+```
+
+**Command: `assemble`**
+
+```
+Usage: chip8-cli assemble <source> <output>
+
+assemble cartridge
+```
+
+**Command: `disassemble`**
+
+```
+Usage: chip8-cli disassemble <file> [-o <output>]
+
+disassemble cartridge
+
+Options:
+  -o, --output      output file (omit argument for stdout)
+```
+
+### GUI application
+
+```
+Usage: chip8-gui.exe [<game_path>] [--debug]
+
+CHIP-8 Emulator GUI
+
+Options:
+  --debug           use debug UI
 ```
