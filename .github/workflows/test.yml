@@ -8,5 +8,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y libasound2-dev libgl-dev libx11-dev libxi-dev
     - name: Run tests
       run: cargo xtask test
