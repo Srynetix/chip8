@@ -1,9 +1,0 @@
-[package]
-name = "xtask"
-version = "0.0.0"
-authors = ["Denis BOURGE <denis.bourge@sharingcloud.com>"]
-edition = "2018"
-
-[dependencies]
-argh = "0.1.6"
-duct = "0.13.5"

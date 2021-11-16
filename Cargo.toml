@@ -1,6 +1,8 @@
 [workspace]
 members = [
-    "crates/*",
-    "xtask"
+    "crates/chip8-cli",
+    "crates/chip8-core",
+    "crates/chip8-drivers",
+    "crates/chip8-gui",
 ]
 resolver = "2"
